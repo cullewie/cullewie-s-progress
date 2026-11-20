@@ -1,0 +1,232 @@
+{
+    "schemaVersion":  1,
+    "release":  {
+                    "version":  "1.0.0",
+                    "channel":  "main",
+                    "minWindowsBuild":  22000,
+                    "minPowerShell":  "5.1"
+                },
+    "files":  [
+                  {
+                      "path":  "Docs/HOW-IT-WORKS.md",
+                      "size":  1284,
+                      "sha256":  "0a14359e6dde3f19a00aa9d9066aea76bc2f6677a97881d9a85e6f11db421ee8",
+                      "role":  "documentation",
+                      "origin":  "generated",
+                      "derivedFrom":  null
+                  },
+                  {
+                      "path":  "Docs/PROVENANCE.md",
+                      "size":  1915,
+                      "sha256":  "35a1a4fe016b21cbbb061966aa55a68f9f623fdc01cbf866facebcf7c33fde2b",
+                      "role":  "documentation",
+                      "origin":  "generated",
+                      "derivedFrom":  null
+                  },
+                  {
+                      "path":  "Docs/SCRIPT-INVENTORY.md",
+                      "size":  1354,
+                      "sha256":  "7da1cfedad0b93223128f7608f4fe99d2c68b6baf9daad1ac01291a9aaa299c5",
+                      "role":  "documentation",
+                      "origin":  "generated",
+                      "derivedFrom":  null
+                  },
+                  {
+                      "path":  "Launcher.bat",
+                      "size":  254,
+                      "sha256":  "c23a854344ab7f8692a42f83504d4f064eaf92208853c7b1a9831dbcca0eb6ee",
+                      "role":  "launcher-entry",
+                      "origin":  "generated",
+                      "derivedFrom":  null
+                  },
+                  {
+                      "path":  "Launcher.ps1",
+                      "size":  7583,
+                      "sha256":  "fa351d47e6e4c6bf6d731613ed3265e5621547e783be9bd5cf5985f3757f9d2e",
+                      "role":  "launcher",
+                      "origin":  "generated",
+                      "derivedFrom":  null
+                  },
+                  {
+                      "path":  "README.md",
+                      "size":  1378,
+                      "sha256":  "1d44c2bcbd01e70bbb20359226bba150e222d0746ca0e982206ce1bb8bc67f60",
+                      "role":  "documentation",
+                      "origin":  "generated",
+                      "derivedFrom":  null
+                  },
+                  {
+                      "path":  "Scripts/Drivers/DDU/DDU.ps1",
+                      "size":  10520,
+                      "sha256":  "564657374be33107ae7c69e61825cf8b2b7eb6ff668d40654908524a4d3ce9b5",
+                      "role":  "source",
+                      "origin":  "edited-source",
+                      "derivedFrom":  "564657374be33107ae7c69e61825cf8b2b7eb6ff668d40654908524a4d3ce9b5"
+                  },
+                  {
+                      "path":  "Scripts/Drivers/Debloated-Installer/Driver-Installer.ps1",
+                      "size":  37285,
+                      "sha256":  "adf2e6121a6fa2171e7b917c59a58af575c68366342cf173f7e542c8dd1b2d24",
+                      "role":  "source",
+                      "origin":  "edited-source",
+                      "derivedFrom":  "adf2e6121a6fa2171e7b917c59a58af575c68366342cf173f7e542c8dd1b2d24"
+                  },
+                  {
+                      "path":  "Scripts/Drivers/Multi-GPU/Driver-Downloader.ps1",
+                      "size":  3533,
+                      "sha256":  "25890bc50f2abb4a1a6d80f5c626a295abcd7fd3e08c82396cad3e123f320987",
+                      "role":  "source",
+                      "origin":  "edited-source",
+                      "derivedFrom":  "25890bc50f2abb4a1a6d80f5c626a295abcd7fd3e08c82396cad3e123f320987"
+                  },
+                  {
+                      "path":  "Scripts/Drivers/NVIDIA/NVIDIA-Driver-Updater.ps1",
+                      "size":  5406,
+                      "sha256":  "955de18efb9af0d06c14565156dbe426ba2c2f78d64b149d82d65855b88ddded",
+                      "role":  "source",
+                      "origin":  "edited-source",
+                      "derivedFrom":  "955de18efb9af0d06c14565156dbe426ba2c2f78d64b149d82d65855b88ddded"
+                  },
+                  {
+                      "path":  "Scripts/NVIDIA/Digital-Vibrance.ps1",
+                      "size":  10305,
+                      "sha256":  "5979653a31b1193238751c4b0c1f599306c1865cf742ad6de29205d00cf9563f",
+                      "role":  "source",
+                      "origin":  "edited-source",
+                      "derivedFrom":  "aa941ca4825627187c9815c88e73356f5f632239e784a6707edd29b1ef41e86b"
+                  },
+                  {
+                      "path":  "Scripts/NVIDIA/Settings-GitHub.ps1",
+                      "size":  13108,
+                      "sha256":  "1e5bfa1fa88d9db3ec7255db78f1f973505a764bec7694befcafb7a900337063",
+                      "role":  "source",
+                      "origin":  "edited-source",
+                      "derivedFrom":  "e8f9e32872ca98fd7d589568a167f73967c6d01605f8ada86eefa9ef30e936af"
+                  },
+                  {
+                      "path":  "Scripts/NVIDIA/Settings-WinGet.ps1",
+                      "size":  12331,
+                      "sha256":  "d552d93222d5ddc3a4511887c4efaa00373e2591ac5c44015905439d701f84ee",
+                      "role":  "source",
+                      "origin":  "edited-source",
+                      "derivedFrom":  "6149b836b52bd1c37d087470fe7758ab31cd96e0bdaf0497a67015e100bb6d0f"
+                  },
+                  {
+                      "path":  "Scripts/Windows/Copilot-Off.ps1",
+                      "size":  1962,
+                      "sha256":  "c8868bf2fc7a8ea99018fd113caf1e08b87182482a4d8c3ef772a3b91a5a3186",
+                      "role":  "source",
+                      "origin":  "edited-source",
+                      "derivedFrom":  "c8868bf2fc7a8ea99018fd113caf1e08b87182482a4d8c3ef772a3b91a5a3186"
+                  },
+                  {
+                      "path":  "Scripts/Windows/Power-Plan.ps1",
+                      "size":  16651,
+                      "sha256":  "4e2afa2805834b27ec3d19a02a3479e2cf08807666fb7d21f1993f9c6d1c39cc",
+                      "role":  "source",
+                      "origin":  "edited-source",
+                      "derivedFrom":  "fd09ff4fb5dc2eac9d7a783696d6cc6624f67a8d2adce8c0cf474b27d7dd9170"
+                  },
+                  {
+                      "path":  "Scripts/Windows/Services.ps1",
+                      "size":  29059,
+                      "sha256":  "3913edf9c362c34b180a77817e3349ab6e3a8d910b7b0577ee1adc79d06f9181",
+                      "role":  "source",
+                      "origin":  "edited-source",
+                      "derivedFrom":  "6a49ad67078f131abb61a301fa2dcfa520ae9fcfdbad7a31d7b2d7e70dd45099"
+                  },
+                  {
+                      "path":  "Scripts/Windows/Timer-Resolution.ps1",
+                      "size":  10532,
+                      "sha256":  "6e27741fa54afdba7ace528f218b8cdcb7d93767da8c6856b747a977f7c18c3a",
+                      "role":  "source",
+                      "origin":  "edited-source",
+                      "derivedFrom":  "883f7cf4e6179383de02e44b94ffc8dafd380246751f1b1d81cab8800b1e8621"
+                  },
+                  {
+                      "path":  "Scripts/Windows/Widgets.ps1",
+                      "size":  1459,
+                      "sha256":  "23ee08ec83771922c513761beabf671198ac4f9728eb0c3eb190acd0721c6595",
+                      "role":  "source",
+                      "origin":  "edited-source",
+                      "derivedFrom":  "0171013b91f2a6f7fd6d055f305045650ad1a326d5f45cb08953759a7a69ac0a"
+                  }
+              ],
+    "externalAssets":  [
+
+                       ],
+    "modules":  [
+                    {
+                        "id":  "nvidia-driver-updater",
+                        "entry":  "Scripts/Drivers/NVIDIA/NVIDIA-Driver-Updater.ps1",
+                        "adminRequired":  true,
+                        "requiresReboot":  true
+                    },
+                    {
+                        "id":  "multi-gpu-downloader",
+                        "entry":  "Scripts/Drivers/Multi-GPU/Driver-Downloader.ps1",
+                        "adminRequired":  true,
+                        "requiresReboot":  false
+                    },
+                    {
+                        "id":  "ddu",
+                        "entry":  "Scripts/Drivers/DDU/DDU.ps1",
+                        "adminRequired":  true,
+                        "requiresReboot":  true
+                    },
+                    {
+                        "id":  "debloated-driver-installer",
+                        "entry":  "Scripts/Drivers/Debloated-Installer/Driver-Installer.ps1",
+                        "adminRequired":  true,
+                        "requiresReboot":  true
+                    },
+                    {
+                        "id":  "nvidia-settings-github",
+                        "entry":  "Scripts/NVIDIA/Settings-GitHub.ps1",
+                        "adminRequired":  true,
+                        "requiresReboot":  false
+                    },
+                    {
+                        "id":  "nvidia-settings-winget",
+                        "entry":  "Scripts/NVIDIA/Settings-WinGet.ps1",
+                        "adminRequired":  true,
+                        "requiresReboot":  false
+                    },
+                    {
+                        "id":  "nvidia-digital-vibrance",
+                        "entry":  "Scripts/NVIDIA/Digital-Vibrance.ps1",
+                        "adminRequired":  true,
+                        "requiresReboot":  false
+                    },
+                    {
+                        "id":  "widgets",
+                        "entry":  "Scripts/Windows/Widgets.ps1",
+                        "adminRequired":  true,
+                        "requiresReboot":  false
+                    },
+                    {
+                        "id":  "services",
+                        "entry":  "Scripts/Windows/Services.ps1",
+                        "adminRequired":  true,
+                        "requiresReboot":  false
+                    },
+                    {
+                        "id":  "power-plan",
+                        "entry":  "Scripts/Windows/Power-Plan.ps1",
+                        "adminRequired":  true,
+                        "requiresReboot":  false
+                    },
+                    {
+                        "id":  "copilot-off",
+                        "entry":  "Scripts/Windows/Copilot-Off.ps1",
+                        "adminRequired":  true,
+                        "requiresReboot":  false
+                    },
+                    {
+                        "id":  "timer-resolution",
+                        "entry":  "Scripts/Windows/Timer-Resolution.ps1",
+                        "adminRequired":  true,
+                        "requiresReboot":  false
+                    }
+                ]
+}
