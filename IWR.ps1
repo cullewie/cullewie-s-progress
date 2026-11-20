@@ -6,8 +6,8 @@ $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 $previousSecurityProtocol = [Net.ServicePointManager]::SecurityProtocol
 $Repository = 'cullewie/cullewie-s-progress'
-$PayloadCommit = '7b7a73810948070ccf2ea8fe30828a16d82731a7'
-$ExpectedManifestSha256 = '50af87d2106ee540182e51801425c721fd624e9861feb706d77de786244739d0'
+$PayloadCommit = '64f0a1e5ebefd37717ebfd8bdc504347a80e61ea'
+$ExpectedManifestSha256 = 'bd1d663ce7b37ef2e6facc59522cc98918b4259c4cf25fdeea83fdf353e87e5a'
 $RawRoot = 'https://raw.githubusercontent.com/' + $Repository + '/' + $PayloadCommit
 
 function Test-Administrator {
@@ -60,7 +60,7 @@ try {
     Set-PrivateDirectoryAcl -Path $releasesRoot
     Set-PrivateDirectoryAcl -Path $stagingRoot
 
-    $releaseId = '0.1.0-dev.1-' + $PayloadCommit.Substring(0,12)
+    $releaseId = '1.0.0-' + $PayloadCommit.Substring(0,12)
     $releasePath = Join-Path $releasesRoot $releaseId
     $manifestUrl = $RawRoot + '/manifest.json'
     $activePath = $releasePath
@@ -78,7 +78,7 @@ try {
         }
 
         $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
-        if ($manifest.schemaVersion -ne 1 -or $manifest.release.version -ne '0.1.0-dev.1') {
+        if ($manifest.schemaVersion -ne 1 -or $manifest.release.version -ne '1.0.0') {
             throw 'Unsupported manifest schema or release version.'
         }
         if (@($manifest.files).Count -eq 0) {
