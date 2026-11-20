@@ -110,18 +110,39 @@ function Start-GuidedNvidiaSetup {
     }
 
     if ($ContinueNvidiaSetup) {
+        $statePath = Join-Path $script:RepoRoot 'nvidia-setup-state.json'
+        if (-not (Test-Path -LiteralPath $statePath -PathType Leaf)) {
+            throw 'The saved NVIDIA model name is missing after DDU cleanup.'
+        }
+        $state = Get-Content -LiteralPath $statePath -Raw | ConvertFrom-Json
+        if ([string]::IsNullOrWhiteSpace([string]$state.GpuName)) {
+            throw 'The saved NVIDIA model name is empty after DDU cleanup.'
+        }
         Write-Host 'NVIDIA cleanup is complete. Installing the driver, then NVIDIA Settings from GitHub.' -ForegroundColor Cyan
-        Invoke-ChildScript -Tool $updater -NoPause
-        $tool = $script:Tools | Where-Object { $_.Id -eq 'settings-github' } | Select-Object -First 1
-        Invoke-ChildScript -Tool $tool -NoPause
+        $env:CULLEWIE_NVIDIA_GPU_NAME = [string]$state.GpuName
+        try {
+            Invoke-ChildScript -Tool $updater -NoPause
+            $tool = $script:Tools | Where-Object { $_.Id -eq 'settings-github' } | Select-Object -First 1
+            Invoke-ChildScript -Tool $tool -NoPause
+        }
+        finally {
+            Remove-Item Env:\CULLEWIE_NVIDIA_GPU_NAME -ErrorAction SilentlyContinue
+            Remove-Item -LiteralPath $statePath -Force -ErrorAction SilentlyContinue
+        }
         return
     }
 
-    $nvidiaDriver = Get-CimInstance -ClassName Win32_VideoController -ErrorAction Stop |
-        Where-Object { $_.PNPDeviceID -like 'PCI\VEN_10DE&*' -and $_.DriverProviderName -match 'NVIDIA' } |
+    $nvidiaDriver = Get-CimInstance -ClassName Win32_PnPSignedDriver -ErrorAction Stop |
+        Where-Object { $_.DeviceClass -eq 'DISPLAY' -and $_.DeviceID -like 'PCI\VEN_10DE&*' -and $_.DriverProviderName -match 'NVIDIA' } |
         Select-Object -First 1
     if ($nvidiaDriver) {
-        Write-Host "Installed NVIDIA driver detected for $($nvidiaDriver.Name). DDU will clean all NVIDIA driver components in normal Windows mode twice, with a restart after each pass." -ForegroundColor Yellow
+        if ([string]::IsNullOrWhiteSpace([string]$nvidiaDriver.DeviceName)) {
+            throw 'Could not save the NVIDIA model name before DDU cleanup.'
+        }
+        $statePath = Join-Path $script:RepoRoot 'nvidia-setup-state.json'
+        $state = [pscustomobject]@{ GpuName = [string]$nvidiaDriver.DeviceName }
+        [IO.File]::WriteAllText($statePath, ($state | ConvertTo-Json -Compress), [Text.UTF8Encoding]::new($false))
+        Write-Host "Installed NVIDIA driver detected for $($nvidiaDriver.DeviceName). DDU will clean all NVIDIA driver components in normal Windows mode twice, with a restart after each pass." -ForegroundColor Yellow
         $ddu = $script:Tools | Where-Object { $_.Id -eq 'ddu' } | Select-Object -First 1
         Invoke-ChildScript -Tool $ddu -Arguments @('-GuidedNvidia', '-ContinueLauncherPath', $PSCommandPath) -NoPause
         return

@@ -16,7 +16,7 @@ NVIDIA Settings aracı GitHub üzerinden kurulur.
 
 ## Rehberli NVIDIA kurulumu
 
-Launcher kurulu NVIDIA görüntü sürücüsünü denetler. Sürücü yoksa DDU kullanılmadan kurulum yapılır. Sürücü varsa DDU normal Windows modunda NVIDIA sürücüsü ve NVIDIA bileşenlerini temizler. Windows iki kez yeniden başlatılır; her açılışta işlem kaldığı yerden sürer. İkinci temizliğin ardından NVIDIA Driver Updater çalışır ve NVIDIA Settings GitHub üzerinden kurulur. Bu akış Safe Mode kullanmaz ve AMD/Intel sürücülerini temizlemez. DDU üreticisinin normal mod yönergesi temizliği yeniden başlatma ile iki kez yapmayı önerir.
+Launcher kurulu NVIDIA görüntü sürücüsünü denetler. Sürücü yoksa DDU kullanılmadan kurulum yapılır. Sürücü varsa DDU normal Windows modunda NVIDIA sürücüsü ve NVIDIA bileşenlerini temizler. Windows iki kez yeniden başlatılır; her açılışta işlem kaldığı yerden sürer. İkinci temizliğin ardından NVIDIA Driver Updater çalışır ve NVIDIA Settings GitHub üzerinden kurulur. Kurulumdan önce kartın model adı kaydedilir; DDU sonrası NVIDIA Driver Updater bu adı kullanır. Bu akış Safe Mode kullanmaz ve AMD/Intel sürücülerini temizlemez. DDU üreticisinin normal mod yönergesi temizliği yeniden başlatma ile iki kez yapmayı önerir.
 
 ## Sistem ayarları
 

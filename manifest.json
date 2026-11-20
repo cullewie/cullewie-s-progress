@@ -9,16 +9,16 @@
     "files":  [
                   {
                       "path":  "Docs/HOW-IT-WORKS.md",
-                      "size":  1872,
-                      "sha256":  "d6115c3873d988e69f17112ac057bac07bfb2aad995147c727996649e6741296",
+                      "size":  1974,
+                      "sha256":  "e8184ef38a73dfd5cce6f8549751b9282402457a3576ead8a30d0ee8a408adac",
                       "role":  "documentation",
                       "origin":  "generated",
                       "derivedFrom":  null
                   },
                   {
                       "path":  "Docs/PROVENANCE.md",
-                      "size":  1876,
-                      "sha256":  "69280121c7a49f7820ebf82d527f99fb60ce4afffa81b778cd04d6ab036b9280",
+                      "size":  1945,
+                      "sha256":  "5a16f0ecc402cc5c93ae85daaa7362dc554d595edf81de0e91769bff0e0fdcab",
                       "role":  "documentation",
                       "origin":  "generated",
                       "derivedFrom":  null
@@ -41,8 +41,8 @@
                   },
                   {
                       "path":  "Launcher.ps1",
-                      "size":  9817,
-                      "sha256":  "e72104820fa0bcb309721f99c54410b1fe18795d268768491f3b2a5720b6c4fe",
+                      "size":  11050,
+                      "sha256":  "87812f1cf8adff6234eab75ff250e56e7eb293e21e44a17172887867ccd0e8bf",
                       "role":  "launcher",
                       "origin":  "generated",
                       "derivedFrom":  null
@@ -81,8 +81,8 @@
                   },
                   {
                       "path":  "Scripts/Drivers/NVIDIA/NVIDIA-Driver-Updater.ps1",
-                      "size":  5470,
-                      "sha256":  "40a33c186b2991e26758ae4823eee69e32c0f51333c94cbc926a90582aab9729",
+                      "size":  5637,
+                      "sha256":  "00dfd28162459968420976f9a777bcf660659a06a89d3cbe149dffc0bbf986f9",
                       "role":  "source",
                       "origin":  "edited-source",
                       "derivedFrom":  "955de18efb9af0d06c14565156dbe426ba2c2f78d64b149d82d65855b88ddded"

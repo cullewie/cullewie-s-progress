@@ -24,6 +24,9 @@
         }
 
         $GPU = $GPUs[0]
+        if (-not [string]::IsNullOrWhiteSpace($env:CULLEWIE_NVIDIA_GPU_NAME)) {
+            $GPU = [PSCustomObject]@{ Name = $env:CULLEWIE_NVIDIA_GPU_NAME }
+        }
 
         Write-Host "GPU: $($GPU.Name)" -ForegroundColor Green
 
