@@ -16,7 +16,8 @@ exit
 }
 
 # SCRIPT SILENT
-$progresspreference = 'silentlycontinue'
+# Keep download progress visible in the console.
+$ProgressPreference = 'Continue'
 
 Write-Host "INSTALL UPDATED GRAPHICS DRIVER" -ForegroundColor Yellow
 Write-Host " 1.  NVIDIA" -ForegroundColor Green

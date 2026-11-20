@@ -6,8 +6,8 @@ Kaynak paketteki 12 PowerShell dosyası SHA-256 ile doğrulanmıştır. Aşağı
 |---|---:|---|
 | Scripts/Drivers/DDU/DDU.ps1 | 10520 | 564657374be33107ae7c69e61825cf8b2b7eb6ff668d40654908524a4d3ce9b5 |
 | Scripts/Drivers/Debloated-Installer/Driver-Installer.ps1 | 37285 | adf2e6121a6fa2171e7b917c59a58af575c68366342cf173f7e542c8dd1b2d24 |
-| Scripts/Drivers/Multi-GPU/Driver-Downloader.ps1 | 3533 | 25890bc50f2abb4a1a6d80f5c626a295abcd7fd3e08c82396cad3e123f320987 |
-| Scripts/Drivers/NVIDIA/NVIDIA-Driver-Updater.ps1 | 5406 | 955de18efb9af0d06c14565156dbe426ba2c2f78d64b149d82d65855b88ddded |
+| Scripts/Drivers/Multi-GPU/Driver-Downloader.ps1 | 3574 | 7fa16789d9b81c8baeebd71d972b1c5b117f15f5791399f46fcf18d6d0017ef5 |
+| Scripts/Drivers/NVIDIA/NVIDIA-Driver-Updater.ps1 | 5464 | e171d50e5a2f732c79ab18f3f89b28c8f546dd711a29542b0c71afb75fa93302 |
 | Scripts/NVIDIA/Digital-Vibrance.ps1 | 10400 | 97bbc19629baa336c8ffafdd598c82a9419d039c2ede0ff46ff1750b63008bba |
 | Scripts/NVIDIA/Settings-GitHub.ps1 | 13108 | 1e5bfa1fa88d9db3ec7255db78f1f973505a764bec7694befcafb7a900337063 |
 | Scripts/NVIDIA/Settings-WinGet.ps1 | 12331 | d552d93222d5ddc3a4511887c4efaa00373e2591ac5c44015905439d701f84ee |

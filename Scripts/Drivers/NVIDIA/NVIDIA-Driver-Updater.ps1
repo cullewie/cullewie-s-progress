@@ -2,7 +2,8 @@
     Clear-Host
 
     $ErrorActionPreference = "Stop"
-    $ProgressPreference = "SilentlyContinue"
+    # Keep PowerShell's download progress visible in the console.
+    $ProgressPreference = "Continue"
 
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 

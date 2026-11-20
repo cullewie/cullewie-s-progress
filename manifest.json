@@ -1,7 +1,7 @@
 {
     "schemaVersion":  1,
     "release":  {
-                    "version":  "1.0.1",
+                    "version":  "1.0.2",
                     "channel":  "main",
                     "minWindowsBuild":  22000,
                     "minPowerShell":  "5.1"
@@ -18,7 +18,7 @@
                   {
                       "path":  "Docs/PROVENANCE.md",
                       "size":  1912,
-                      "sha256":  "918dc45496cc00a6775db3c3b01225012a86240ff6dd3863c560886b520d0d12",
+                      "sha256":  "772e4082b9a389460322f6500052d0ab5a76332e28b877bab6b4fbdab3a0d7c6",
                       "role":  "documentation",
                       "origin":  "generated",
                       "derivedFrom":  null
@@ -73,16 +73,16 @@
                   },
                   {
                       "path":  "Scripts/Drivers/Multi-GPU/Driver-Downloader.ps1",
-                      "size":  3533,
-                      "sha256":  "25890bc50f2abb4a1a6d80f5c626a295abcd7fd3e08c82396cad3e123f320987",
+                      "size":  3574,
+                      "sha256":  "7fa16789d9b81c8baeebd71d972b1c5b117f15f5791399f46fcf18d6d0017ef5",
                       "role":  "source",
                       "origin":  "edited-source",
                       "derivedFrom":  "25890bc50f2abb4a1a6d80f5c626a295abcd7fd3e08c82396cad3e123f320987"
                   },
                   {
                       "path":  "Scripts/Drivers/NVIDIA/NVIDIA-Driver-Updater.ps1",
-                      "size":  5406,
-                      "sha256":  "955de18efb9af0d06c14565156dbe426ba2c2f78d64b149d82d65855b88ddded",
+                      "size":  5464,
+                      "sha256":  "e171d50e5a2f732c79ab18f3f89b28c8f546dd711a29542b0c71afb75fa93302",
                       "role":  "source",
                       "origin":  "edited-source",
                       "derivedFrom":  "955de18efb9af0d06c14565156dbe426ba2c2f78d64b149d82d65855b88ddded"
