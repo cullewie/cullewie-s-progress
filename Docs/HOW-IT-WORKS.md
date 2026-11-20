@@ -12,7 +12,7 @@ SHA-256, dosyanın parmak izi gibi çalışır. Dosyanın içeriği değişirse 
 
 Ana NVIDIA Driver Updater kaynaktaki haliyle korunur. Kaynak, daha büyük bir menüden alınmış `1 { ... }` bölümüdür. Launcher bu bölümü geçici bir `switch (1)` bloğuna koyarak çalıştırır; kaynak dosyanın içeriğini değiştirmez.
 
-GitHub ve WinGet ile gelen NVIDIA Settings araçları iki ayrı seçenektir.
+NVIDIA Settings aracı GitHub üzerinden kurulur.
 
 ## Sistem ayarları
 

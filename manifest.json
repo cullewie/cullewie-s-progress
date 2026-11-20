@@ -1,7 +1,7 @@
 {
     "schemaVersion":  1,
     "release":  {
-                    "version":  "1.0.2",
+                    "version":  "1.0.3",
                     "channel":  "main",
                     "minWindowsBuild":  22000,
                     "minPowerShell":  "5.1"
@@ -9,24 +9,24 @@
     "files":  [
                   {
                       "path":  "Docs/HOW-IT-WORKS.md",
-                      "size":  1284,
-                      "sha256":  "0a14359e6dde3f19a00aa9d9066aea76bc2f6677a97881d9a85e6f11db421ee8",
+                      "size":  1257,
+                      "sha256":  "fee99a19443d2a9b681507e0c3de9f5f9c6ee31bbb89787f08962d8851053249",
                       "role":  "documentation",
                       "origin":  "generated",
                       "derivedFrom":  null
                   },
                   {
                       "path":  "Docs/PROVENANCE.md",
-                      "size":  1912,
-                      "sha256":  "772e4082b9a389460322f6500052d0ab5a76332e28b877bab6b4fbdab3a0d7c6",
+                      "size":  1817,
+                      "sha256":  "7a87b14e1f3d68e824cabbdf5cd77afd48b5af6f7b3883102f87c1dfd037fac9",
                       "role":  "documentation",
                       "origin":  "generated",
                       "derivedFrom":  null
                   },
                   {
                       "path":  "Docs/SCRIPT-INVENTORY.md",
-                      "size":  1354,
-                      "sha256":  "7da1cfedad0b93223128f7608f4fe99d2c68b6baf9daad1ac01291a9aaa299c5",
+                      "size":  1273,
+                      "sha256":  "787e5b5c4f68d247050568a4107daa4682556bcc1fb941ca5a6398fa433af5ff",
                       "role":  "documentation",
                       "origin":  "generated",
                       "derivedFrom":  null
@@ -41,16 +41,16 @@
                   },
                   {
                       "path":  "Launcher.ps1",
-                      "size":  7583,
-                      "sha256":  "fa351d47e6e4c6bf6d731613ed3265e5621547e783be9bd5cf5985f3757f9d2e",
+                      "size":  6927,
+                      "sha256":  "cbd2b19f86b6666695ff6f21eb5be821305bdec3fb77a486294700e02ca584bc",
                       "role":  "launcher",
                       "origin":  "generated",
                       "derivedFrom":  null
                   },
                   {
                       "path":  "README.md",
-                      "size":  1378,
-                      "sha256":  "1d44c2bcbd01e70bbb20359226bba150e222d0746ca0e982206ce1bb8bc67f60",
+                      "size":  1370,
+                      "sha256":  "0e59db2109b7eda188f15e0a831e172ce1e32aef89d82cc50d36ba6b6e84c6c3",
                       "role":  "documentation",
                       "origin":  "generated",
                       "derivedFrom":  null
@@ -89,8 +89,8 @@
                   },
                   {
                       "path":  "Scripts/NVIDIA/Digital-Vibrance.ps1",
-                      "size":  10400,
-                      "sha256":  "97bbc19629baa336c8ffafdd598c82a9419d039c2ede0ff46ff1750b63008bba",
+                      "size":  10551,
+                      "sha256":  "e3ba8e46b90f3b353245cf67e83b7b4bcccee804304e97cbe575345572b9506f",
                       "role":  "source",
                       "origin":  "edited-source",
                       "derivedFrom":  "aa941ca4825627187c9815c88e73356f5f632239e784a6707edd29b1ef41e86b"
@@ -102,14 +102,6 @@
                       "role":  "source",
                       "origin":  "edited-source",
                       "derivedFrom":  "e8f9e32872ca98fd7d589568a167f73967c6d01605f8ada86eefa9ef30e936af"
-                  },
-                  {
-                      "path":  "Scripts/NVIDIA/Settings-WinGet.ps1",
-                      "size":  12331,
-                      "sha256":  "d552d93222d5ddc3a4511887c4efaa00373e2591ac5c44015905439d701f84ee",
-                      "role":  "source",
-                      "origin":  "edited-source",
-                      "derivedFrom":  "6149b836b52bd1c37d087470fe7758ab31cd96e0bdaf0497a67015e100bb6d0f"
                   },
                   {
                       "path":  "Scripts/Windows/Copilot-Off.ps1",
@@ -183,12 +175,6 @@
                     {
                         "id":  "nvidia-settings-github",
                         "entry":  "Scripts/NVIDIA/Settings-GitHub.ps1",
-                        "adminRequired":  true,
-                        "requiresReboot":  false
-                    },
-                    {
-                        "id":  "nvidia-settings-winget",
-                        "entry":  "Scripts/NVIDIA/Settings-WinGet.ps1",
                         "adminRequired":  true,
                         "requiresReboot":  false
                     },

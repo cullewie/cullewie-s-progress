@@ -15,10 +15,10 @@ Komut, araç dosyalarını indirir, dosyaları kontrol eder ve menüyü açar. B
 ## Menüde neler var?
 
 - **Sürücüler:** NVIDIA güncelleme aracı, çoklu ekran kartı sürücü indiricisi, DDU ve sade sürücü kurucusu.
-- **NVIDIA:** İki ayrı NVIDIA Settings seçeneği ve Digital Vibrance aracı.
+- **NVIDIA:** GitHub üzerinden kurulan NVIDIA Settings ve Digital Vibrance aracı.
 - **Windows:** Widgets, hizmetler, güç planı, Copilot ve zamanlayıcı araçları.
 
-Ana NVIDIA Driver Updater üretim sürümü olarak korunur. İki NVIDIA Settings seçeneği birbirinden ayrıdır.
+Ana NVIDIA Driver Updater üretim sürümü olarak korunur. NVIDIA Settings GitHub üzerinden kurulur.
 
 ## Davranış
 
@@ -28,4 +28,4 @@ IWR yalnızca dosyaları indirir, SHA-256 değerlerini kontrol eder ve menüyü 
 
 ## Dosyalar
 
-`Scripts/` klasöründe 12 PowerShell aracı bulunur. `manifest.json`, indirilen dosyaların boyut ve SHA-256 değerlerini listeler. `Docs/PROVENANCE.md` kaynak dosyaların kimliğini kaydeder.
+`Scripts/` klasöründe 11 PowerShell aracı bulunur. `manifest.json`, indirilen dosyaların boyut ve SHA-256 değerlerini listeler. `Docs/PROVENANCE.md` kaynak dosyaların kimliğini kaydeder.

@@ -260,6 +260,7 @@ catch {
 
 # ---------------- INPUT ----------------
 
+Write-Host "Enter       : Apply 50" -ForegroundColor Gray
 Write-Host "0 - 100     : Custom Digital Vibrance" -ForegroundColor Gray
 Write-Host ""
 
@@ -272,7 +273,10 @@ while (-not $confirmed) {
 
     $parsedValue = 0
 
-    if (
+    if ([string]::IsNullOrWhiteSpace($inputValue)) {
+        $parsedValue = 50
+    }
+    elseif (
         -not [int]::TryParse(
             $inputValue.Trim(),
             [ref]$parsedValue

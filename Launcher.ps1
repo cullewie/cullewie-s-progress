@@ -10,7 +10,6 @@ $script:Tools = @(
     [pscustomobject]@{ Id='ddu'; Name='DDU Auto/Manual'; Category='Drivers'; Path='Scripts/Drivers/DDU/DDU.ps1'; Wrapper='' }
     [pscustomobject]@{ Id='debloated-installer'; Name='Debloated Driver Installer'; Category='Drivers'; Path='Scripts/Drivers/Debloated-Installer/Driver-Installer.ps1'; Wrapper='' }
     [pscustomobject]@{ Id='settings-github'; Name='NVIDIA Settings (GitHub)'; Category='NVIDIA'; Path='Scripts/NVIDIA/Settings-GitHub.ps1'; Wrapper='' }
-    [pscustomobject]@{ Id='settings-winget'; Name='NVIDIA Settings (WinGet)'; Category='NVIDIA'; Path='Scripts/NVIDIA/Settings-WinGet.ps1'; Wrapper='' }
     [pscustomobject]@{ Id='digital-vibrance'; Name='NVIDIA Digital Vibrance'; Category='NVIDIA'; Path='Scripts/NVIDIA/Digital-Vibrance.ps1'; Wrapper='' }
     [pscustomobject]@{ Id='widgets'; Name='Widgets Off'; Category='Windows'; Path='Scripts/Windows/Widgets.ps1'; Wrapper='' }
     [pscustomobject]@{ Id='services'; Name='Services Off'; Category='Windows'; Path='Scripts/Windows/Services.ps1'; Wrapper='' }
@@ -88,20 +87,8 @@ function Show-ToolMenu {
 function Start-GuidedNvidiaSetup {
     $updater = $script:Tools | Where-Object { $_.Id -eq 'nvidia-updater' } | Select-Object -First 1
     Invoke-ChildScript -Tool $updater
-    Clear-Host
-    Write-Host 'Choose one NVIDIA Settings implementation. They remain separate.' -ForegroundColor Cyan
-    Write-Host '1. GitHub variant'
-    Write-Host '2. WinGet variant'
-    Write-Host '0. Skip'
-    $selection = Read-Host 'Choose a provider'
-    if ($selection -eq '1') {
-        $tool = $script:Tools | Where-Object { $_.Id -eq 'settings-github' } | Select-Object -First 1
-        Invoke-ChildScript -Tool $tool
-    }
-    elseif ($selection -eq '2') {
-        $tool = $script:Tools | Where-Object { $_.Id -eq 'settings-winget' } | Select-Object -First 1
-        Invoke-ChildScript -Tool $tool
-    }
+    $tool = $script:Tools | Where-Object { $_.Id -eq 'settings-github' } | Select-Object -First 1
+    Invoke-ChildScript -Tool $tool
 }
 if ($PSVersionTable.PSVersion -lt [version]'5.1') {
     throw 'Windows PowerShell 5.1 or newer is required.'
@@ -122,7 +109,7 @@ while ($true) {
     Write-Host 'cullewie-s-progress — Windows setup toolkit' -ForegroundColor Cyan
     Write-Host 'Choose a script from a category to open it.' -ForegroundColor Gray
     Write-Host ''
-    Write-Host '1. Guided NVIDIA setup (driver + choose GitHub or WinGet settings)'
+    Write-Host '1. Guided NVIDIA setup (driver + GitHub settings)'
     Write-Host '2. Driver tools'
     Write-Host '3. NVIDIA utilities'
     Write-Host '4. Windows options'

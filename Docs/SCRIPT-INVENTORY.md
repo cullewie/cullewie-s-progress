@@ -1,6 +1,6 @@
 # Araç listesi
 
-Bu projede 12 PowerShell aracı vardır.
+Bu projede 11 PowerShell aracı vardır.
 
 ## Sürücüler
 
@@ -12,10 +12,9 @@ Bu projede 12 PowerShell aracı vardır.
 ## NVIDIA
 
 - `Scripts/NVIDIA/Settings-GitHub.ps1` — GitHub dağıtımlı NVIDIA Settings aracı.
-- `Scripts/NVIDIA/Settings-WinGet.ps1` — WinGet dağıtımlı NVIDIA Settings aracı.
 - `Scripts/NVIDIA/Digital-Vibrance.ps1` — NVIDIA Digital Vibrance ayarı.
 
-İki NVIDIA Settings aracı ayrı tutulur.
+NVIDIA Settings aracı GitHub üzerinden kurulur.
 
 ## Windows
 
