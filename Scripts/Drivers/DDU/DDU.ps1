@@ -1,4 +1,10 @@
-        # SCRIPT RUN AS ADMIN
+[CmdletBinding()]
+param(
+    [switch]$GuidedNvidia,
+    [string]$ContinueLauncherPath
+)
+
+# SCRIPT RUN AS ADMIN
         If (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]"Administrator"))
         {Start-Process PowerShell.exe -ArgumentList ("-NoProfile -ExecutionPolicy Bypass -File `"{0}`"" -f $PSCommandPath) -Verb RunAs
         Exit}
@@ -21,7 +27,7 @@
         Write-Host "1. DDU: Auto"
         Write-Host "2. DDU: Manual`n"
         while ($true) {
-        $choice = Read-Host " "
+        $choice = if ($GuidedNvidia) { '1' } else { Read-Host " " }
         if ($choice -match '^[1-2]$') {
         switch ($choice) {
         1 {
@@ -92,12 +98,39 @@ Set-Content -Path "$env:SystemRoot\Temp\ddu\Settings\Settings.xml" -Value $DduCo
 # set ddu config to read only
 Set-ItemProperty -Path "$env:SystemRoot\Temp\ddu\Settings\Settings.xml" -Name IsReadOnly -Value $true
 
+# The guided NVIDIA path cleans only NVIDIA in normal Windows mode.
+if ($GuidedNvidia) {
+    if (-not $ContinueLauncherPath -or -not (Test-Path -LiteralPath $ContinueLauncherPath -PathType Leaf)) {
+        throw 'The launcher path for continuing after restart is missing.'
+    }
+    $runOnce = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce'
+    $command = 'powershell.exe -NoProfile -ExecutionPolicy Bypass -File "{0}" -ContinueNvidiaSetup -SecondDduPass' -f $ContinueLauncherPath
+    New-ItemProperty -Path $runOnce -Name 'CullewieNvidiaDduSecondPass' -Value $command -PropertyType String -Force | Out-Null
+    $dduExe = Join-Path $env:SystemRoot 'Temp/ddu/Display Driver Uninstaller.exe'
+    if (-not (Test-Path -LiteralPath $dduExe -PathType Leaf)) {
+        throw 'The DDU executable was not extracted successfully.'
+    }
+    Write-Host 'Cleaning all NVIDIA driver components in normal Windows mode. Windows will restart, repeat this once, then install the NVIDIA driver.' -ForegroundColor Yellow
+    Start-Process -FilePath $dduExe -ArgumentList '-Silent -NoSafeModeMsg -CleanNvidia -RemovePhysx -RemoveGFE -RemoveNVBROADCAST -RemoveNVCP -RemoveVulkan -RemoveNvidiaDirs -Remove3DTVPlay -Restart' -Wait
+    exit
+}
 # prevent downloads of drivers from windows update
 cmd /c "reg add `"HKLM\Software\Microsoft\Windows\CurrentVersion\DriverSearching`" /v `"SearchOrderConfig`" /t REG_DWORD /d `"0`" /f >nul 2>&1"
 
 # create ddu ps1 file
 $DDU = @'
-        # SCRIPT RUN AS ADMIN
+[CmdletBinding()]
+param(
+    [switch]$GuidedNvidia,
+    [string]$ContinueLauncherPath
+)
+[CmdletBinding()]
+param(
+    [switch]$GuidedNvidia,
+    [string]$ContinueLauncherPath
+)
+
+# SCRIPT RUN AS ADMIN
         If (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]"Administrator"))
         {Start-Process PowerShell.exe -ArgumentList ("-NoProfile -ExecutionPolicy Bypass -File `"{0}`"" -f $PSCommandPath) -Verb RunAs
         Exit}
@@ -205,7 +238,18 @@ cmd /c "reg add `"HKLM\Software\Microsoft\Windows\CurrentVersion\DriverSearching
 
 # create ddumanual ps1 file
 $DDU = @'
-        # SCRIPT RUN AS ADMIN
+[CmdletBinding()]
+param(
+    [switch]$GuidedNvidia,
+    [string]$ContinueLauncherPath
+)
+[CmdletBinding()]
+param(
+    [switch]$GuidedNvidia,
+    [string]$ContinueLauncherPath
+)
+
+# SCRIPT RUN AS ADMIN
         If (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]"Administrator"))
         {Start-Process PowerShell.exe -ArgumentList ("-NoProfile -ExecutionPolicy Bypass -File `"{0}`"" -f $PSCommandPath) -Verb RunAs
         Exit}

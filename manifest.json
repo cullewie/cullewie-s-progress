@@ -1,7 +1,7 @@
 {
     "schemaVersion":  1,
     "release":  {
-                    "version":  "1.0.3",
+                    "version":  "1.0.4",
                     "channel":  "main",
                     "minWindowsBuild":  22000,
                     "minPowerShell":  "5.1"
@@ -9,24 +9,24 @@
     "files":  [
                   {
                       "path":  "Docs/HOW-IT-WORKS.md",
-                      "size":  1257,
-                      "sha256":  "fee99a19443d2a9b681507e0c3de9f5f9c6ee31bbb89787f08962d8851053249",
+                      "size":  1872,
+                      "sha256":  "d6115c3873d988e69f17112ac057bac07bfb2aad995147c727996649e6741296",
                       "role":  "documentation",
                       "origin":  "generated",
                       "derivedFrom":  null
                   },
                   {
                       "path":  "Docs/PROVENANCE.md",
-                      "size":  1817,
-                      "sha256":  "7a87b14e1f3d68e824cabbdf5cd77afd48b5af6f7b3883102f87c1dfd037fac9",
+                      "size":  1876,
+                      "sha256":  "69280121c7a49f7820ebf82d527f99fb60ce4afffa81b778cd04d6ab036b9280",
                       "role":  "documentation",
                       "origin":  "generated",
                       "derivedFrom":  null
                   },
                   {
                       "path":  "Docs/SCRIPT-INVENTORY.md",
-                      "size":  1273,
-                      "sha256":  "787e5b5c4f68d247050568a4107daa4682556bcc1fb941ca5a6398fa433af5ff",
+                      "size":  1366,
+                      "sha256":  "33528d80f637012fac6e6b13c0f6f3ab12a36ee8595abe283aea6e0977d445a7",
                       "role":  "documentation",
                       "origin":  "generated",
                       "derivedFrom":  null
@@ -41,24 +41,24 @@
                   },
                   {
                       "path":  "Launcher.ps1",
-                      "size":  6927,
-                      "sha256":  "cbd2b19f86b6666695ff6f21eb5be821305bdec3fb77a486294700e02ca584bc",
+                      "size":  9817,
+                      "sha256":  "e72104820fa0bcb309721f99c54410b1fe18795d268768491f3b2a5720b6c4fe",
                       "role":  "launcher",
                       "origin":  "generated",
                       "derivedFrom":  null
                   },
                   {
                       "path":  "README.md",
-                      "size":  1370,
-                      "sha256":  "0e59db2109b7eda188f15e0a831e172ce1e32aef89d82cc50d36ba6b6e84c6c3",
+                      "size":  1733,
+                      "sha256":  "6bb4faa651ee3cac9311c9aa0acf7a83578ed46c7839a920f65c845c58c881f4",
                       "role":  "documentation",
                       "origin":  "generated",
                       "derivedFrom":  null
                   },
                   {
                       "path":  "Scripts/Drivers/DDU/DDU.ps1",
-                      "size":  10520,
-                      "sha256":  "564657374be33107ae7c69e61825cf8b2b7eb6ff668d40654908524a4d3ce9b5",
+                      "size":  12209,
+                      "sha256":  "a20a3823842994f54eba3b5c24aa36f4414dd04dd78669cfeb8240ddbe2f67d3",
                       "role":  "source",
                       "origin":  "edited-source",
                       "derivedFrom":  "564657374be33107ae7c69e61825cf8b2b7eb6ff668d40654908524a4d3ce9b5"
@@ -81,8 +81,8 @@
                   },
                   {
                       "path":  "Scripts/Drivers/NVIDIA/NVIDIA-Driver-Updater.ps1",
-                      "size":  5464,
-                      "sha256":  "e171d50e5a2f732c79ab18f3f89b28c8f546dd711a29542b0c71afb75fa93302",
+                      "size":  5470,
+                      "sha256":  "40a33c186b2991e26758ae4823eee69e32c0f51333c94cbc926a90582aab9729",
                       "role":  "source",
                       "origin":  "edited-source",
                       "derivedFrom":  "955de18efb9af0d06c14565156dbe426ba2c2f78d64b149d82d65855b88ddded"

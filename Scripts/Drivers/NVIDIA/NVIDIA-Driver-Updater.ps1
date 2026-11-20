@@ -166,7 +166,7 @@
 
         Write-Host "OPENING NVIDIA INSTALLER..." -ForegroundColor Green
 
-        Start-Process -FilePath $TargetPath
+        Start-Process -FilePath $TargetPath -Wait
 
         exit
     }

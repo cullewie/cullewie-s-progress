@@ -20,6 +20,8 @@ Komut, araç dosyalarını indirir, dosyaları kontrol eder ve menüyü açar. B
 
 Ana NVIDIA Driver Updater üretim sürümü olarak korunur. NVIDIA Settings GitHub üzerinden kurulur.
 
+Rehberli NVIDIA kurulumu önce kurulu NVIDIA sürücüsünü kontrol eder. Sürücü varsa DDU, normal Windows oturumunda NVIDIA bileşenlerini temizler ve iki kez yeniden başlatır. Sonra NVIDIA sürücüsü ve GitHub sürümündeki NVIDIA Settings kurulur. NVIDIA sürücüsü yoksa DDU adımı atlanır. AMD ve Intel sürücüleri bu akışta temizlenmez.
+
 ## Davranış
 
 Menüde geri alma veya varsayılan ayara döndürme seçeneği yoktur. Seçilen araç kendi işini yapar. Bazı araçların işi bitirmek için Windows'u yeniden başlatması gerekir.

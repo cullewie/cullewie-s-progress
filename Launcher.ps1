@@ -1,5 +1,8 @@
-﻿[CmdletBinding()]
-param()
+[CmdletBinding()]
+param(
+    [switch]$ContinueNvidiaSetup,
+    [switch]$SecondDduPass
+)
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $script:RepoRoot = $PSScriptRoot
@@ -23,7 +26,11 @@ function Test-IsAdministrator {
     return $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 }
 function Invoke-ChildScript {
-    param([Parameter(Mandatory=$true)]$Tool)
+    param(
+        [Parameter(Mandatory=$true)]$Tool,
+        [string[]]$Arguments = @(),
+        [switch]$NoPause
+    )
     $sourcePath = Join-Path $script:RepoRoot ($Tool.Path -replace '/', '\')
     if (-not (Test-Path -LiteralPath $sourcePath -PathType Leaf)) {
         Write-Host "Script missing: $sourcePath" -ForegroundColor Red
@@ -44,7 +51,8 @@ function Invoke-ChildScript {
             Set-Content -LiteralPath $generatedWrapper -Value $wrapped -Encoding UTF8
             $launchPath = $generatedWrapper
         }
-        & $script:PowerShellExe -NoLogo -NoProfile -ExecutionPolicy Bypass -File $launchPath
+        $childArguments = @('-NoLogo', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $launchPath) + $Arguments
+        & $script:PowerShellExe @childArguments
         $childExitCode = $LASTEXITCODE
         if ($childExitCode -ne 0) {
             Write-Host "Child process exit code: $childExitCode" -ForegroundColor Red
@@ -61,7 +69,9 @@ function Invoke-ChildScript {
             Remove-Item -LiteralPath $generatedWrapper -Force
         }
     }
-    [void](Read-Host 'Press Enter to return to the launcher')
+    if (-not $NoPause) {
+        [void](Read-Host 'Press Enter to return to the launcher')
+    }
 }
 function Show-ToolMenu {
     param([Parameter(Mandatory=$true)][string]$Category)
@@ -86,9 +96,41 @@ function Show-ToolMenu {
 }
 function Start-GuidedNvidiaSetup {
     $updater = $script:Tools | Where-Object { $_.Id -eq 'nvidia-updater' } | Select-Object -First 1
-    Invoke-ChildScript -Tool $updater
+
+    if ($SecondDduPass) {
+        $command = 'powershell.exe -NoProfile -ExecutionPolicy Bypass -File "{0}" -ContinueNvidiaSetup' -f $PSCommandPath
+        New-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce' -Name 'CullewieNvidiaSetupAfterDDU' -Value $command -PropertyType String -Force | Out-Null
+        $dduExe = Join-Path $env:SystemRoot 'Temp/ddu/Display Driver Uninstaller.exe'
+        if (-not (Test-Path -LiteralPath $dduExe -PathType Leaf)) {
+            throw 'DDU is missing before its second normal-mode cleanup pass.'
+        }
+        Write-Host 'Second NVIDIA-only DDU pass in normal Windows mode. The computer will restart once more.' -ForegroundColor Yellow
+        Start-Process -FilePath $dduExe -ArgumentList '-Silent -NoSafeModeMsg -CleanNvidia -RemovePhysx -RemoveGFE -RemoveNVBROADCAST -RemoveNVCP -RemoveVulkan -RemoveNvidiaDirs -Remove3DTVPlay -Restart' -Wait
+        return
+    }
+
+    if ($ContinueNvidiaSetup) {
+        Write-Host 'NVIDIA cleanup is complete. Installing the driver, then NVIDIA Settings from GitHub.' -ForegroundColor Cyan
+        Invoke-ChildScript -Tool $updater -NoPause
+        $tool = $script:Tools | Where-Object { $_.Id -eq 'settings-github' } | Select-Object -First 1
+        Invoke-ChildScript -Tool $tool -NoPause
+        return
+    }
+
+    $nvidiaDriver = Get-CimInstance -ClassName Win32_VideoController -ErrorAction Stop |
+        Where-Object { $_.PNPDeviceID -like 'PCI\VEN_10DE&*' -and $_.DriverProviderName -match 'NVIDIA' } |
+        Select-Object -First 1
+    if ($nvidiaDriver) {
+        Write-Host "Installed NVIDIA driver detected for $($nvidiaDriver.Name). DDU will clean all NVIDIA driver components in normal Windows mode twice, with a restart after each pass." -ForegroundColor Yellow
+        $ddu = $script:Tools | Where-Object { $_.Id -eq 'ddu' } | Select-Object -First 1
+        Invoke-ChildScript -Tool $ddu -Arguments @('-GuidedNvidia', '-ContinueLauncherPath', $PSCommandPath) -NoPause
+        return
+    }
+
+    Write-Host 'No installed NVIDIA display driver was detected. Skipping DDU.' -ForegroundColor Cyan
+    Invoke-ChildScript -Tool $updater -NoPause
     $tool = $script:Tools | Where-Object { $_.Id -eq 'settings-github' } | Select-Object -First 1
-    Invoke-ChildScript -Tool $tool
+    Invoke-ChildScript -Tool $tool -NoPause
 }
 if ($PSVersionTable.PSVersion -lt [version]'5.1') {
     throw 'Windows PowerShell 5.1 or newer is required.'
@@ -97,12 +139,26 @@ if (-not [Environment]::Is64BitOperatingSystem -or -not [Environment]::Is64BitPr
     throw 'Run this toolkit from 64-bit PowerShell on 64-bit Windows.'
 }
 if (-not (Test-IsAdministrator)) {
+    if ($ContinueNvidiaSetup) {
+        $elevationArguments = @('-NoProfile', '-ExecutionPolicy Bypass', '-File', ('"{0}"' -f $PSCommandPath), '-ContinueNvidiaSetup')
+        if ($SecondDduPass) { $elevationArguments += '-SecondDduPass' }
+        Start-Process -FilePath $script:PowerShellExe -ArgumentList $elevationArguments -Verb RunAs
+        return
+    }
     Write-Host 'Run Launcher.bat or IWR.ps1 from an elevated Administrator PowerShell window.' -ForegroundColor Red
     return
 }
 $osVersion = [Environment]::OSVersion.Version
 if ($osVersion.Major -lt 10 -or $osVersion.Build -lt 22000) {
     throw 'This release requires Windows 11 (build 22000 or newer).'
+}
+if ($ContinueNvidiaSetup) {
+    Start-GuidedNvidiaSetup
+    return
+}
+if ($ContinueNvidiaSetup) {
+    Start-GuidedNvidiaSetup
+    return
 }
 while ($true) {
     Clear-Host

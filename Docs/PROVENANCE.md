@@ -16,4 +16,7 @@ Kaynak paket 12 PowerShell dosyası içeriyordu; WinGet sürümü bu repodan ç�
 | Scripts/Windows/Timer-Resolution.ps1 | 10532 | 6e27741fa54afdba7ace528f218b8cdcb7d93767da8c6856b747a977f7c18c3a |
 | Scripts/Windows/Widgets.ps1 | 1459 | 23ee08ec83771922c513761beabf671198ac4f9728eb0c3eb190acd0721c6595 |
 
-Ana NVIDIA Driver Updater dosyası bu değişiklikte aynen korunmuştur. Diğer listelenen dosyalarda yalnızca kullanıcıya sunulan varsayılan/geri alma seçenekleri kaldırılmıştır. `manifest.json`, indirilen tüm dosyaların boyunu ve karmasını ayrıca kontrol eder.
+Ana NVIDIA Driver Updater ayni GPU bulma, NVIDIA katalog arama, indirme ve imza dogrulama mantigini kullanir. Kurucu bitene kadar beklemesi icin Start-Process satirina -Wait eklendi.
+
+
+The guided DDU path uses NVIDIA-only cleanup flags in normal Windows mode; the standalone DDU Auto/Manual path keeps its original Safe Mode behavior.
