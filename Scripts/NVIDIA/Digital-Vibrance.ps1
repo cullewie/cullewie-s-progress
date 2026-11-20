@@ -111,10 +111,13 @@ public static class NvVibranceDisplayUtility
         return defaults.ToArray();
     }
 
-    // Apply custom value or NVIDIA driver default (-1).
+    // Apply a custom Digital Vibrance value from 0 to 100.
     public static string Apply(int percent)
     {
         StringBuilder log = new StringBuilder();
+
+        if (percent < 0 || percent > 100)
+            return "Digital Vibrance must be between 0 and 100.";
 
         InitD init = Get<InitD>(0x0150E828);
 
@@ -160,7 +163,7 @@ public static class NvVibranceDisplayUtility
                 int max = Marshal.ReadInt32(buf, 12);
                 int def = Marshal.ReadInt32(buf, 16);
 
-                int level = percent < 0 ? def : percent;
+                int level = percent;
 
                 if (level < min) level = min;
                 if (level > max) level = max;

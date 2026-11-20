@@ -1,7 +1,7 @@
 {
     "schemaVersion":  1,
     "release":  {
-                    "version":  "1.0.0",
+                    "version":  "1.0.1",
                     "channel":  "main",
                     "minWindowsBuild":  22000,
                     "minPowerShell":  "5.1"
@@ -17,8 +17,8 @@
                   },
                   {
                       "path":  "Docs/PROVENANCE.md",
-                      "size":  1915,
-                      "sha256":  "35a1a4fe016b21cbbb061966aa55a68f9f623fdc01cbf866facebcf7c33fde2b",
+                      "size":  1912,
+                      "sha256":  "918dc45496cc00a6775db3c3b01225012a86240ff6dd3863c560886b520d0d12",
                       "role":  "documentation",
                       "origin":  "generated",
                       "derivedFrom":  null
@@ -89,8 +89,8 @@
                   },
                   {
                       "path":  "Scripts/NVIDIA/Digital-Vibrance.ps1",
-                      "size":  10305,
-                      "sha256":  "5979653a31b1193238751c4b0c1f599306c1865cf742ad6de29205d00cf9563f",
+                      "size":  10400,
+                      "sha256":  "97bbc19629baa336c8ffafdd598c82a9419d039c2ede0ff46ff1750b63008bba",
                       "role":  "source",
                       "origin":  "edited-source",
                       "derivedFrom":  "aa941ca4825627187c9815c88e73356f5f632239e784a6707edd29b1ef41e86b"
