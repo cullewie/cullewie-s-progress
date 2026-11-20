@@ -6,7 +6,7 @@ Bu projede 11 PowerShell aracı vardır.
 
 - `Scripts/Drivers/NVIDIA/NVIDIA-Driver-Updater.ps1` — Ana NVIDIA sürücü güncelleyici. Üretim tabanı budur.
 - `Scripts/Drivers/Multi-GPU/Driver-Downloader.ps1` — NVIDIA, AMD ve Intel sürücü indiricisi.
-- `Scripts/Drivers/DDU/DDU.ps1` - DDU otomatik/el ile araci. Rehberli NVIDIA akisi yalniz NVIDIA bilesenlerini normal Windows modunda temizler ve iki kez yeniden baslatir.
+- `Scripts/Drivers/DDU/DDU.ps1` - DDU otomatik/el ile araci. Rehberli NVIDIA akisi normal Windows modunda temizler; yeniden baslatma veya geri yukleme noktasi olusturmaz.
 - `Scripts/Drivers/Debloated-Installer/Driver-Installer.ps1` — Sade sürücü kurucusu.
 
 ## NVIDIA

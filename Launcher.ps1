@@ -1,8 +1,5 @@
 [CmdletBinding()]
-param(
-    [switch]$ContinueNvidiaSetup,
-    [switch]$SecondDduPass
-)
+param()
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $script:RepoRoot = $PSScriptRoot
@@ -31,6 +28,7 @@ function Invoke-ChildScript {
         [string[]]$Arguments = @(),
         [switch]$NoPause
     )
+    $script:LastChildExitCode = -1
     $sourcePath = Join-Path $script:RepoRoot ($Tool.Path -replace '/', '\')
     if (-not (Test-Path -LiteralPath $sourcePath -PathType Leaf)) {
         Write-Host "Script missing: $sourcePath" -ForegroundColor Red
@@ -54,6 +52,7 @@ function Invoke-ChildScript {
         $childArguments = @('-NoLogo', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $launchPath) + $Arguments
         & $script:PowerShellExe @childArguments
         $childExitCode = $LASTEXITCODE
+        $script:LastChildExitCode = [int]$childExitCode
         if ($childExitCode -ne 0) {
             Write-Host "Child process exit code: $childExitCode" -ForegroundColor Red
         }
@@ -96,41 +95,7 @@ function Show-ToolMenu {
 }
 function Start-GuidedNvidiaSetup {
     $updater = $script:Tools | Where-Object { $_.Id -eq 'nvidia-updater' } | Select-Object -First 1
-
-    if ($SecondDduPass) {
-        $command = 'powershell.exe -NoProfile -ExecutionPolicy Bypass -File "{0}" -ContinueNvidiaSetup' -f $PSCommandPath
-        New-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce' -Name 'CullewieNvidiaSetupAfterDDU' -Value $command -PropertyType String -Force | Out-Null
-        $dduExe = Join-Path $env:SystemRoot 'Temp/ddu/Display Driver Uninstaller.exe'
-        if (-not (Test-Path -LiteralPath $dduExe -PathType Leaf)) {
-            throw 'DDU is missing before its second normal-mode cleanup pass.'
-        }
-        Write-Host 'Second NVIDIA-only DDU pass in normal Windows mode. The computer will restart once more.' -ForegroundColor Yellow
-        Start-Process -FilePath $dduExe -ArgumentList '-Silent -NoSafeModeMsg -CleanNvidia -RemovePhysx -RemoveGFE -RemoveNVBROADCAST -RemoveNVCP -RemoveVulkan -RemoveNvidiaDirs -Remove3DTVPlay -Restart' -Wait
-        return
-    }
-
-    if ($ContinueNvidiaSetup) {
-        $statePath = Join-Path $script:RepoRoot 'nvidia-setup-state.json'
-        if (-not (Test-Path -LiteralPath $statePath -PathType Leaf)) {
-            throw 'The saved NVIDIA model name is missing after DDU cleanup.'
-        }
-        $state = Get-Content -LiteralPath $statePath -Raw | ConvertFrom-Json
-        if ([string]::IsNullOrWhiteSpace([string]$state.GpuName)) {
-            throw 'The saved NVIDIA model name is empty after DDU cleanup.'
-        }
-        Write-Host 'NVIDIA cleanup is complete. Installing the driver, then NVIDIA Settings from GitHub.' -ForegroundColor Cyan
-        $env:CULLEWIE_NVIDIA_GPU_NAME = [string]$state.GpuName
-        try {
-            Invoke-ChildScript -Tool $updater -NoPause
-            $tool = $script:Tools | Where-Object { $_.Id -eq 'settings-github' } | Select-Object -First 1
-            Invoke-ChildScript -Tool $tool -NoPause
-        }
-        finally {
-            Remove-Item Env:\CULLEWIE_NVIDIA_GPU_NAME -ErrorAction SilentlyContinue
-            Remove-Item -LiteralPath $statePath -Force -ErrorAction SilentlyContinue
-        }
-        return
-    }
+    $statePath = Join-Path $script:RepoRoot 'nvidia-setup-state.json'
 
     $nvidiaDriver = Get-CimInstance -ClassName Win32_PnPSignedDriver -ErrorAction Stop |
         Where-Object { $_.DeviceClass -eq 'DISPLAY' -and $_.DeviceID -like 'PCI\VEN_10DE&*' -and $_.DriverProviderName -match 'NVIDIA' } |
@@ -139,19 +104,37 @@ function Start-GuidedNvidiaSetup {
         if ([string]::IsNullOrWhiteSpace([string]$nvidiaDriver.DeviceName)) {
             throw 'Could not save the NVIDIA model name before DDU cleanup.'
         }
-        $statePath = Join-Path $script:RepoRoot 'nvidia-setup-state.json'
         $state = [pscustomobject]@{ GpuName = [string]$nvidiaDriver.DeviceName }
         [IO.File]::WriteAllText($statePath, ($state | ConvertTo-Json -Compress), [Text.UTF8Encoding]::new($false))
-        Write-Host "Installed NVIDIA driver detected for $($nvidiaDriver.DeviceName). DDU will clean all NVIDIA driver components in normal Windows mode twice, with a restart after each pass." -ForegroundColor Yellow
+        Write-Host "Installed NVIDIA driver detected for $($nvidiaDriver.DeviceName). DDU will clean NVIDIA in normal Windows mode without restarting." -ForegroundColor Yellow
         $ddu = $script:Tools | Where-Object { $_.Id -eq 'ddu' } | Select-Object -First 1
-        Invoke-ChildScript -Tool $ddu -Arguments @('-GuidedNvidia', '-ContinueLauncherPath', $PSCommandPath) -NoPause
-        return
+        Invoke-ChildScript -Tool $ddu -Arguments @('-GuidedNvidia') -NoPause
+        if ($script:LastChildExitCode -ne 0) {
+            throw 'DDU did not complete. NVIDIA installation was stopped.'
+        }
+    }
+    else {
+        Remove-Item -LiteralPath $statePath -Force -ErrorAction SilentlyContinue
+        Write-Host 'No installed NVIDIA display driver was detected. Skipping DDU.' -ForegroundColor Cyan
     }
 
-    Write-Host 'No installed NVIDIA display driver was detected. Skipping DDU.' -ForegroundColor Cyan
-    Invoke-ChildScript -Tool $updater -NoPause
-    $tool = $script:Tools | Where-Object { $_.Id -eq 'settings-github' } | Select-Object -First 1
-    Invoke-ChildScript -Tool $tool -NoPause
+    if (Test-Path -LiteralPath $statePath -PathType Leaf) {
+        $state = Get-Content -LiteralPath $statePath -Raw | ConvertFrom-Json
+        if ([string]::IsNullOrWhiteSpace([string]$state.GpuName)) {
+            throw 'The saved NVIDIA model name is empty.'
+        }
+        $env:CULLEWIE_NVIDIA_GPU_NAME = [string]$state.GpuName
+    }
+    try {
+        Write-Host 'Installing the NVIDIA driver, then NVIDIA Settings from GitHub.' -ForegroundColor Cyan
+        Invoke-ChildScript -Tool $updater -NoPause
+        $tool = $script:Tools | Where-Object { $_.Id -eq 'settings-github' } | Select-Object -First 1
+        Invoke-ChildScript -Tool $tool -NoPause
+    }
+    finally {
+        Remove-Item Env:\CULLEWIE_NVIDIA_GPU_NAME -ErrorAction SilentlyContinue
+        Remove-Item -LiteralPath $statePath -Force -ErrorAction SilentlyContinue
+    }
 }
 if ($PSVersionTable.PSVersion -lt [version]'5.1') {
     throw 'Windows PowerShell 5.1 or newer is required.'
@@ -160,26 +143,12 @@ if (-not [Environment]::Is64BitOperatingSystem -or -not [Environment]::Is64BitPr
     throw 'Run this toolkit from 64-bit PowerShell on 64-bit Windows.'
 }
 if (-not (Test-IsAdministrator)) {
-    if ($ContinueNvidiaSetup) {
-        $elevationArguments = @('-NoProfile', '-ExecutionPolicy Bypass', '-File', ('"{0}"' -f $PSCommandPath), '-ContinueNvidiaSetup')
-        if ($SecondDduPass) { $elevationArguments += '-SecondDduPass' }
-        Start-Process -FilePath $script:PowerShellExe -ArgumentList $elevationArguments -Verb RunAs
-        return
-    }
     Write-Host 'Run Launcher.bat or IWR.ps1 from an elevated Administrator PowerShell window.' -ForegroundColor Red
     return
 }
 $osVersion = [Environment]::OSVersion.Version
 if ($osVersion.Major -lt 10 -or $osVersion.Build -lt 22000) {
     throw 'This release requires Windows 11 (build 22000 or newer).'
-}
-if ($ContinueNvidiaSetup) {
-    Start-GuidedNvidiaSetup
-    return
-}
-if ($ContinueNvidiaSetup) {
-    Start-GuidedNvidiaSetup
-    return
 }
 while ($true) {
     Clear-Host

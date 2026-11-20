@@ -1,7 +1,7 @@
 {
     "schemaVersion":  1,
     "release":  {
-                    "version":  "1.0.4",
+                    "version":  "1.0.5",
                     "channel":  "main",
                     "minWindowsBuild":  22000,
                     "minPowerShell":  "5.1"
@@ -9,24 +9,24 @@
     "files":  [
                   {
                       "path":  "Docs/HOW-IT-WORKS.md",
-                      "size":  1974,
-                      "sha256":  "e8184ef38a73dfd5cce6f8549751b9282402457a3576ead8a30d0ee8a408adac",
+                      "size":  1645,
+                      "sha256":  "9771d2fed4a68132ae28228e6dddaf2040ad06eac74e1ff182171e12b606684f",
                       "role":  "documentation",
                       "origin":  "generated",
                       "derivedFrom":  null
                   },
                   {
                       "path":  "Docs/PROVENANCE.md",
-                      "size":  1945,
-                      "sha256":  "5a16f0ecc402cc5c93ae85daaa7362dc554d595edf81de0e91769bff0e0fdcab",
+                      "size":  1977,
+                      "sha256":  "fef440e77ec7c3fd1645b6948dd1608ae0e82acc2c5079227feac17ac5861260",
                       "role":  "documentation",
                       "origin":  "generated",
                       "derivedFrom":  null
                   },
                   {
                       "path":  "Docs/SCRIPT-INVENTORY.md",
-                      "size":  1366,
-                      "sha256":  "33528d80f637012fac6e6b13c0f6f3ab12a36ee8595abe283aea6e0977d445a7",
+                      "size":  1365,
+                      "sha256":  "bd70c2689647a0ec00839b95a9d8dea97e01932b5ed35b6a2a4bf09ec940080e",
                       "role":  "documentation",
                       "origin":  "generated",
                       "derivedFrom":  null
@@ -41,24 +41,24 @@
                   },
                   {
                       "path":  "Launcher.ps1",
-                      "size":  11050,
-                      "sha256":  "87812f1cf8adff6234eab75ff250e56e7eb293e21e44a17172887867ccd0e8bf",
+                      "size":  9289,
+                      "sha256":  "055645191481bbff5ef666d23ad15cdb781b5f84b24288ad9167954753311db5",
                       "role":  "launcher",
                       "origin":  "generated",
                       "derivedFrom":  null
                   },
                   {
                       "path":  "README.md",
-                      "size":  1733,
-                      "sha256":  "6bb4faa651ee3cac9311c9aa0acf7a83578ed46c7839a920f65c845c58c881f4",
+                      "size":  1627,
+                      "sha256":  "cd0b7fb694a8b84df0a197973c58e4acbdc390f64261014dd528fc9d1756b3f5",
                       "role":  "documentation",
                       "origin":  "generated",
                       "derivedFrom":  null
                   },
                   {
                       "path":  "Scripts/Drivers/DDU/DDU.ps1",
-                      "size":  11855,
-                      "sha256":  "1a7cde6532640016505c03adf0e007ed2c160ccbb023bc2499a690c7a9f014bb",
+                      "size":  11478,
+                      "sha256":  "fb8df7c91968026873adc2b56802fda3ebd643ac55c7006e5d01b63d694ca96e",
                       "role":  "source",
                       "origin":  "edited-source",
                       "derivedFrom":  "564657374be33107ae7c69e61825cf8b2b7eb6ff668d40654908524a4d3ce9b5"

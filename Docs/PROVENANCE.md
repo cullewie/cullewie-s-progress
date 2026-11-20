@@ -19,4 +19,4 @@ Kaynak paket 12 PowerShell dosyası içeriyordu; WinGet sürümü bu repodan ç�
 Ana NVIDIA Driver Updater ayni GPU bulma, NVIDIA katalog arama, indirme ve imza dogrulama mantigini kullanir. Kurucu bitene kadar beklemesi icin Start-Process satirina -Wait eklendi.
 
 
-The guided DDU path uses NVIDIA-only cleanup flags in normal Windows mode; it saves the GPU model name across restarts for the primary updater. The standalone DDU Auto/Manual path keeps its original Safe Mode behavior.
+The guided DDU path uses NVIDIA-only cleanup flags in normal Windows mode, without restarting or creating a restore point; it saves the GPU model name for the primary updater. The standalone DDU Auto/Manual path keeps its original Safe Mode behavior.

@@ -1,7 +1,6 @@
 [CmdletBinding()]
 param(
-    [switch]$GuidedNvidia,
-    [string]$ContinueLauncherPath
+    [switch]$GuidedNvidia
 )
 
 # SCRIPT RUN AS ADMIN
@@ -100,18 +99,16 @@ Set-ItemProperty -Path "$env:SystemRoot\Temp\ddu\Settings\Settings.xml" -Name Is
 
 # The guided NVIDIA path cleans only NVIDIA in normal Windows mode.
 if ($GuidedNvidia) {
-    if (-not $ContinueLauncherPath -or -not (Test-Path -LiteralPath $ContinueLauncherPath -PathType Leaf)) {
-        throw 'The launcher path for continuing after restart is missing.'
-    }
-    $runOnce = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce'
-    $command = 'powershell.exe -NoProfile -ExecutionPolicy Bypass -File "{0}" -ContinueNvidiaSetup -SecondDduPass' -f $ContinueLauncherPath
-    New-ItemProperty -Path $runOnce -Name 'CullewieNvidiaDduSecondPass' -Value $command -PropertyType String -Force | Out-Null
     $dduExe = Join-Path $env:SystemRoot 'Temp/ddu/Display Driver Uninstaller.exe'
     if (-not (Test-Path -LiteralPath $dduExe -PathType Leaf)) {
         throw 'The DDU executable was not extracted successfully.'
     }
-    Write-Host 'Cleaning all NVIDIA driver components in normal Windows mode. Windows will restart, repeat this once, then install the NVIDIA driver.' -ForegroundColor Yellow
-    Start-Process -FilePath $dduExe -ArgumentList '-Silent -NoSafeModeMsg -CleanNvidia -RemovePhysx -RemoveGFE -RemoveNVBROADCAST -RemoveNVCP -RemoveVulkan -RemoveNvidiaDirs -Remove3DTVPlay -Restart' -Wait
+    Write-Host 'Cleaning NVIDIA driver components. Safe Mode, restart, and restore point creation are disabled.' -ForegroundColor Yellow
+    $cleanup = Start-Process -FilePath $dduExe -ArgumentList '-Silent -NoSafeModeMsg -NoRestorePoint -CleanNvidia -RemovePhysx -RemoveGFE -RemoveNVBROADCAST -RemoveNVCP -RemoveVulkan -RemoveNvidiaDirs -Remove3DTVPlay' -Wait -PassThru
+    if ($cleanup.ExitCode -ne 0) {
+        throw "DDU failed with exit code $($cleanup.ExitCode)."
+    }
+    Write-Host 'DDU cleanup finished. Continuing without restarting.' -ForegroundColor Green
     exit
 }
 # prevent downloads of drivers from windows update
