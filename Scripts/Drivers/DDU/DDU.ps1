@@ -119,17 +119,6 @@ cmd /c "reg add `"HKLM\Software\Microsoft\Windows\CurrentVersion\DriverSearching
 
 # create ddu ps1 file
 $DDU = @'
-[CmdletBinding()]
-param(
-    [switch]$GuidedNvidia,
-    [string]$ContinueLauncherPath
-)
-[CmdletBinding()]
-param(
-    [switch]$GuidedNvidia,
-    [string]$ContinueLauncherPath
-)
-
 # SCRIPT RUN AS ADMIN
         If (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]"Administrator"))
         {Start-Process PowerShell.exe -ArgumentList ("-NoProfile -ExecutionPolicy Bypass -File `"{0}`"" -f $PSCommandPath) -Verb RunAs
@@ -238,17 +227,6 @@ cmd /c "reg add `"HKLM\Software\Microsoft\Windows\CurrentVersion\DriverSearching
 
 # create ddumanual ps1 file
 $DDU = @'
-[CmdletBinding()]
-param(
-    [switch]$GuidedNvidia,
-    [string]$ContinueLauncherPath
-)
-[CmdletBinding()]
-param(
-    [switch]$GuidedNvidia,
-    [string]$ContinueLauncherPath
-)
-
 # SCRIPT RUN AS ADMIN
         If (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]"Administrator"))
         {Start-Process PowerShell.exe -ArgumentList ("-NoProfile -ExecutionPolicy Bypass -File `"{0}`"" -f $PSCommandPath) -Verb RunAs

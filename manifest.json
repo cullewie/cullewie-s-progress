@@ -57,8 +57,8 @@
                   },
                   {
                       "path":  "Scripts/Drivers/DDU/DDU.ps1",
-                      "size":  12209,
-                      "sha256":  "a20a3823842994f54eba3b5c24aa36f4414dd04dd78669cfeb8240ddbe2f67d3",
+                      "size":  11855,
+                      "sha256":  "1a7cde6532640016505c03adf0e007ed2c160ccbb023bc2499a690c7a9f014bb",
                       "role":  "source",
                       "origin":  "edited-source",
                       "derivedFrom":  "564657374be33107ae7c69e61825cf8b2b7eb6ff668d40654908524a4d3ce9b5"
