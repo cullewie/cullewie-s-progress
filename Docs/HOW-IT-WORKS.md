@@ -12,14 +12,16 @@ SHA-256, dosyanın parmak izi gibi çalışır. Dosyanın içeriği değişirse 
 
 Ana NVIDIA Driver Updater kaynaktaki haliyle korunur. Kaynak, daha büyük bir menüden alınmış `1 { ... }` bölümüdür. Launcher bu bölümü geçici bir `switch (1)` bloğuna koyarak çalıştırır; kaynak dosyanın içeriğini değiştirmez.
 
-NVIDIA Settings aracı GitHub üzerinden kurulur.
+NVIDIA Settings aracı ayrı bir seçenektir; rehberli kurulum bunu çağırmaz.
 
 ## Rehberli NVIDIA kurulumu
 
-Kurulu NVIDIA surucusu varsa DDU normal Windows modunda bir kez calisir. Safe Mode acilmaz; DDU yeniden baslatma komutu vermez ve geri yukleme noktasi olusturmaz. DDU bittikten sonra ayni launcher oturumu NVIDIA surucusunu kurar, ardindan NVIDIA Settings GitHub uzerinden kurulur. Ekran kartinin model adi temizlikten once saklanip kurucuya aktarilir.
+Kurulu NVIDIA sürücüsü varsa DDU normal Windows modunda bir kez çalışır. Safe Mode açılmaz; DDU yeniden başlatma komutu vermez ve geri yükleme noktası oluşturmaz. DDU bittikten sonra aynı launcher oturumu NVIDIA paketinden yalnızca `Display.Driver` bileşenini kurar. NVIDIA App ve NVIDIA Control Panel kurulumu başlatılmaz. Ekran kartının model adı temizlikten önce saklanıp kurucuya aktarılır. İndirme akışı yüzdeyi saniyede birkaç kez günceller; PowerShell 5.1'in yavaş yerleşik ilerleme göstergesini kullanmaz.
 
 ## Sistem ayarları
 
 Menü, Windows ayarlarını kendiliğinden değiştirmez. Bir araç seçildiğinde kendi akışını başlatır. Araçların sunduğu geri alma ve varsayılan ayara dönme seçenekleri menüden çıkarılmıştır.
 
 IWR yalnızca dosyaları indirir, doğrular ve launcher'ı açar. Yönetici PowerShell penceresi gerekir. Kalıcı ExecutionPolicy ayarı değiştirilmez; alt PowerShell sürecine özel `Bypass` kullanılır.
+
+Services Off, Windows ekran yakalama işlevlerinin kullanabilmesi için `CaptureService` hizmetini Disabled yerine Manual bırakır.

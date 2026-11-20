@@ -18,9 +18,11 @@ Komut, araç dosyalarını indirir, dosyaları kontrol eder ve menüyü açar. B
 - **NVIDIA:** GitHub üzerinden kurulan NVIDIA Settings ve Digital Vibrance aracı.
 - **Windows:** Widgets, hizmetler, güç planı, Copilot ve zamanlayıcı araçları.
 
-Ana NVIDIA Driver Updater üretim sürümü olarak korunur. NVIDIA Settings GitHub üzerinden kurulur.
+Ana NVIDIA Driver Updater üretim sürümü olarak korunur. Rehberli NVIDIA kurulumu yalnızca ekran sürücüsünü kurar; NVIDIA App ve NVIDIA Control Panel için ayrı kurulum başlatmaz.
 
-Rehberli NVIDIA kurulumu kurulu surucuyu bir kez DDU ile temizler. DDU normal Windows modunda calisir; bilgisayari yeniden baslatmaz ve geri yukleme noktasi olusturmaz. DDU bitince launcher NVIDIA surucusunu ve GitHub NVIDIA Settings uygulamasini kurar.
+Rehberli NVIDIA kurulumu kurulu sürücüyü bir kez DDU ile temizler. DDU normal Windows modunda çalışır; bilgisayarı yeniden başlatmaz ve geri yükleme noktası oluşturmaz. DDU bitince NVIDIA kurulum paketi yalnızca `Display.Driver` bileşenini kurar. Yeniden başlatma gerekse bile toolkit bilgisayarı otomatik yeniden başlatmaz. Büyük sürücü indirmeleri yüzde göstergesi kullanır ve PowerShell 5.1'in yavaş yerleşik indirme göstergesini devre dışı bırakır.
+
+Services Off seçeneği `CaptureService` hizmetini `Manual` durumda bırakır; böylece Snipping Tool gerektiğinde bu hizmeti başlatabilir.
 
 ## Davranış
 

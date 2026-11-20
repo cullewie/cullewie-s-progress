@@ -1,7 +1,7 @@
 {
     "schemaVersion":  1,
     "release":  {
-                    "version":  "1.0.5",
+                    "version":  "1.0.6",
                     "channel":  "main",
                     "minWindowsBuild":  22000,
                     "minPowerShell":  "5.1"
@@ -9,24 +9,24 @@
     "files":  [
                   {
                       "path":  "Docs/HOW-IT-WORKS.md",
-                      "size":  1645,
-                      "sha256":  "9771d2fed4a68132ae28228e6dddaf2040ad06eac74e1ff182171e12b606684f",
+                      "size":  2006,
+                      "sha256":  "4cc739071dc7874dff451499ea0720c444f913b5e83f342da59662388169cde4",
                       "role":  "documentation",
                       "origin":  "generated",
                       "derivedFrom":  null
                   },
                   {
                       "path":  "Docs/PROVENANCE.md",
-                      "size":  1977,
-                      "sha256":  "fef440e77ec7c3fd1645b6948dd1608ae0e82acc2c5079227feac17ac5861260",
+                      "size":  2352,
+                      "sha256":  "f9bf394bc8dde0ce57c4f952a396e6a10d590e86cc875e9febf098a375baed3c",
                       "role":  "documentation",
                       "origin":  "generated",
                       "derivedFrom":  null
                   },
                   {
                       "path":  "Docs/SCRIPT-INVENTORY.md",
-                      "size":  1365,
-                      "sha256":  "bd70c2689647a0ec00839b95a9d8dea97e01932b5ed35b6a2a4bf09ec940080e",
+                      "size":  1551,
+                      "sha256":  "08f13a7f7887052c1ff79079fc5099bf3b5d010eaf296d8f6251487797580cd9",
                       "role":  "documentation",
                       "origin":  "generated",
                       "derivedFrom":  null
@@ -41,16 +41,16 @@
                   },
                   {
                       "path":  "Launcher.ps1",
-                      "size":  9289,
-                      "sha256":  "055645191481bbff5ef666d23ad15cdb781b5f84b24288ad9167954753311db5",
+                      "size":  9106,
+                      "sha256":  "11facbd4e2424676f976fce3559821270404054c1829c2532a1582e3671adfa2",
                       "role":  "launcher",
                       "origin":  "generated",
                       "derivedFrom":  null
                   },
                   {
                       "path":  "README.md",
-                      "size":  1627,
-                      "sha256":  "cd0b7fb694a8b84df0a197973c58e4acbdc390f64261014dd528fc9d1756b3f5",
+                      "size":  2090,
+                      "sha256":  "a0c945c0aef7180b238797ed3ae16cf79f42a88eba058a562f2ab3f76a92c439",
                       "role":  "documentation",
                       "origin":  "generated",
                       "derivedFrom":  null
@@ -81,8 +81,8 @@
                   },
                   {
                       "path":  "Scripts/Drivers/NVIDIA/NVIDIA-Driver-Updater.ps1",
-                      "size":  5637,
-                      "sha256":  "00dfd28162459968420976f9a777bcf660659a06a89d3cbe149dffc0bbf986f9",
+                      "size":  8531,
+                      "sha256":  "c3ec0c7eb0c7f8f5eda681ffe5fa7eaa693576f030518010fcc1d90ee9e0a275",
                       "role":  "source",
                       "origin":  "edited-source",
                       "derivedFrom":  "955de18efb9af0d06c14565156dbe426ba2c2f78d64b149d82d65855b88ddded"
@@ -121,8 +121,8 @@
                   },
                   {
                       "path":  "Scripts/Windows/Services.ps1",
-                      "size":  29059,
-                      "sha256":  "3913edf9c362c34b180a77817e3349ab6e3a8d910b7b0577ee1adc79d06f9181",
+                      "size":  29060,
+                      "sha256":  "ba394e9767aa99903c292ca85dd0ab61523f888ffbe1034e2ee70d456ad2fa9d",
                       "role":  "source",
                       "origin":  "edited-source",
                       "derivedFrom":  "6a49ad67078f131abb61a301fa2dcfa520ae9fcfdbad7a31d7b2d7e70dd45099"

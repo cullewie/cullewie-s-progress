@@ -124,12 +124,48 @@
             Remove-Item $TargetPath -Force
         }
 
-        Invoke-WebRequest `
-            -Uri $Driver.DownloadURL `
-            -Headers $Headers `
-            -UseBasicParsing `
-            -OutFile $TargetPath `
-            -TimeoutSec 3600
+        $DownloadRequest = [System.Net.HttpWebRequest]::Create([Uri]$Driver.DownloadURL)
+        $DownloadRequest.Method = 'GET'
+        $DownloadRequest.UserAgent = $Headers['User-Agent']
+        $DownloadRequest.Timeout = 60000
+        $DownloadRequest.ReadWriteTimeout = 60000
+        $DownloadResponse = $null
+        $DownloadInput = $null
+        $DownloadOutput = $null
+        try {
+            $DownloadResponse = $DownloadRequest.GetResponse()
+            $DownloadLength = [int64]$DownloadResponse.ContentLength
+            $DownloadInput = $DownloadResponse.GetResponseStream()
+            $DownloadOutput = [System.IO.File]::Open($TargetPath, [System.IO.FileMode]::Create, [System.IO.FileAccess]::Write, [System.IO.FileShare]::None)
+            $DownloadBuffer = New-Object byte[] 1048576
+            $DownloadedBytes = [int64]0
+            $ProgressTimer = [System.Diagnostics.Stopwatch]::StartNew()
+            $NextProgressUpdate = [int64]0
+
+            while (($BytesRead = $DownloadInput.Read($DownloadBuffer, 0, $DownloadBuffer.Length)) -gt 0) {
+                $DownloadOutput.Write($DownloadBuffer, 0, $BytesRead)
+                $DownloadedBytes += $BytesRead
+                if ($ProgressTimer.ElapsedMilliseconds -ge $NextProgressUpdate) {
+                    if ($DownloadLength -gt 0) {
+                        $DownloadPercent = [int][Math]::Min(99, [Math]::Floor(($DownloadedBytes * 100.0) / $DownloadLength))
+                        $DownloadStatus = '{0}% - {1:N0} MB / {2:N0} MB' -f $DownloadPercent, ($DownloadedBytes / 1MB), ($DownloadLength / 1MB)
+                        Write-Progress -Activity 'Downloading NVIDIA driver' -Status $DownloadStatus -PercentComplete $DownloadPercent
+                    }
+                    else {
+                        $DownloadStatus = '{0:N0} MB downloaded - server did not provide total size' -f ($DownloadedBytes / 1MB)
+                        Write-Progress -Activity 'Downloading NVIDIA driver' -Status $DownloadStatus -PercentComplete 0
+                    }
+                    $NextProgressUpdate = $ProgressTimer.ElapsedMilliseconds + 400
+                }
+            }
+            $DownloadOutput.Flush()
+            Write-Progress -Activity 'Downloading NVIDIA driver' -Completed
+        }
+        finally {
+            if ($DownloadOutput) { $DownloadOutput.Dispose() }
+            if ($DownloadInput) { $DownloadInput.Dispose() }
+            if ($DownloadResponse) { $DownloadResponse.Dispose() }
+        }
 
         if (!(Test-Path $TargetPath)) {
             throw "Driver download failed."
@@ -167,9 +203,18 @@
             File         = $TargetPath
         } | Format-List
 
-        Write-Host "OPENING NVIDIA INSTALLER..." -ForegroundColor Green
+        Write-Host "INSTALLING NVIDIA DISPLAY DRIVER..." -ForegroundColor Green
 
-        Start-Process -FilePath $TargetPath -Wait
+        $Installer = Start-Process -FilePath $TargetPath -ArgumentList @('-s', '-n', 'Display.Driver') -Wait -PassThru
+        if ($Installer.ExitCode -notin @(0, 1)) {
+            throw "NVIDIA driver installer failed with exit code $($Installer.ExitCode)."
+        }
+        if ($Installer.ExitCode -eq 1) {
+            Write-Host "The driver installed, but Windows reports that a restart is required. This script will not restart the computer." -ForegroundColor Yellow
+        }
+        else {
+            Write-Host "NVIDIA display driver installer completed successfully. No restart was requested." -ForegroundColor Green
+        }
 
         exit
     }

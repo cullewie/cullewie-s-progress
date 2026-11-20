@@ -159,7 +159,7 @@ Windows Registry Editor Version 5.00
 "Start"=dword:00000003
 
 [HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\CaptureService]
-"Start"=dword:00000004
+"Start"=dword:00000003
 
 [HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\cbdhsvc]
 "Start"=dword:00000004

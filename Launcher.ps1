@@ -126,10 +126,8 @@ function Start-GuidedNvidiaSetup {
         $env:CULLEWIE_NVIDIA_GPU_NAME = [string]$state.GpuName
     }
     try {
-        Write-Host 'Installing the NVIDIA driver, then NVIDIA Settings from GitHub.' -ForegroundColor Cyan
+        Write-Host 'Installing NVIDIA display driver.' -ForegroundColor Cyan
         Invoke-ChildScript -Tool $updater -NoPause
-        $tool = $script:Tools | Where-Object { $_.Id -eq 'settings-github' } | Select-Object -First 1
-        Invoke-ChildScript -Tool $tool -NoPause
     }
     finally {
         Remove-Item Env:\CULLEWIE_NVIDIA_GPU_NAME -ErrorAction SilentlyContinue
@@ -155,7 +153,7 @@ while ($true) {
     Write-Host 'cullewie-s-progress — Windows setup toolkit' -ForegroundColor Cyan
     Write-Host 'Choose a script from a category to open it.' -ForegroundColor Gray
     Write-Host ''
-    Write-Host '1. Guided NVIDIA setup (driver + GitHub settings)'
+    Write-Host '1. Guided NVIDIA setup (display driver only)'
     Write-Host '2. Driver tools'
     Write-Host '3. NVIDIA utilities'
     Write-Host '4. Windows options'
