@@ -135,6 +135,20 @@ function Start-GuidedNvidiaSetup {
         Remove-Item -LiteralPath $statePath -Force -ErrorAction SilentlyContinue
     }
 }
+function Start-FullSetup {
+    Start-GuidedNvidiaSetup
+    if ($script:LastChildExitCode -ne 0) {
+        throw 'NVIDIA driver installation did not complete. Full setup stopped before Windows changes.'
+    }
+    # Services goes last: it restarts the computer to apply its changes.
+    foreach ($id in 'settings-github', 'widgets', 'copilot-off', 'power-plan', 'timer-resolution', 'services') {
+        $tool = $script:Tools | Where-Object { $_.Id -eq $id } | Select-Object -First 1
+        Invoke-ChildScript -Tool $tool -NoPause
+        if ($script:LastChildExitCode -ne 0) {
+            throw "$($tool.Name) did not complete. Full setup stopped."
+        }
+    }
+}
 if ($PSVersionTable.PSVersion -lt [version]'5.1') {
     throw 'Windows PowerShell 5.1 or newer is required.'
 }
@@ -154,25 +168,33 @@ while ($true) {
     Write-Host 'cullewie-s-progress — Windows setup toolkit' -ForegroundColor Cyan
     Write-Host 'Choose a script from a category to open it.' -ForegroundColor Gray
     Write-Host ''
-    Write-Host '1. Guided NVIDIA setup (display driver only)'
-    Write-Host '2. Driver tools'
-    Write-Host '3. NVIDIA utilities'
-    Write-Host '4. Windows options'
-    Write-Host '5. Optional Digital Vibrance utility'
+    Write-Host '1. Full automatic setup'
+    Write-Host '2. Guided NVIDIA setup'
+    Write-Host '3. Driver tools'
+    Write-Host '4. NVIDIA utilities'
+    Write-Host '5. Windows options'
+    Write-Host '6. Digital Vibrance'
     Write-Host '0. Exit'
     $selection = Read-Host 'Choose an option'
     switch ($selection) {
         '1' {
+            try { Start-FullSetup }
+            catch {
+                Write-Host "Full setup stopped: $($_.Exception.Message)" -ForegroundColor Red
+                [void](Read-Host 'Press Enter to return to the launcher')
+            }
+        }
+        '2' {
             try { Start-GuidedNvidiaSetup }
             catch {
                 Write-Host "Guided NVIDIA setup stopped: $($_.Exception.Message)" -ForegroundColor Red
                 [void](Read-Host 'Press Enter to return to the launcher')
             }
         }
-        '2' { Show-ToolMenu -Category 'Drivers' }
-        '3' { Show-ToolMenu -Category 'NVIDIA' }
-        '4' { Show-ToolMenu -Category 'Windows' }
-        '5' {
+        '3' { Show-ToolMenu -Category 'Drivers' }
+        '4' { Show-ToolMenu -Category 'NVIDIA' }
+        '5' { Show-ToolMenu -Category 'Windows' }
+        '6' {
             $tool = $script:Tools | Where-Object { $_.Id -eq 'digital-vibrance' } | Select-Object -First 1
             Invoke-ChildScript -Tool $tool
         }

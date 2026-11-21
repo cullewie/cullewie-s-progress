@@ -8,13 +8,6 @@
         $Host.PrivateData.ProgressForegroundColor = "White"
         Clear-Host
 
-        # SCRIPT CHECK INTERNET
-        if (!(Test-Connection -ComputerName "8.8.8.8" -Count 1 -Quiet -ErrorAction SilentlyContinue)) {
-        Write-Host "Internet Connection Required`n" -ForegroundColor Red
-        Pause
-        exit
-        }
-
         # SCRIPT SILENT
         $progresspreference = 'silentlycontinue'
 
@@ -35,9 +28,8 @@ $Shortcut.Save()
 
 Clear-Host
 
-        Write-Host "1. NVIDIA Settings: On (Recommended)"
         while ($true) {
-        $choice = Read-Host " "
+        $choice = '1'
         if ($choice -match '^[1]$') {
         switch ($choice) {
         1 {

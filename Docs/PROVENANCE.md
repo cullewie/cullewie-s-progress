@@ -5,11 +5,11 @@ Kaynak paket 12 PowerShell dosyası içeriyordu; WinGet sürümü bu repodan ç�
 | Dosya | Bayt | SHA-256 |
 |---|---:|---|
 | Scripts/Drivers/DDU/DDU.ps1 | 12051 | 83bdabd9bdac7aa4b2b6ed30daf758b8d3beaa47deaf907790012a32f2f12dce |
-| Scripts/Drivers/Debloated-Installer/Driver-Installer.ps1 | 37963 | 320effd366d4f25d7a31cdf36fddd09575450cee5a029e635b69ed44b6d03f6e |
+| Scripts/Drivers/Debloated-Installer/Driver-Installer.ps1 | 37709 | 178618e4982b35cedcb2f4bc0651d95c9cde3bc0ef738a84de8cc33b2aefa57b |
 | Scripts/Drivers/Multi-GPU/Driver-Downloader.ps1 | 4195 | 95c0a6d05e45e230f9cce80ba8895f9b26072fbe6a3d022944fc0b8c671709cf |
 | Scripts/Drivers/NVIDIA/NVIDIA-Driver-Updater.ps1 | 8702 | 25ed28da9d26504a19168262c0c3054df439ef5e90143b940b24e13af05a9adb |
 | Scripts/NVIDIA/Digital-Vibrance.ps1 | 10551 | e3ba8e46b90f3b353245cf67e83b7b4bcccee804304e97cbe575345572b9506f |
-| Scripts/NVIDIA/Settings-GitHub.ps1 | 13582 | 2fbb45996953d2ab23ecbfc99ec7b4209150116b4aa38f144b359ddc65459c5a |
+| Scripts/NVIDIA/Settings-GitHub.ps1 | 13259 | a4589974d5f638b11ad32fd70cbde0eb9ce32000bdcd0c8d8fa17c9566a0a3a4 |
 | Scripts/Windows/Copilot-Off.ps1 | 1548 | 2de74ba40c6aa77e7be94a1a5a022bdeea592405fe4ce1edc49613649c79b156 |
 | Scripts/Windows/Power-Plan.ps1 | 16724 | d2c675f55c89d54becbbba0bbbf299f3671a90f1f269603d8b001c183ff28ef0 |
 | Scripts/Windows/Services.ps1 | 29012 | 3db3d332d3e8ed3a820036a9aaccb0041124afc255c5a2e4b008ed2bd66eafd1 |

@@ -1,7 +1,7 @@
 {
     "schemaVersion":  1,
     "release":  {
-                    "version":  "1.0.7",
+                    "version":  "1.0.8",
                     "channel":  "main",
                     "minWindowsBuild":  22000,
                     "minPowerShell":  "5.1"
@@ -18,7 +18,7 @@
                   {
                       "path":  "Docs/PROVENANCE.md",
                       "size":  2352,
-                      "sha256":  "d8ea78b53d0d5d415675325bbe0b8557528d267938e10290915d291b4d735af6",
+                      "sha256":  "4f44cb4f8334d12eb1fbd84137f61842ddfe061f3c3e7304ae5efa90276a4662",
                       "role":  "documentation",
                       "origin":  "generated",
                       "derivedFrom":  null
@@ -41,16 +41,16 @@
                   },
                   {
                       "path":  "Launcher.ps1",
-                      "size":  9435,
-                      "sha256":  "fa6ee02c914c977023a36d9a94c2da6fc75417f6801d9dede4549221c03278d8",
+                      "size":  10366,
+                      "sha256":  "842207216ff9dce9a032e1953dfabe47aad16b3ae4105831cd93914acaedbfb8",
                       "role":  "launcher",
                       "origin":  "generated",
                       "derivedFrom":  null
                   },
                   {
                       "path":  "README.md",
-                      "size":  2156,
-                      "sha256":  "e4a6dd2fd2afd01006df494fb4806972efea2485233567f52e0efb680af03421",
+                      "size":  2523,
+                      "sha256":  "a2d0c159b8a16bb739d7166d2f6f92bf56158a4b6f22938fb83f608b4fb24963",
                       "role":  "documentation",
                       "origin":  "generated",
                       "derivedFrom":  null
@@ -65,8 +65,8 @@
                   },
                   {
                       "path":  "Scripts/Drivers/Debloated-Installer/Driver-Installer.ps1",
-                      "size":  37963,
-                      "sha256":  "320effd366d4f25d7a31cdf36fddd09575450cee5a029e635b69ed44b6d03f6e",
+                      "size":  37709,
+                      "sha256":  "178618e4982b35cedcb2f4bc0651d95c9cde3bc0ef738a84de8cc33b2aefa57b",
                       "role":  "source",
                       "origin":  "edited-source",
                       "derivedFrom":  "adf2e6121a6fa2171e7b917c59a58af575c68366342cf173f7e542c8dd1b2d24"
@@ -97,8 +97,8 @@
                   },
                   {
                       "path":  "Scripts/NVIDIA/Settings-GitHub.ps1",
-                      "size":  13582,
-                      "sha256":  "2fbb45996953d2ab23ecbfc99ec7b4209150116b4aa38f144b359ddc65459c5a",
+                      "size":  13259,
+                      "sha256":  "a4589974d5f638b11ad32fd70cbde0eb9ce32000bdcd0c8d8fa17c9566a0a3a4",
                       "role":  "source",
                       "origin":  "edited-source",
                       "derivedFrom":  "e8f9e32872ca98fd7d589568a167f73967c6d01605f8ada86eefa9ef30e936af"

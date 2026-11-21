@@ -14,6 +14,7 @@ Komut, araç dosyalarını indirir, dosyaları kontrol eder ve menüyü açar. B
 
 ## Menüde neler var?
 
+- **Tam otomatik kurulum (1):** Sırayla DDU ile NVIDIA sürücüsünü kaldırır, yeni ekran sürücüsünü kurar, NVIDIA Settings ve NIP ayarlarını uygular, ardından Widgets, Copilot, güç planı, zamanlayıcı ve hizmet araçlarını çalıştırır. Hizmet aracı en sonda bilgisayarı yeniden başlatır. Bir adım başarısız olursa kurulum orada durur.
 - **Sürücüler:** NVIDIA güncelleme aracı, çoklu ekran kartı sürücü indiricisi, DDU ve sade sürücü kurucusu.
 - **NVIDIA:** GitHub üzerinden kurulan NVIDIA Settings ve Digital Vibrance aracı.
 - **Windows:** Widgets, hizmetler, güç planı, Copilot ve zamanlayıcı araçları.
