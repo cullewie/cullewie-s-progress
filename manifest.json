@@ -1,7 +1,7 @@
 {
     "schemaVersion":  1,
     "release":  {
-                    "version":  "1.0.9",
+                    "version":  "1.0.10",
                     "channel":  "main",
                     "minWindowsBuild":  22000,
                     "minPowerShell":  "5.1"
@@ -17,16 +17,16 @@
                   },
                   {
                       "path":  "Docs/PROVENANCE.md",
-                      "size":  2352,
-                      "sha256":  "0d81575755417b3961bbe69db56559bdfe2fc279700b514dcbb79479b9fb17bb",
+                      "size":  2502,
+                      "sha256":  "18c04bf8ec8be235acca198eca7ffe53ac186c1883e79b791f21291c42ae8d3b",
                       "role":  "documentation",
                       "origin":  "generated",
                       "derivedFrom":  null
                   },
                   {
                       "path":  "Docs/SCRIPT-INVENTORY.md",
-                      "size":  1551,
-                      "sha256":  "08f13a7f7887052c1ff79079fc5099bf3b5d010eaf296d8f6251487797580cd9",
+                      "size":  1773,
+                      "sha256":  "e13affa621100db901bb77ed1e3c382484cf8eaab55acadca95ad916df4c578b",
                       "role":  "documentation",
                       "origin":  "generated",
                       "derivedFrom":  null
@@ -41,16 +41,16 @@
                   },
                   {
                       "path":  "Launcher.ps1",
-                      "size":  10366,
-                      "sha256":  "842207216ff9dce9a032e1953dfabe47aad16b3ae4105831cd93914acaedbfb8",
+                      "size":  10503,
+                      "sha256":  "c8424d777f95ae7d33752880fba3b81be94c03461ac02b98c1a08980dd3cc851",
                       "role":  "launcher",
                       "origin":  "generated",
                       "derivedFrom":  null
                   },
                   {
                       "path":  "README.md",
-                      "size":  2523,
-                      "sha256":  "a2d0c159b8a16bb739d7166d2f6f92bf56158a4b6f22938fb83f608b4fb24963",
+                      "size":  2579,
+                      "sha256":  "5b71008117061e268061ff0520e2d0b8c0c9f6a5e63237eaa6421e0b3e106027",
                       "role":  "documentation",
                       "origin":  "generated",
                       "derivedFrom":  null
@@ -142,6 +142,14 @@
                       "role":  "source",
                       "origin":  "edited-source",
                       "derivedFrom":  "0171013b91f2a6f7fd6d055f305045650ad1a326d5f45cb08953759a7a69ac0a"
+                  },
+                  {
+                      "path":  "Scripts/Windows/Tweaks.ps1",
+                      "size":  11227,
+                      "sha256":  "19221d79eab7b08015658f172b45e4b5c5dd4444655f54c1c13c53924c41bd55",
+                      "role":  "source",
+                      "origin":  "adapted-source",
+                      "derivedFrom":  "opcinn/yuksekfps yuksekfps.ps1"
                   }
               ],
     "externalAssets":  [
@@ -211,6 +219,12 @@
                     {
                         "id":  "timer-resolution",
                         "entry":  "Scripts/Windows/Timer-Resolution.ps1",
+                        "adminRequired":  true,
+                        "requiresReboot":  false
+                    },
+                    {
+                        "id":  "tweaks",
+                        "entry":  "Scripts/Windows/Tweaks.ps1",
                         "adminRequired":  true,
                         "requiresReboot":  false
                     }

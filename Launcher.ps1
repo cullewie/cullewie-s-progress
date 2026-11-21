@@ -16,6 +16,7 @@ $script:Tools = @(
     [pscustomobject]@{ Id='power-plan'; Name='Power Plan On'; Category='Windows'; Path='Scripts/Windows/Power-Plan.ps1'; Wrapper='' }
     [pscustomobject]@{ Id='copilot-off'; Name='Copilot Off'; Category='Windows'; Path='Scripts/Windows/Copilot-Off.ps1'; Wrapper='' }
     [pscustomobject]@{ Id='timer-resolution'; Name='Timer Resolution On'; Category='Windows'; Path='Scripts/Windows/Timer-Resolution.ps1'; Wrapper='' }
+    [pscustomobject]@{ Id='tweaks'; Name='Windows Tweaks'; Category='Windows'; Path='Scripts/Windows/Tweaks.ps1'; Wrapper='' }
 )
 function Test-IsAdministrator {
     $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
@@ -141,7 +142,7 @@ function Start-FullSetup {
         throw 'NVIDIA driver installation did not complete. Full setup stopped before Windows changes.'
     }
     # Services goes last: it restarts the computer to apply its changes.
-    foreach ($id in 'settings-github', 'widgets', 'copilot-off', 'power-plan', 'timer-resolution', 'services') {
+    foreach ($id in 'settings-github', 'widgets', 'copilot-off', 'power-plan', 'timer-resolution', 'tweaks', 'services') {
         $tool = $script:Tools | Where-Object { $_.Id -eq $id } | Select-Object -First 1
         Invoke-ChildScript -Tool $tool -NoPause
         if ($script:LastChildExitCode -ne 0) {

@@ -14,10 +14,10 @@ Komut, araç dosyalarını indirir, dosyaları kontrol eder ve menüyü açar. B
 
 ## Menüde neler var?
 
-- **Tam otomatik kurulum (1):** Sırayla DDU ile NVIDIA sürücüsünü kaldırır, yeni ekran sürücüsünü kurar, NVIDIA Settings ve NIP ayarlarını uygular, ardından Widgets, Copilot, güç planı, zamanlayıcı ve hizmet araçlarını çalıştırır. Hizmet aracı en sonda bilgisayarı yeniden başlatır. Bir adım başarısız olursa kurulum orada durur.
+- **Tam otomatik kurulum (1):** Sırayla DDU ile NVIDIA sürücüsünü kaldırır, yeni ekran sürücüsünü kurar, NVIDIA Settings ve NIP ayarlarını uygular, ardından Widgets, Copilot, güç planı, zamanlayıcı, Windows ayarları (Tweaks) ve hizmet araçlarını çalıştırır. Hizmet aracı en sonda bilgisayarı yeniden başlatır. Bir adım başarısız olursa kurulum orada durur.
 - **Sürücüler:** NVIDIA güncelleme aracı, çoklu ekran kartı sürücü indiricisi, DDU ve sade sürücü kurucusu.
 - **NVIDIA:** GitHub üzerinden kurulan NVIDIA Settings ve Digital Vibrance aracı.
-- **Windows:** Widgets, hizmetler, güç planı, Copilot ve zamanlayıcı araçları.
+- **Windows:** Widgets, hizmetler, güç planı, Copilot ve zamanlayıcı araçları, Windows ayarları (Tweaks).
 
 Ana NVIDIA Driver Updater üretim sürümü olarak korunur. Rehberli NVIDIA kurulumu yalnızca ekran sürücüsünü kurar; NVIDIA App ve NVIDIA Control Panel için ayrı kurulum başlatmaz.
 
@@ -33,4 +33,4 @@ IWR yalnızca dosyaları indirir, SHA-256 değerlerini kontrol eder ve menüyü 
 
 ## Dosyalar
 
-`Scripts/` klasöründe 11 PowerShell aracı bulunur. `manifest.json`, indirilen dosyaların boyut ve SHA-256 değerlerini listeler. `Docs/PROVENANCE.md` kaynak dosyaların kimliğini kaydeder.
+`Scripts/` klasöründe 12 PowerShell aracı bulunur. `manifest.json`, indirilen dosyaların boyut ve SHA-256 değerlerini listeler. `Docs/PROVENANCE.md` kaynak dosyaların kimliğini kaydeder.

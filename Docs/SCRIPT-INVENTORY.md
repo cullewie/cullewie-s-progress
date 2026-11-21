@@ -1,6 +1,6 @@
 # Araç listesi
 
-Bu projede 11 PowerShell aracı vardır.
+Bu projede 12 PowerShell aracı vardır.
 
 ## Sürücüler
 
@@ -23,5 +23,6 @@ NVIDIA Settings aracı GitHub üzerinden kurulur.
 - `Scripts/Windows/Power-Plan.ps1` — Güç planı ayarlarını değiştirir.
 - `Scripts/Windows/Copilot-Off.ps1` — Copilot'ı kapatır ve kaldırma adımlarını çalıştırır.
 - `Scripts/Windows/Timer-Resolution.ps1` — Zamanlayıcı çözünürlüğü hizmetini kurar.
+- `Scripts/Windows/Tweaks.ps1` — opcin'in YUKSEK FPS betiğinden uyarlanan Windows ayarları. Geri yükleme noktasını kapatır, BitLocker'ı kapatır; gizlilik, arayüz, oyun ve ağ ayarlarını yapar, diski temizler.
 
 Kaynak betiklerdeki geri alma ve varsayılan ayara döndürme menüleri kaldırılmıştır. Teknik çalışma ayrıntıları için `HOW-IT-WORKS.md` dosyasına bak.
