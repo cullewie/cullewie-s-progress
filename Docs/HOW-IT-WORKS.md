@@ -25,6 +25,13 @@ FR33THY WinSux gibi dört aşamada çalışır; UAC kapatılmaz.
 
 Güvenli Mod'da Windows Hello PIN'i çalışmaz; her aşamada hesabın şifresiyle oturum açılır.
 
+Sorun çıkarmaması için:
+
+- BitLocker açıksa 1. aşamada askıya alınır; önyükleme ayarı değişince kurtarma anahtarı sorulmaz. Tweaks daha sonra BitLocker'ı kapatır.
+- Windows Update'in DDU ile yeni sürücü arasında kendi NVIDIA sürücüsünü kurması engellenir.
+- 3. aşama internet gelene kadar en fazla 5 dakika bekler.
+- Kartta NVIDIA sürücüsü yoksa Windows kartı "Microsoft Basic Display Adapter" diye gösterir. Bu durumda kartın PCI kimliği `pci-ids.ucw.cz` listesinde aranır ve NVIDIA'nın kullandığı model adı bulunur.
+
 ## Rehberli NVIDIA kurulumu
 
 Kurulu NVIDIA sürücüsü varsa DDU normal Windows modunda bir kez çalışır. Safe Mode açılmaz; DDU yeniden başlatma komutu vermez ve geri yükleme noktası oluşturmaz. DDU bittikten sonra aynı launcher oturumu NVIDIA paketinden yalnızca `Display.Driver` bileşenini kurar. NVIDIA App ve NVIDIA Control Panel kurulumu başlatılmaz. Ekran kartının model adı temizlikten önce saklanıp kurucuya aktarılır. İndirme akışı yüzdeyi saniyede birkaç kez günceller; PowerShell 5.1'in yavaş yerleşik ilerleme göstergesini kullanmaz.

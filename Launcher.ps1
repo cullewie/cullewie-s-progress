@@ -5,6 +5,7 @@ param(
 )
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 $script:RepoRoot = $PSScriptRoot
 $script:PowerShellExe = Join-Path $PSHOME 'powershell.exe'
 $script:Tools = @(
@@ -123,6 +124,10 @@ function Start-GuidedNvidiaSetup {
     else {
         Remove-Item -LiteralPath $statePath -Force -ErrorAction SilentlyContinue
         Write-Host 'No installed NVIDIA display driver was detected. Skipping DDU.' -ForegroundColor Cyan
+        $resolved = Resolve-NvidiaGpuName
+        if ($resolved) {
+            [IO.File]::WriteAllText($statePath, ([pscustomobject]@{ GpuName = $resolved } | ConvertTo-Json -Compress), [Text.UTF8Encoding]::new($false))
+        }
     }
 
     if (Test-Path -LiteralPath $statePath -PathType Leaf) {
@@ -147,6 +152,53 @@ function Start-GuidedNvidiaSetup {
 #   3 normal  (task):      driver, NVIDIA settings, Windows tools; Services queues stage 4 and restarts
 #   4 safe mode (RunOnce): Services settings apply, restart normally
 $script:FullSetupTask = 'cullewie-full-setup'
+function Get-NvidiaNameCandidates {
+    # pci.ids name -> NVIDIA catalog names, e.g. "AD106M [GeForce RTX 4070 Max-Q / Mobile]" -> "GeForce RTX 4070 Laptop GPU"
+    param([string]$PciName)
+    if ($PciName -notmatch '^(\S+).*?\[(.+)\]') { return @() }
+    $chip = $Matches[1]
+    $name = $Matches[2]
+    $laptop = $chip -match 'M$' -or $name -match 'Mobile|Max-Q|Laptop GPU'
+    $name = ($name -split ' / ')[0]
+    $name = $name -replace '\s+(Max-Q|Mobile|Laptop GPU|Lite Hash Rate|Engineering Sample|Refresh|GDDR6X|OEM|Rev\.\s*\S+|\d+\s?GB)\b', ''
+    $name = ($name -replace '\s+', ' ').Trim()
+    if ($laptop) { return @("$name Laptop GPU", $name) }
+    return @($name)
+}
+function Resolve-NvidiaGpuName {
+    # Without an NVIDIA driver Windows names the card "Microsoft Basic Display Adapter";
+    # look the PCI device ID up in pci.ids and pick the name NVIDIA's catalog uses.
+    $gpu = Get-CimInstance Win32_VideoController | Where-Object { $_.PNPDeviceID -like 'PCI\VEN_10DE&*' } | Select-Object -First 1
+    if (-not $gpu) { return $null }
+    if ($gpu.Name -match 'NVIDIA|GeForce|Quadro|RTX|GTX') { return [string]$gpu.Name }
+    if ($gpu.PNPDeviceID -notmatch 'DEV_([0-9A-F]{4})') { return $null }
+    $deviceId = $Matches[1].ToLowerInvariant()
+    try {
+        $content = (Invoke-WebRequest -Uri 'https://pci-ids.ucw.cz/v2.2/pci.ids' -UseBasicParsing -TimeoutSec 60).Content
+        if ($content -is [byte[]]) { $content = [Text.Encoding]::UTF8.GetString($content) }
+        $pciIds = $content -split "`n"
+        $products = (Invoke-RestMethod -Uri 'https://www.nvidia.com/Download/API/lookupValueSearch.aspx?TypeID=3' -Headers @{ 'User-Agent' = 'Mozilla/5.0' } -UseBasicParsing -TimeoutSec 60).LookupValueSearch.LookupValues.LookupValue |
+            ForEach-Object { [string]$_.Name -replace '^NVIDIA\s+', '' }
+    }
+    catch { return $null }
+    $inVendor = $false
+    foreach ($line in $pciIds) {
+        if ($line -match '^10de\s') { $inVendor = $true; continue }
+        if ($inVendor -and $line -match '^[0-9a-f]{4}\s') { break }
+        if ($inVendor -and $line -match "^\t$deviceId  (.+?)\s*$") {
+            return Get-NvidiaNameCandidates $Matches[1] | Where-Object { $products -contains $_ } | Select-Object -First 1
+        }
+    }
+    return $null
+}
+function Wait-Internet {
+    # the logon task can start before the network is up
+    for ($i = 0; $i -lt 60; $i++) {
+        try { Invoke-WebRequest -Uri 'https://www.nvidia.com' -Method Head -UseBasicParsing -TimeoutSec 5 | Out-Null; return }
+        catch { Start-Sleep -Seconds 5 }
+    }
+    throw 'No internet connection after 5 minutes.'
+}
 function Invoke-RequiredTool {
     param([Parameter(Mandatory=$true)][string]$Id, [string[]]$Arguments = @())
     $tool = $script:Tools | Where-Object { $_.Id -eq $Id } | Select-Object -First 1
@@ -174,6 +226,19 @@ function Start-FullSetup {
         [IO.File]::WriteAllText($dduFlag, '')
     }
     Invoke-RequiredTool -Id 'defender' -Arguments '-QueueOnly'
+
+    # BitLocker can ask for the recovery key when boot settings change; suspend it until Tweaks turns it off
+    if (Get-Command Get-BitLockerVolume -ErrorAction SilentlyContinue) {
+        $bitLocker = Get-BitLockerVolume -MountPoint $env:SystemDrive -ErrorAction SilentlyContinue
+        if ($bitLocker -and [string]$bitLocker.ProtectionStatus -eq 'On') {
+            Suspend-BitLocker -MountPoint $env:SystemDrive -RebootCount 0 | Out-Null
+        }
+    }
+    # keep Windows Update from installing its own NVIDIA driver between DDU and the real driver
+    New-Item -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\DriverSearching' -Force | Out-Null
+    Set-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\DriverSearching' -Name 'SearchOrderConfig' -Value 0 -Type DWord
+    New-Item -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate' -Force | Out-Null
+    Set-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate' -Name 'ExcludeWUDriversInQualityUpdate' -Value 1 -Type DWord
 
     # safe mode has no Windows Hello PIN; show the password option at sign-in (as WinSux does)
     New-Item -Path 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\PasswordLess\Device' -Force | Out-Null
@@ -225,10 +290,16 @@ function Resume-FullSetup {
     Unregister-ScheduledTask -TaskName $script:FullSetupTask -Confirm:$false -ErrorAction SilentlyContinue
     $statePath = Join-Path $script:RepoRoot 'nvidia-setup-state.json'
     $failed = New-Object System.Collections.Generic.List[string]
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+    try { Wait-Internet } catch { $failed.Add($_.Exception.Message) }
     $hasNvidia = @(Get-CimInstance Win32_VideoController | Where-Object { $_.PNPDeviceID -like 'PCI\VEN_10DE&*' }).Count -gt 0
     if ($hasNvidia) {
         if (Test-Path -LiteralPath $statePath -PathType Leaf) {
             $env:CULLEWIE_NVIDIA_GPU_NAME = [string](Get-Content -LiteralPath $statePath -Raw | ConvertFrom-Json).GpuName
+        }
+        else {
+            $resolved = Resolve-NvidiaGpuName
+            if ($resolved) { $env:CULLEWIE_NVIDIA_GPU_NAME = $resolved }
         }
         # a failed NVIDIA step must not block the Windows steps after it
         try {

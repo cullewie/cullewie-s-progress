@@ -1,7 +1,7 @@
 {
     "schemaVersion":  1,
     "release":  {
-                    "version":  "1.0.13",
+                    "version":  "1.0.14",
                     "channel":  "main",
                     "minWindowsBuild":  22000,
                     "minPowerShell":  "5.1"
@@ -9,8 +9,8 @@
     "files":  [
                   {
                       "path":  "Docs/HOW-IT-WORKS.md",
-                      "size":  3056,
-                      "sha256":  "8d45ad43c2cc5bc7d2711ae61f6a0216ffeb2b5986fefa8f058a38f75310cf49",
+                      "size":  3618,
+                      "sha256":  "74ea86c6d8b922effa3cab1c7e49c33a1713298a4e6c86630c2304d93583ca9f",
                       "role":  "documentation",
                       "origin":  "generated",
                       "derivedFrom":  null
@@ -41,8 +41,8 @@
                   },
                   {
                       "path":  "Launcher.ps1",
-                      "size":  17484,
-                      "sha256":  "892ff12fef522fcf5430b5ab316c889d77935c1f464c0a49614451d2b3e49566",
+                      "size":  21755,
+                      "sha256":  "eef6c178775f94f18c677ee1788568aa9357178588b83598a2f329f8dc7e5e1d",
                       "role":  "launcher",
                       "origin":  "generated",
                       "derivedFrom":  null
