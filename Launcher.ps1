@@ -11,12 +11,14 @@ $script:Tools = @(
     [pscustomobject]@{ Id='debloated-installer'; Name='Debloated Driver Installer'; Category='Drivers'; Path='Scripts/Drivers/Debloated-Installer/Driver-Installer.ps1'; Wrapper='' }
     [pscustomobject]@{ Id='settings-github'; Name='NVIDIA Settings (GitHub)'; Category='NVIDIA'; Path='Scripts/NVIDIA/Settings-GitHub.ps1'; Wrapper='' }
     [pscustomobject]@{ Id='digital-vibrance'; Name='NVIDIA Digital Vibrance'; Category='NVIDIA'; Path='Scripts/NVIDIA/Digital-Vibrance.ps1'; Wrapper='' }
+    [pscustomobject]@{ Id='p0-state'; Name='NVIDIA P0 State On'; Category='NVIDIA'; Path='Scripts/NVIDIA/P0-State.ps1'; Wrapper='' }
     [pscustomobject]@{ Id='widgets'; Name='Widgets Off'; Category='Windows'; Path='Scripts/Windows/Widgets.ps1'; Wrapper='' }
     [pscustomobject]@{ Id='services'; Name='Services Off'; Category='Windows'; Path='Scripts/Windows/Services.ps1'; Wrapper='' }
     [pscustomobject]@{ Id='power-plan'; Name='Power Plan On'; Category='Windows'; Path='Scripts/Windows/Power-Plan.ps1'; Wrapper='' }
     [pscustomobject]@{ Id='copilot-off'; Name='Copilot Off'; Category='Windows'; Path='Scripts/Windows/Copilot-Off.ps1'; Wrapper='' }
     [pscustomobject]@{ Id='timer-resolution'; Name='Timer Resolution On'; Category='Windows'; Path='Scripts/Windows/Timer-Resolution.ps1'; Wrapper='' }
     [pscustomobject]@{ Id='tweaks'; Name='Windows Tweaks'; Category='Windows'; Path='Scripts/Windows/Tweaks.ps1'; Wrapper='' }
+    [pscustomobject]@{ Id='defender'; Name='Defender Optimize'; Category='Windows'; Path='Scripts/Windows/Defender.ps1'; Wrapper='' }
 )
 function Test-IsAdministrator {
     $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
@@ -142,9 +144,11 @@ function Start-FullSetup {
         throw 'NVIDIA driver installation did not complete. Full setup stopped before Windows changes.'
     }
     # Services goes last: it restarts the computer to apply its changes.
-    foreach ($id in 'settings-github', 'widgets', 'copilot-off', 'power-plan', 'timer-resolution', 'tweaks', 'services') {
+    # Defender only queues its safe-mode step; Services then restarts once for both.
+    foreach ($id in 'settings-github', 'p0-state', 'widgets', 'copilot-off', 'power-plan', 'timer-resolution', 'tweaks', 'defender', 'services') {
         $tool = $script:Tools | Where-Object { $_.Id -eq $id } | Select-Object -First 1
-        Invoke-ChildScript -Tool $tool -NoPause
+        if ($id -eq 'defender') { Invoke-ChildScript -Tool $tool -Arguments '-NoRestart' -NoPause }
+        else { Invoke-ChildScript -Tool $tool -NoPause }
         if ($script:LastChildExitCode -ne 0) {
             throw "$($tool.Name) did not complete. Full setup stopped."
         }

@@ -1,6 +1,6 @@
 # Araç listesi
 
-Bu projede 12 PowerShell aracı vardır.
+Bu projede 14 PowerShell aracı vardır.
 
 ## Sürücüler
 
@@ -13,6 +13,7 @@ Bu projede 12 PowerShell aracı vardır.
 
 - `Scripts/NVIDIA/Settings-GitHub.ps1` — GitHub dağıtımlı NVIDIA Settings aracı.
 - `Scripts/NVIDIA/Digital-Vibrance.ps1` — NVIDIA Digital Vibrance ayarı.
+- `Scripts/NVIDIA/P0-State.ps1` — FR33THY P0 State: NVIDIA kartını sürekli en yüksek güç durumunda ve boost frekansında tutar.
 
 NVIDIA Settings aracı GitHub üzerinden kurulur.
 
@@ -24,5 +25,6 @@ NVIDIA Settings aracı GitHub üzerinden kurulur.
 - `Scripts/Windows/Copilot-Off.ps1` — Copilot'ı kapatır ve kaldırma adımlarını çalıştırır.
 - `Scripts/Windows/Timer-Resolution.ps1` — Zamanlayıcı çözünürlüğü hizmetini kurar.
 - `Scripts/Windows/Tweaks.ps1` — opcin'in YUKSEK FPS betiğinden uyarlanan Windows ayarları. Geri yükleme noktasını kapatır, BitLocker'ı kapatır; gizlilik, arayüz, oyun ve ağ ayarlarını yapar, diski temizler.
+- `Scripts/Windows/Defender.ps1` — FR33THY Defender Optimize: Defender, SmartScreen, Smart App Control ve bildirim ayarlarını güvenli modda kapatır. FACEIT için VBS, bellek bütünlüğü, savunmasız sürücü engelleme listesi ve sistem exploit korumaları Windows varsayılanında kalır.
 
 Kaynak betiklerdeki geri alma ve varsayılan ayara döndürme menüleri kaldırılmıştır. Teknik çalışma ayrıntıları için `HOW-IT-WORKS.md` dosyasına bak.

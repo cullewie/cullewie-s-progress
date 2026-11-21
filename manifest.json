@@ -1,7 +1,7 @@
 {
     "schemaVersion":  1,
     "release":  {
-                    "version":  "1.0.10",
+                    "version":  "1.0.11",
                     "channel":  "main",
                     "minWindowsBuild":  22000,
                     "minPowerShell":  "5.1"
@@ -17,16 +17,16 @@
                   },
                   {
                       "path":  "Docs/PROVENANCE.md",
-                      "size":  2502,
-                      "sha256":  "18c04bf8ec8be235acca198eca7ffe53ac186c1883e79b791f21291c42ae8d3b",
+                      "size":  2750,
+                      "sha256":  "af6e83aa960be2abc5ce566298f3207b35ad5f7065f3ff17f823e35e5c62e847",
                       "role":  "documentation",
                       "origin":  "generated",
                       "derivedFrom":  null
                   },
                   {
                       "path":  "Docs/SCRIPT-INVENTORY.md",
-                      "size":  1773,
-                      "sha256":  "e13affa621100db901bb77ed1e3c382484cf8eaab55acadca95ad916df4c578b",
+                      "size":  2208,
+                      "sha256":  "35c1dee6f6250b42a0e2f4c173305d244b0b17e1d4e00d016445739a21f1295d",
                       "role":  "documentation",
                       "origin":  "generated",
                       "derivedFrom":  null
@@ -41,16 +41,16 @@
                   },
                   {
                       "path":  "Launcher.ps1",
-                      "size":  10503,
-                      "sha256":  "c8424d777f95ae7d33752880fba3b81be94c03461ac02b98c1a08980dd3cc851",
+                      "size":  10988,
+                      "sha256":  "6b9c4175253a74e61486f77232a416bfe297424418ee013be56eaeec986867cd",
                       "role":  "launcher",
                       "origin":  "generated",
                       "derivedFrom":  null
                   },
                   {
                       "path":  "README.md",
-                      "size":  2579,
-                      "sha256":  "5b71008117061e268061ff0520e2d0b8c0c9f6a5e63237eaa6421e0b3e106027",
+                      "size":  2627,
+                      "sha256":  "0685033e3179ff5503b2749b8115dc9c038d92fd1072a01daa055d781486f937",
                       "role":  "documentation",
                       "origin":  "generated",
                       "derivedFrom":  null
@@ -145,11 +145,27 @@
                   },
                   {
                       "path":  "Scripts/Windows/Tweaks.ps1",
-                      "size":  11227,
-                      "sha256":  "19221d79eab7b08015658f172b45e4b5c5dd4444655f54c1c13c53924c41bd55",
+                      "size":  11519,
+                      "sha256":  "4dd36fd3eb646958dd1512b388828752657e92661f107326a269fbf4abd76706",
                       "role":  "source",
                       "origin":  "adapted-source",
                       "derivedFrom":  "opcinn/yuksekfps yuksekfps.ps1"
+                  },
+                  {
+                      "path":  "Scripts/NVIDIA/P0-State.ps1",
+                      "size":  1356,
+                      "sha256":  "613c9aba2ad32f0db0609cc6046fac946919cddd66a26919e74677a2403266dc",
+                      "role":  "source",
+                      "origin":  "edited-source",
+                      "derivedFrom":  "FR33THY Ultimate 9 P0 State.ps1"
+                  },
+                  {
+                      "path":  "Scripts/Windows/Defender.ps1",
+                      "size":  11959,
+                      "sha256":  "d49d2eeb6105bb2319ee8f21b2f329facfd3fc82c9c83c0f885eb1e425221a0f",
+                      "role":  "source",
+                      "origin":  "edited-source",
+                      "derivedFrom":  "FR33THY Ultimate 33 Defender Optimize.ps1"
                   }
               ],
     "externalAssets":  [
@@ -227,6 +243,18 @@
                         "entry":  "Scripts/Windows/Tweaks.ps1",
                         "adminRequired":  true,
                         "requiresReboot":  false
+                    },
+                    {
+                        "id":  "p0-state",
+                        "entry":  "Scripts/NVIDIA/P0-State.ps1",
+                        "adminRequired":  true,
+                        "requiresReboot":  true
+                    },
+                    {
+                        "id":  "defender",
+                        "entry":  "Scripts/Windows/Defender.ps1",
+                        "adminRequired":  true,
+                        "requiresReboot":  true
                     }
                 ]
 }

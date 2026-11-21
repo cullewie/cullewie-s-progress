@@ -56,6 +56,9 @@ foreach ($store in "location","userNotificationListener","userAccountInformation
     Set-Reg -Path "$consentPath\$store" -Name "Value" -Type "String" -Value "Deny"
 }
 Set-Reg -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications" -Name "GlobalUserDisabled" -Value 1
+# background apps off for all apps (FR33THY "9 Background Apps.ps1")
+Set-Reg -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AppPrivacy" -Name "LetAppsRunInBackground" -Value 2
+Set-Reg -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Search" -Name "BackgroundAppGlobalToggle" -Value 0
 Set-Reg -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\DriverSearching" -Name "SearchOrderConfig" -Value 0
 
 Write-Host "Telemetry services off"
