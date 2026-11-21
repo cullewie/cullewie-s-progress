@@ -8,9 +8,8 @@
         $Host.PrivateData.ProgressForegroundColor = "White"
         Clear-Host
 
-        Write-Host "1. Widgets: Off (Recommended)"
         while ($true) {
-        $choice = Read-Host " "
+        $choice = '1'
         if ($choice -match '^[1]$') {
         switch ($choice) {
         1 {

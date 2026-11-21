@@ -22,7 +22,7 @@ Ana NVIDIA Driver Updater üretim sürümü olarak korunur. Rehberli NVIDIA kuru
 
 Rehberli NVIDIA kurulumu kurulu sürücüyü bir kez DDU ile temizler. DDU normal Windows modunda çalışır; bilgisayarı yeniden başlatmaz ve geri yükleme noktası oluşturmaz. DDU bitince NVIDIA kurulum paketi yalnızca `Display.Driver` bileşenini kurar. Yeniden başlatma gerekse bile toolkit bilgisayarı otomatik yeniden başlatmaz. Büyük sürücü indirmeleri yüzde göstergesi kullanır ve PowerShell 5.1'in yavaş yerleşik indirme göstergesini devre dışı bırakır.
 
-Services Off seçeneği `CaptureService` hizmetini `Manual` durumda bırakır; böylece Snipping Tool gerektiğinde bu hizmeti başlatabilir.
+Services Off seçeneği `CaptureService` hizmetini `Manual` durumda bırakır; böylece Snipping Tool gerektiğinde bu hizmeti başlatabilir. Wi-Fi (`WlanSvc`) ve olay günlüğü (`EventLog`) açık kalır.
 
 ## Davranış
 

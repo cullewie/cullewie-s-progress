@@ -20,6 +20,7 @@
 
 # download nvidia control panel
 IWR "https://github.com/FR33THYFR33THY/Ultimate/releases/download/Files/nvp.appx" -OutFile "$env:SystemRoot\Temp\nvp.appx"
+if ((Get-FileHash "$env:SystemRoot\Temp\nvp.appx" -Algorithm SHA256).Hash -ne 'dd9ca6be34a6f9d90d8eb85ff39c4292f14df32dd7f6e032fec0c8de76b98eeb') { throw 'nvp.appx SHA-256 mismatch; download stopped.' }
 
 # install nvidia control panel
 Add-AppxPackage -Path "$env:SystemRoot\Temp\nvp.appx" -ErrorAction SilentlyContinue | Out-Null
@@ -75,6 +76,7 @@ New-Item -Path "$env:SystemDrive\Program Files (x86)\Nvidia Profile Inspector" -
 
 # download nvidia profile inspector
 IWR "https://github.com/FR33THYFR33THY/Ultimate/releases/download/Files/inspector.exe" -OutFile "$env:SystemDrive\Program Files (x86)\Nvidia Profile Inspector\Nvidia Profile Inspector.exe"
+if ((Get-FileHash "$env:SystemDrive\Program Files (x86)\Nvidia Profile Inspector\Nvidia Profile Inspector.exe" -Algorithm SHA256).Hash -ne '071f38bfeec4fab0a33261f7fa010940e2c3c96fb21f03d18d490110ddb90b03') { throw 'inspector.exe SHA-256 mismatch; download stopped.' }
 
 # create desktop shortcut
 $WshShell = New-Object -comObject WScript.Shell

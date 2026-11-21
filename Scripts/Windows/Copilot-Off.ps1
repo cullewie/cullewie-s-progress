@@ -13,10 +13,8 @@ $progresspreference = 'silentlycontinue'
 
 Write-Host "Copilot: Off...`n"
 
-# stop related processes
-$stop = "backgroundTaskHost", "Copilot", "CrossDeviceResume", "GameBar", "MicrosoftEdgeUpdate", "msedge", "msedgewebview2", "OneDrive", "OneDrive.Sync.Service", "OneDriveStandaloneUpdater", "Resume", "RuntimeBroker", "Search", "SearchHost", "Setup", "StoreDesktopExtension", "WidgetService", "Widgets"
-$stop | ForEach-Object { Stop-Process -Name $_ -Force -ErrorAction SilentlyContinue }
-Get-Process | Where-Object { $_.ProcessName -like "*edge*" } | Stop-Process -Force -ErrorAction SilentlyContinue
+# stop copilot so its package can be removed; other apps (Edge, installers) keep running
+Stop-Process -Name "Copilot" -Force -ErrorAction SilentlyContinue
 
 # remove copilot package for all users
 Get-AppxPackage -AllUsers *Copilot* | Remove-AppxPackage -AllUsers -ErrorAction SilentlyContinue
@@ -29,5 +27,4 @@ cmd /c "reg add `"HKCU\Software\Policies\Microsoft\Windows\WindowsCopilot`" /v `
 cmd /c "reg add `"HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsCopilot`" /v `"TurnOffWindowsCopilot`" /t REG_DWORD /d `"1`" /f >nul 2>&1"
 
 Write-Host "Done.`n"
-Read-Host "Devam etmek icin Enter'a basin"
 exit

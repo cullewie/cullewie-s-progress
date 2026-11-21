@@ -8,11 +8,11 @@ $Host.PrivateData.ProgressBackgroundColor = "Black"
 $Host.PrivateData.ProgressForegroundColor = "White"
 Clear-Host
 
-# SCRIPT CHECK INTERNET
-if (!(Test-Connection -ComputerName "8.8.8.8" -Count 1 -Quiet -ErrorAction SilentlyContinue)) {
-Write-Host "Internet Connection Required`n" -ForegroundColor Red
-Pause
-exit
+function Assert-Publisher([string]$Path, [string]$Publisher) {
+$signature = Get-AuthenticodeSignature -LiteralPath $Path
+if ($signature.Status -ne 'Valid' -or $signature.SignerCertificate.Subject -notmatch $Publisher) {
+throw "Downloaded file is not signed by $Publisher; it was not started: $Path"
+}
 }
 
 # SCRIPT SILENT
@@ -43,11 +43,14 @@ $payload = $response.Content | ConvertFrom-Json
 $version =  $payload.IDS[0].downloadInfo.Version
 $windowsVersion = if ([Environment]::OSVersion.Version -ge (new-object 'Version' 9, 1)) {"win10-win11"} else {"win8-win7"}
 $windowsArchitecture = if ([Environment]::Is64BitOperatingSystem) {"64bit"} else {"32bit"}
-$url = "https://international.download.nvidia.com/Windows/$version/$version-desktop-$windowsVersion-$windowsArchitecture-international-dch-whql.exe"
+# Laptops (a battery is present) need NVIDIA's notebook package.
+$formFactor = if (Get-CimInstance Win32_Battery) {"notebook"} else {"desktop"}
+$url = "https://international.download.nvidia.com/Windows/$version/$version-$formFactor-$windowsVersion-$windowsArchitecture-international-dch-whql.exe"
 Write-Output "Downloading: Nvidia Driver $version ..."
 
 # download nvidia driver
 IWR $url -OutFile "$env:SystemRoot\Temp\nvidiadriver.exe"
+Assert-Publisher "$env:SystemRoot\Temp\nvidiadriver.exe" 'NVIDIA Corporation'
 Clear-Host
 
 # open nvidia driver installer
@@ -69,7 +72,11 @@ $spoofwebbrowser = @{
 "Accept"     = "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
 "Referer"    = "https://www.amd.com/"
 }
-IWR $DownloadAmd.href -UseBasicParsing -Headers $spoofwebbrowser -OutFile "$env:SystemRoot\Temp\amddriver.exe" -ErrorAction SilentlyContinue | Out-Null
+$amdLinks = @($DownloadAmd.href | Select-Object -Unique)
+if ($amdLinks.Count -ne 1) { throw "Expected one AMD installer link on the AMD page. Found: $($amdLinks.Count)" }
+Remove-Item "$env:SystemRoot\Temp\amddriver.exe" -Force -ErrorAction SilentlyContinue
+IWR $amdLinks[0] -UseBasicParsing -Headers $spoofwebbrowser -OutFile "$env:SystemRoot\Temp\amddriver.exe"
+Assert-Publisher "$env:SystemRoot\Temp\amddriver.exe" 'Advanced Micro Devices'
 
 # open amd web driver installer
 Start-Process "$env:SystemRoot\Temp\amddriver.exe"

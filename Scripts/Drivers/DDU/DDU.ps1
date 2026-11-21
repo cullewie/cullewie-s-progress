@@ -13,13 +13,6 @@ param(
         $Host.PrivateData.ProgressForegroundColor = "White"
         Clear-Host
 
-        # SCRIPT CHECK INTERNET
-        if (!(Test-Connection -ComputerName "8.8.8.8" -Count 1 -Quiet -ErrorAction SilentlyContinue)) {
-        Write-Host "Internet Connection Required`n" -ForegroundColor Red
-        Pause
-        exit
-        }
-
         # SCRIPT SILENT
         $progresspreference = 'silentlycontinue'
 
@@ -35,6 +28,7 @@ param(
 
 # download 7zip
 IWR "https://github.com/FR33THYFR33THY/Ultimate/releases/download/Files/7zip.exe" -OutFile "$env:SystemRoot\Temp\7zip.exe"
+if ((Get-FileHash "$env:SystemRoot\Temp\7zip.exe" -Algorithm SHA256).Hash -ne '0859c524b8a63551848f0c246abddcb1d0b7b656b0fbfe879f8d85e61a9e6edd') { throw '7zip.exe SHA-256 mismatch; download stopped.' }
 
 # install 7zip
 Start-Process -Wait "$env:SystemRoot\Temp\7zip.exe" -ArgumentList "/S"
@@ -49,6 +43,7 @@ Remove-Item "$env:ProgramData\Microsoft\Windows\Start Menu\Programs\7-Zip" -Recu
 
 # download ddu
 IWR "https://github.com/FR33THYFR33THY/Ultimate/releases/download/Files/ddu.exe" -OutFile "$env:SystemRoot\Temp\ddu.exe"
+if ((Get-FileHash "$env:SystemRoot\Temp\ddu.exe" -Algorithm SHA256).Hash -ne '9b2611ec6d5a9d8853936cc071cc4026c6cfe91beed956cd41cc81c0930acd47') { throw 'ddu.exe SHA-256 mismatch; download stopped.' }
 
 # extract ddu with 7zip
 & "$env:SystemDrive\Program Files\7-Zip\7z.exe" x "$env:SystemRoot\Temp\ddu.exe" -o"$env:SystemRoot\Temp\ddu" -y | Out-Null
@@ -157,6 +152,7 @@ exit
 
 # download 7zip
 IWR "https://github.com/FR33THYFR33THY/Ultimate/releases/download/Files/7zip.exe" -OutFile "$env:SystemRoot\Temp\7zip.exe"
+if ((Get-FileHash "$env:SystemRoot\Temp\7zip.exe" -Algorithm SHA256).Hash -ne '0859c524b8a63551848f0c246abddcb1d0b7b656b0fbfe879f8d85e61a9e6edd') { throw '7zip.exe SHA-256 mismatch; download stopped.' }
 
 # install 7zip
 Start-Process -Wait "$env:SystemRoot\Temp\7zip.exe" -ArgumentList "/S"
@@ -171,6 +167,7 @@ Remove-Item "$env:ProgramData\Microsoft\Windows\Start Menu\Programs\7-Zip" -Recu
 
 # download ddu
 IWR "https://github.com/FR33THYFR33THY/Ultimate/releases/download/Files/ddu.exe" -OutFile "$env:SystemRoot\Temp\ddu.exe"
+if ((Get-FileHash "$env:SystemRoot\Temp\ddu.exe" -Algorithm SHA256).Hash -ne '9b2611ec6d5a9d8853936cc071cc4026c6cfe91beed956cd41cc81c0930acd47') { throw 'ddu.exe SHA-256 mismatch; download stopped.' }
 
 # extract ddu with 7zip
 & "$env:SystemDrive\Program Files\7-Zip\7z.exe" x "$env:SystemRoot\Temp\ddu.exe" -o"$env:SystemRoot\Temp\ddu" -y | Out-Null

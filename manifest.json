@@ -1,7 +1,7 @@
 {
     "schemaVersion":  1,
     "release":  {
-                    "version":  "1.0.6",
+                    "version":  "1.0.7",
                     "channel":  "main",
                     "minWindowsBuild":  22000,
                     "minPowerShell":  "5.1"
@@ -18,7 +18,7 @@
                   {
                       "path":  "Docs/PROVENANCE.md",
                       "size":  2352,
-                      "sha256":  "f9bf394bc8dde0ce57c4f952a396e6a10d590e86cc875e9febf098a375baed3c",
+                      "sha256":  "d8ea78b53d0d5d415675325bbe0b8557528d267938e10290915d291b4d735af6",
                       "role":  "documentation",
                       "origin":  "generated",
                       "derivedFrom":  null
@@ -41,48 +41,48 @@
                   },
                   {
                       "path":  "Launcher.ps1",
-                      "size":  9106,
-                      "sha256":  "11facbd4e2424676f976fce3559821270404054c1829c2532a1582e3671adfa2",
+                      "size":  9435,
+                      "sha256":  "fa6ee02c914c977023a36d9a94c2da6fc75417f6801d9dede4549221c03278d8",
                       "role":  "launcher",
                       "origin":  "generated",
                       "derivedFrom":  null
                   },
                   {
                       "path":  "README.md",
-                      "size":  2090,
-                      "sha256":  "a0c945c0aef7180b238797ed3ae16cf79f42a88eba058a562f2ab3f76a92c439",
+                      "size":  2156,
+                      "sha256":  "e4a6dd2fd2afd01006df494fb4806972efea2485233567f52e0efb680af03421",
                       "role":  "documentation",
                       "origin":  "generated",
                       "derivedFrom":  null
                   },
                   {
                       "path":  "Scripts/Drivers/DDU/DDU.ps1",
-                      "size":  11478,
-                      "sha256":  "fb8df7c91968026873adc2b56802fda3ebd643ac55c7006e5d01b63d694ca96e",
+                      "size":  12051,
+                      "sha256":  "83bdabd9bdac7aa4b2b6ed30daf758b8d3beaa47deaf907790012a32f2f12dce",
                       "role":  "source",
                       "origin":  "edited-source",
                       "derivedFrom":  "564657374be33107ae7c69e61825cf8b2b7eb6ff668d40654908524a4d3ce9b5"
                   },
                   {
                       "path":  "Scripts/Drivers/Debloated-Installer/Driver-Installer.ps1",
-                      "size":  37285,
-                      "sha256":  "adf2e6121a6fa2171e7b917c59a58af575c68366342cf173f7e542c8dd1b2d24",
+                      "size":  37963,
+                      "sha256":  "320effd366d4f25d7a31cdf36fddd09575450cee5a029e635b69ed44b6d03f6e",
                       "role":  "source",
                       "origin":  "edited-source",
                       "derivedFrom":  "adf2e6121a6fa2171e7b917c59a58af575c68366342cf173f7e542c8dd1b2d24"
                   },
                   {
                       "path":  "Scripts/Drivers/Multi-GPU/Driver-Downloader.ps1",
-                      "size":  3574,
-                      "sha256":  "7fa16789d9b81c8baeebd71d972b1c5b117f15f5791399f46fcf18d6d0017ef5",
+                      "size":  4195,
+                      "sha256":  "95c0a6d05e45e230f9cce80ba8895f9b26072fbe6a3d022944fc0b8c671709cf",
                       "role":  "source",
                       "origin":  "edited-source",
                       "derivedFrom":  "25890bc50f2abb4a1a6d80f5c626a295abcd7fd3e08c82396cad3e123f320987"
                   },
                   {
                       "path":  "Scripts/Drivers/NVIDIA/NVIDIA-Driver-Updater.ps1",
-                      "size":  8531,
-                      "sha256":  "c3ec0c7eb0c7f8f5eda681ffe5fa7eaa693576f030518010fcc1d90ee9e0a275",
+                      "size":  8702,
+                      "sha256":  "25ed28da9d26504a19168262c0c3054df439ef5e90143b940b24e13af05a9adb",
                       "role":  "source",
                       "origin":  "edited-source",
                       "derivedFrom":  "955de18efb9af0d06c14565156dbe426ba2c2f78d64b149d82d65855b88ddded"
@@ -97,48 +97,48 @@
                   },
                   {
                       "path":  "Scripts/NVIDIA/Settings-GitHub.ps1",
-                      "size":  13108,
-                      "sha256":  "1e5bfa1fa88d9db3ec7255db78f1f973505a764bec7694befcafb7a900337063",
+                      "size":  13582,
+                      "sha256":  "2fbb45996953d2ab23ecbfc99ec7b4209150116b4aa38f144b359ddc65459c5a",
                       "role":  "source",
                       "origin":  "edited-source",
                       "derivedFrom":  "e8f9e32872ca98fd7d589568a167f73967c6d01605f8ada86eefa9ef30e936af"
                   },
                   {
                       "path":  "Scripts/Windows/Copilot-Off.ps1",
-                      "size":  1962,
-                      "sha256":  "c8868bf2fc7a8ea99018fd113caf1e08b87182482a4d8c3ef772a3b91a5a3186",
+                      "size":  1548,
+                      "sha256":  "2de74ba40c6aa77e7be94a1a5a022bdeea592405fe4ce1edc49613649c79b156",
                       "role":  "source",
                       "origin":  "edited-source",
                       "derivedFrom":  "c8868bf2fc7a8ea99018fd113caf1e08b87182482a4d8c3ef772a3b91a5a3186"
                   },
                   {
                       "path":  "Scripts/Windows/Power-Plan.ps1",
-                      "size":  16651,
-                      "sha256":  "4e2afa2805834b27ec3d19a02a3479e2cf08807666fb7d21f1993f9c6d1c39cc",
+                      "size":  16724,
+                      "sha256":  "d2c675f55c89d54becbbba0bbbf299f3671a90f1f269603d8b001c183ff28ef0",
                       "role":  "source",
                       "origin":  "edited-source",
                       "derivedFrom":  "fd09ff4fb5dc2eac9d7a783696d6cc6624f67a8d2adce8c0cf474b27d7dd9170"
                   },
                   {
                       "path":  "Scripts/Windows/Services.ps1",
-                      "size":  29060,
-                      "sha256":  "ba394e9767aa99903c292ca85dd0ab61523f888ffbe1034e2ee70d456ad2fa9d",
+                      "size":  29012,
+                      "sha256":  "3db3d332d3e8ed3a820036a9aaccb0041124afc255c5a2e4b008ed2bd66eafd1",
                       "role":  "source",
                       "origin":  "edited-source",
                       "derivedFrom":  "6a49ad67078f131abb61a301fa2dcfa520ae9fcfdbad7a31d7b2d7e70dd45099"
                   },
                   {
                       "path":  "Scripts/Windows/Timer-Resolution.ps1",
-                      "size":  10532,
-                      "sha256":  "6e27741fa54afdba7ace528f218b8cdcb7d93767da8c6856b747a977f7c18c3a",
+                      "size":  10617,
+                      "sha256":  "36e1a45ba988ed00a21acb5b0be7a355493811f9b5f31618081d4fa77b6dd6a4",
                       "role":  "source",
                       "origin":  "edited-source",
                       "derivedFrom":  "883f7cf4e6179383de02e44b94ffc8dafd380246751f1b1d81cab8800b1e8621"
                   },
                   {
                       "path":  "Scripts/Windows/Widgets.ps1",
-                      "size":  1459,
-                      "sha256":  "23ee08ec83771922c513761beabf671198ac4f9728eb0c3eb190acd0721c6595",
+                      "size":  1398,
+                      "sha256":  "95376b109b970b8f66fcb9433fe9a112fde83550a6145925c20c67163dc5396c",
                       "role":  "source",
                       "origin":  "edited-source",
                       "derivedFrom":  "0171013b91f2a6f7fd6d055f305045650ad1a326d5f45cb08953759a7a69ac0a"

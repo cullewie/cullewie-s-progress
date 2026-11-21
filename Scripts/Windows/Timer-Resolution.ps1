@@ -8,9 +8,8 @@
         $Host.PrivateData.ProgressForegroundColor = "White"
         Clear-Host
 
-        Write-Host "1. Timer Resolution: On (Recommended)"
         while ($true) {
-        $choice = Read-Host " "
+        $choice = '1'
         if ($choice -match '^[1]$') {
         switch ($choice) {
         1 {
@@ -217,17 +216,18 @@ namespace WindowsService
 '@
 Set-Content -Path "$env:SystemDrive\Windows\SetTimerResolutionService.cs" -Value $csfile -Force
 
+# remove old service if exists; stop it first so Windows deletes it now and the exe is not locked
+if (Get-Service -Name "Set Timer Resolution Service" -ErrorAction SilentlyContinue) {
+Stop-Service -Name "Set Timer Resolution Service" -Force -ErrorAction SilentlyContinue
+sc.exe delete "Set Timer Resolution Service" | Out-Null
+Start-Sleep -Seconds 2
+}
+
 # compile and create service
 Start-Process -Wait "C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe" -ArgumentList "-out:C:\Windows\SetTimerResolutionService.exe C:\Windows\SetTimerResolutionService.cs" -WindowStyle Hidden
 
 # remove cs file
 Remove-Item "$env:SystemDrive\Windows\SetTimerResolutionService.cs" -ErrorAction SilentlyContinue | Out-Null
-
-# remove old service if exists
-if (Get-Service -Name "Set Timer Resolution Service" -ErrorAction SilentlyContinue) {
-sc.exe delete "Set Timer Resolution Service" | Out-Null
-Start-Sleep -Seconds 2
-}
 
 # install and start service
 New-Service -Name "Set Timer Resolution Service" -BinaryPathName "$env:SystemDrive\Windows\SetTimerResolutionService.exe" -ErrorAction SilentlyContinue | Out-Null

@@ -45,7 +45,8 @@ function Invoke-ChildScript {
                 throw 'The NVIDIA source no longer matches the expected 1 { ... } case excerpt. Refusing to wrap it.'
             }
             $wrapped = 'switch (1) {' + [Environment]::NewLine + $original.TrimEnd() + [Environment]::NewLine + '}'
-            $generatedWrapper = Join-Path $env:TEMP ('cullewie-nvidia-updater-' + [Guid]::NewGuid().ToString('N') + '.ps1')
+            # Admin-only release folder: a non-admin program cannot swap the file before it runs elevated.
+            $generatedWrapper = Join-Path $script:RepoRoot ('nvidia-updater-' + [Guid]::NewGuid().ToString('N') + '.ps1')
             Set-Content -LiteralPath $generatedWrapper -Value $wrapped -Encoding UTF8
             $launchPath = $generatedWrapper
         }
@@ -161,7 +162,13 @@ while ($true) {
     Write-Host '0. Exit'
     $selection = Read-Host 'Choose an option'
     switch ($selection) {
-        '1' { Start-GuidedNvidiaSetup }
+        '1' {
+            try { Start-GuidedNvidiaSetup }
+            catch {
+                Write-Host "Guided NVIDIA setup stopped: $($_.Exception.Message)" -ForegroundColor Red
+                [void](Read-Host 'Press Enter to return to the launcher')
+            }
+        }
         '2' { Show-ToolMenu -Category 'Drivers' }
         '3' { Show-ToolMenu -Category 'NVIDIA' }
         '4' { Show-ToolMenu -Category 'Windows' }

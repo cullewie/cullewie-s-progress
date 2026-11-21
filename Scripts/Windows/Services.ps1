@@ -21,9 +21,8 @@
         termservice keyiso ngcctnrsvc & ngcsvc for microsoft account login, local account can disable
         #>
 
-        Write-Host "1. Services: Off"
         while ($true) {
-        $choice = Read-Host " "
+        $choice = '1'
         if ($choice -match '^[1]$') {
         switch ($choice) {
         1 {
@@ -288,7 +287,7 @@ Windows Registry Editor Version 5.00
 "Start"=dword:00000004
 
 [HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\EventLog]
-"Start"=dword:00000004
+"Start"=dword:00000002
 
 [HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\EventSystem]
 "Start"=dword:00000004
@@ -855,7 +854,7 @@ Windows Registry Editor Version 5.00
 "Start"=dword:00000004
 
 [HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\WlanSvc]
-"Start"=dword:00000004
+"Start"=dword:00000002
 
 [HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\wlidsvc]
 "Start"=dword:00000004

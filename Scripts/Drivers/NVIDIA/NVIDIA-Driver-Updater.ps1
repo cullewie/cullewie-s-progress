@@ -42,9 +42,10 @@
         $OSList = (Invoke-RestMethod `
             -Uri "${API}4" -Headers $Headers -UseBasicParsing).LookupValueSearch.LookupValues.LookupValue
 
-        # Match GPU
+        # Match GPU; NVIDIA lists many models without the "NVIDIA " prefix that Windows reports.
+        $GPUShortName = $GPU.Name -replace '^NVIDIA\s+', ''
         $Product = $Products |
-            Where-Object { $_.Name -eq $GPU.Name } |
+            Where-Object { ($_.Name -replace '^NVIDIA\s+', '') -eq $GPUShortName } |
             Select-Object -First 1
 
         if (!$Product) {
@@ -223,6 +224,6 @@
         Write-Host $_.Exception.Message -ForegroundColor Red
 
         Pause
-        exit
+        exit 1
     }
 }

@@ -157,7 +157,7 @@ try {
 catch {
     Write-Host "Bootstrap stopped: $($_.Exception.Message)" -ForegroundColor Red
     if ($stagePath -and (Test-Path -LiteralPath $stagePath -PathType Container)) {
-        Write-Host "Incomplete staging files were retained at: $stagePath" -ForegroundColor Yellow
+        Remove-Item -LiteralPath $stagePath -Recurse -Force -ErrorAction SilentlyContinue
     }
 }
 finally {

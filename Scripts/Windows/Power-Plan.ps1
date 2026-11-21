@@ -8,9 +8,8 @@
         $Host.PrivateData.ProgressForegroundColor = "White"
         Clear-Host
 
-        Write-Host "1. Power Plan: On (Recommended)"
         while ($true) {
-        $choice = Read-Host " "
+        $choice = '1'
         if ($choice -match '^[1]$') {
         switch ($choice) {
         1 {
@@ -189,7 +188,8 @@ powercfg /setdcvalueindex 99999999-9999-9999-9999-999999999999 f693fb01-e858-4f0
 powercfg /setacvalueindex 99999999-9999-9999-9999-999999999999 e276e160-7cb0-43c6-b20b-73f5dce39954 a1662ab2-9d34-4e53-ba8b-2639b9e20857 003 2>$null
 powercfg /setdcvalueindex 99999999-9999-9999-9999-999999999999 e276e160-7cb0-43c6-b20b-73f5dce39954 a1662ab2-9d34-4e53-ba8b-2639b9e20857 003 2>$null
 
-# battery
+# battery: only on desktops; on a laptop these would let it run to 0% and switch off without saving
+if (-not (Get-CimInstance Win32_Battery)) {
 # critical battery notification off
 powercfg /setacvalueindex 99999999-9999-9999-9999-999999999999 e73a048d-bf27-4f12-9731-8b2076e8891f 5dbb7c9f-38e9-40d2-9749-4f8a0e9f640f 000 2>$null
 powercfg /setdcvalueindex 99999999-9999-9999-9999-999999999999 e73a048d-bf27-4f12-9731-8b2076e8891f 5dbb7c9f-38e9-40d2-9749-4f8a0e9f640f 000 2>$null
@@ -217,6 +217,7 @@ powercfg /setdcvalueindex 99999999-9999-9999-9999-999999999999 e73a048d-bf27-4f1
 # reserve battery level 0%
 powercfg /setacvalueindex 99999999-9999-9999-9999-999999999999 e73a048d-bf27-4f12-9731-8b2076e8891f f3c5027d-cd16-4930-aa6b-90db844a8f00 0x00000000 2>$null
 powercfg /setdcvalueindex 99999999-9999-9999-9999-999999999999 e73a048d-bf27-4f12-9731-8b2076e8891f f3c5027d-cd16-4930-aa6b-90db844a8f00 0x00000000 2>$null
+}
 
 # immersive control panel
 # low screen brightness when using battery saver disable
