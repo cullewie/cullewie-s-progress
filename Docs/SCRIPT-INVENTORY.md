@@ -1,18 +1,15 @@
 # Araç listesi
 
-Bu projede 14 PowerShell aracı vardır.
+Bu projede 11 PowerShell aracı vardır. Hepsi tam otomatik kurulumda sırayla çalışır; tek tek çalıştırma menüsü yoktur.
 
 ## Sürücüler
 
 - `Scripts/Drivers/NVIDIA/NVIDIA-Driver-Updater.ps1` — Ana NVIDIA sürücü güncelleyici. Üretim tabanı budur. NVIDIA imzalı paketi doğrular, yüzdeyle indirir ve yalnızca `Display.Driver` bileşenini kurar.
-- `Scripts/Drivers/Multi-GPU/Driver-Downloader.ps1` — NVIDIA, AMD ve Intel sürücü indiricisi.
 - `Scripts/Drivers/DDU/DDU.ps1` - DDU otomatik/el ile araci. Rehberli NVIDIA akisi normal Windows modunda temizler; yeniden baslatma veya geri yukleme noktasi olusturmaz.
-- `Scripts/Drivers/Debloated-Installer/Driver-Installer.ps1` — Sade sürücü kurucusu.
 
 ## NVIDIA
 
 - `Scripts/NVIDIA/Settings-GitHub.ps1` — GitHub dağıtımlı NVIDIA Settings aracı.
-- `Scripts/NVIDIA/Digital-Vibrance.ps1` — NVIDIA Digital Vibrance ayarı.
 - `Scripts/NVIDIA/P0-State.ps1` — FR33THY P0 State: NVIDIA kartını sürekli en yüksek güç durumunda ve boost frekansında tutar.
 
 NVIDIA Settings aracı GitHub üzerinden kurulur.

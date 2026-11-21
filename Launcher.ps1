@@ -1,5 +1,7 @@
 [CmdletBinding()]
 param(
+    # full: the full automatic setup. guided: DDU and NVIDIA driver only, no restart (for testing on a running PC).
+    [ValidateSet('full', 'guided')][string]$Mode = 'full',
     # Set by the full setup logon task after the first safe-mode restart.
     [switch]$ResumeFullSetup
 )
@@ -10,11 +12,8 @@ $script:RepoRoot = $PSScriptRoot
 $script:PowerShellExe = Join-Path $PSHOME 'powershell.exe'
 $script:Tools = @(
     [pscustomobject]@{ Id='nvidia-updater'; Name='NVIDIA Driver Updater'; Category='Drivers'; Path='Scripts/Drivers/NVIDIA/NVIDIA-Driver-Updater.ps1'; Wrapper='NvidiaCase' }
-    [pscustomobject]@{ Id='multi-gpu'; Name='Multi-GPU Driver Downloader'; Category='Drivers'; Path='Scripts/Drivers/Multi-GPU/Driver-Downloader.ps1'; Wrapper='' }
-    [pscustomobject]@{ Id='ddu'; Name='DDU Auto/Manual'; Category='Drivers'; Path='Scripts/Drivers/DDU/DDU.ps1'; Wrapper='' }
-    [pscustomobject]@{ Id='debloated-installer'; Name='Debloated Driver Installer'; Category='Drivers'; Path='Scripts/Drivers/Debloated-Installer/Driver-Installer.ps1'; Wrapper='' }
+    [pscustomobject]@{ Id='ddu'; Name='DDU'; Category='Drivers'; Path='Scripts/Drivers/DDU/DDU.ps1'; Wrapper='' }
     [pscustomobject]@{ Id='settings-github'; Name='NVIDIA Settings (GitHub)'; Category='NVIDIA'; Path='Scripts/NVIDIA/Settings-GitHub.ps1'; Wrapper='' }
-    [pscustomobject]@{ Id='digital-vibrance'; Name='NVIDIA Digital Vibrance'; Category='NVIDIA'; Path='Scripts/NVIDIA/Digital-Vibrance.ps1'; Wrapper='' }
     [pscustomobject]@{ Id='p0-state'; Name='NVIDIA P0 State On'; Category='NVIDIA'; Path='Scripts/NVIDIA/P0-State.ps1'; Wrapper='' }
     [pscustomobject]@{ Id='widgets'; Name='Widgets Off'; Category='Windows'; Path='Scripts/Windows/Widgets.ps1'; Wrapper='' }
     [pscustomobject]@{ Id='services'; Name='Services Off'; Category='Windows'; Path='Scripts/Windows/Services.ps1'; Wrapper='' }
@@ -32,8 +31,7 @@ function Test-IsAdministrator {
 function Invoke-ChildScript {
     param(
         [Parameter(Mandatory=$true)]$Tool,
-        [string[]]$Arguments = @(),
-        [switch]$NoPause
+        [string[]]$Arguments = @()
     )
     $script:LastChildExitCode = -1
     $sourcePath = Join-Path $script:RepoRoot ($Tool.Path -replace '/', '\')
@@ -76,30 +74,6 @@ function Invoke-ChildScript {
             Remove-Item -LiteralPath $generatedWrapper -Force
         }
     }
-    if (-not $NoPause) {
-        [void](Read-Host 'Press Enter to return to the launcher')
-    }
-}
-function Show-ToolMenu {
-    param([Parameter(Mandatory=$true)][string]$Category)
-    $items = @($script:Tools | Where-Object { $_.Category -eq $Category })
-    while ($true) {
-        Clear-Host
-        Write-Host "=== $Category ===" -ForegroundColor Cyan
-        for ($index = 0; $index -lt $items.Count; $index++) {
-            Write-Host ("{0}. {1}" -f ($index + 1), $items[$index].Name)
-        }
-        Write-Host '0. Back'
-        $selection = Read-Host 'Choose a script'
-        if ($selection -eq '0') { return }
-        $number = 0
-        if (-not [int]::TryParse($selection, [ref]$number) -or $number -lt 1 -or $number -gt $items.Count) {
-            Write-Host 'Invalid choice.' -ForegroundColor Yellow
-            Start-Sleep -Seconds 1
-            continue
-        }
-        Invoke-ChildScript -Tool $items[$number - 1]
-    }
 }
 function Start-GuidedNvidiaSetup {
     $updater = $script:Tools | Where-Object { $_.Id -eq 'nvidia-updater' } | Select-Object -First 1
@@ -116,7 +90,7 @@ function Start-GuidedNvidiaSetup {
         [IO.File]::WriteAllText($statePath, ($state | ConvertTo-Json -Compress), [Text.UTF8Encoding]::new($false))
         Write-Host "Installed NVIDIA driver detected for $($nvidiaDriver.DeviceName). DDU will clean NVIDIA in normal Windows mode without restarting." -ForegroundColor Yellow
         $ddu = $script:Tools | Where-Object { $_.Id -eq 'ddu' } | Select-Object -First 1
-        Invoke-ChildScript -Tool $ddu -Arguments @('-GuidedNvidia') -NoPause
+        Invoke-ChildScript -Tool $ddu -Arguments @('-GuidedNvidia')
         if ($script:LastChildExitCode -ne 0) {
             throw 'DDU did not complete. NVIDIA installation was stopped.'
         }
@@ -139,7 +113,7 @@ function Start-GuidedNvidiaSetup {
     }
     try {
         Write-Host 'Installing NVIDIA display driver.' -ForegroundColor Cyan
-        Invoke-ChildScript -Tool $updater -NoPause
+        Invoke-ChildScript -Tool $updater
     }
     finally {
         Remove-Item Env:\CULLEWIE_NVIDIA_GPU_NAME -ErrorAction SilentlyContinue
@@ -202,8 +176,8 @@ function Wait-Internet {
 function Invoke-RequiredTool {
     param([Parameter(Mandatory=$true)][string]$Id, [string[]]$Arguments = @())
     $tool = $script:Tools | Where-Object { $_.Id -eq $Id } | Select-Object -First 1
-    if ($Arguments.Count) { Invoke-ChildScript -Tool $tool -Arguments $Arguments -NoPause }
-    else { Invoke-ChildScript -Tool $tool -NoPause }
+    if ($Arguments.Count) { Invoke-ChildScript -Tool $tool -Arguments $Arguments }
+    else { Invoke-ChildScript -Tool $tool }
     if ($script:LastChildExitCode -ne 0) {
         throw "$($tool.Name) did not complete. Full setup stopped."
     }
@@ -334,56 +308,21 @@ if (-not [Environment]::Is64BitOperatingSystem -or -not [Environment]::Is64BitPr
     throw 'Run this toolkit from 64-bit PowerShell on 64-bit Windows.'
 }
 if (-not (Test-IsAdministrator)) {
-    Write-Host 'Run Launcher.bat or IWR.ps1 from an elevated Administrator PowerShell window.' -ForegroundColor Red
+    Write-Host 'Run IWR.ps1 from an elevated Administrator PowerShell window.' -ForegroundColor Red
     return
 }
 $osVersion = [Environment]::OSVersion.Version
 if ($osVersion.Major -lt 10 -or $osVersion.Build -lt 22000) {
     throw 'This release requires Windows 11 (build 22000 or newer).'
 }
-if ($ResumeFullSetup) {
-    try { Resume-FullSetup }
-    catch {
-        Write-Host "Full setup stopped: $($_.Exception.Message)" -ForegroundColor Red
-        [void](Read-Host 'Press Enter to open the launcher menu')
+Write-Host 'cullewie-s-progress - Windows setup toolkit' -ForegroundColor Cyan
+try {
+    if ($ResumeFullSetup) { Resume-FullSetup }
+    elseif ($Mode -eq 'guided') {
+        Start-GuidedNvidiaSetup
+        Write-Host 'Guided NVIDIA setup finished. Nothing was restarted.' -ForegroundColor Green
     }
+    else { Start-FullSetup }
 }
-while ($true) {
-    Clear-Host
-    Write-Host 'cullewie-s-progress - Windows setup toolkit' -ForegroundColor Cyan
-    Write-Host 'Choose a script from a category to open it.' -ForegroundColor Gray
-    Write-Host ''
-    Write-Host '1. Full automatic setup'
-    Write-Host '2. Guided NVIDIA setup'
-    Write-Host '3. Driver tools'
-    Write-Host '4. NVIDIA utilities'
-    Write-Host '5. Windows options'
-    Write-Host '6. Digital Vibrance'
-    Write-Host '0. Exit'
-    $selection = Read-Host 'Choose an option'
-    switch ($selection) {
-        '1' {
-            try { Start-FullSetup }
-            catch {
-                Write-Host "Full setup stopped: $($_.Exception.Message)" -ForegroundColor Red
-                [void](Read-Host 'Press Enter to return to the launcher')
-            }
-        }
-        '2' {
-            try { Start-GuidedNvidiaSetup }
-            catch {
-                Write-Host "Guided NVIDIA setup stopped: $($_.Exception.Message)" -ForegroundColor Red
-                [void](Read-Host 'Press Enter to return to the launcher')
-            }
-        }
-        '3' { Show-ToolMenu -Category 'Drivers' }
-        '4' { Show-ToolMenu -Category 'NVIDIA' }
-        '5' { Show-ToolMenu -Category 'Windows' }
-        '6' {
-            $tool = $script:Tools | Where-Object { $_.Id -eq 'digital-vibrance' } | Select-Object -First 1
-            Invoke-ChildScript -Tool $tool
-        }
-        '0' { return }
-        default { Write-Host 'Invalid choice.' -ForegroundColor Yellow; Start-Sleep -Seconds 1 }
-    }
-}
+catch { Write-Host "Setup stopped: $($_.Exception.Message)" -ForegroundColor Red }
+[void](Read-Host 'Press Enter to close')

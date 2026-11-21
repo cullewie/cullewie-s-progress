@@ -148,8 +148,10 @@ try {
         throw 'Windows PowerShell executable was not found.'
     }
     Write-Host "Verified release: $releaseId" -ForegroundColor Green
-    Write-Host 'Starting the interactive launcher. No optimization is applied automatically.' -ForegroundColor Cyan
-    & $windowsPowerShell -NoLogo -NoProfile -ExecutionPolicy Bypass -File $launcher
+    # Full automatic setup; CULLEWIE_MODE=guided runs only DDU and the NVIDIA driver, without restarting.
+    $mode = if ($env:CULLEWIE_MODE -eq 'guided') { 'guided' } else { 'full' }
+    Write-Host "Starting: $mode" -ForegroundColor Cyan
+    & $windowsPowerShell -NoLogo -NoProfile -ExecutionPolicy Bypass -File $launcher -Mode $mode
     if ($LASTEXITCODE -ne 0) {
         Write-Host "Launcher exit code: $LASTEXITCODE" -ForegroundColor Yellow
     }
