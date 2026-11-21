@@ -1,7 +1,7 @@
 {
     "schemaVersion":  1,
     "release":  {
-                    "version":  "1.0.8",
+                    "version":  "1.0.9",
                     "channel":  "main",
                     "minWindowsBuild":  22000,
                     "minPowerShell":  "5.1"
@@ -18,7 +18,7 @@
                   {
                       "path":  "Docs/PROVENANCE.md",
                       "size":  2352,
-                      "sha256":  "4f44cb4f8334d12eb1fbd84137f61842ddfe061f3c3e7304ae5efa90276a4662",
+                      "sha256":  "0d81575755417b3961bbe69db56559bdfe2fc279700b514dcbb79479b9fb17bb",
                       "role":  "documentation",
                       "origin":  "generated",
                       "derivedFrom":  null
@@ -65,8 +65,8 @@
                   },
                   {
                       "path":  "Scripts/Drivers/Debloated-Installer/Driver-Installer.ps1",
-                      "size":  37709,
-                      "sha256":  "178618e4982b35cedcb2f4bc0651d95c9cde3bc0ef738a84de8cc33b2aefa57b",
+                      "size":  37422,
+                      "sha256":  "5bf49a8407d7b7cb9acd89465efcf3d68f91729b29ec11327fbf88492260e0c1",
                       "role":  "source",
                       "origin":  "edited-source",
                       "derivedFrom":  "adf2e6121a6fa2171e7b917c59a58af575c68366342cf173f7e542c8dd1b2d24"
@@ -97,8 +97,8 @@
                   },
                   {
                       "path":  "Scripts/NVIDIA/Settings-GitHub.ps1",
-                      "size":  13259,
-                      "sha256":  "a4589974d5f638b11ad32fd70cbde0eb9ce32000bdcd0c8d8fa17c9566a0a3a4",
+                      "size":  12972,
+                      "sha256":  "5b9c788538179fc4ae1d023e69064a5520ae78fba23e84d0647508c34e149e0c",
                       "role":  "source",
                       "origin":  "edited-source",
                       "derivedFrom":  "e8f9e32872ca98fd7d589568a167f73967c6d01605f8ada86eefa9ef30e936af"

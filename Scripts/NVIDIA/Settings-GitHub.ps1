@@ -273,12 +273,6 @@ $nipfile = @'
         <SettingValue>0</SettingValue>
         <ValueType>Dword</ValueType>
       </ProfileSetting>
-      <ProfileSetting>
-        <SettingNameInfo>Preferred OpenGL GPU</SettingNameInfo>
-        <SettingID>550564838</SettingID>
-        <SettingValue>id,2.0:268410DE,00000100,GF - (400,2,161,24564) @ (0)</SettingValue>
-        <ValueType>String</ValueType>
-      </ProfileSetting>
     </Settings>
   </Profile>
 </ArrayOfProfile>
