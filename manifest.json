@@ -1,7 +1,7 @@
 {
     "schemaVersion":  1,
     "release":  {
-                    "version":  "1.0.14",
+                    "version":  "1.0.15",
                     "channel":  "main",
                     "minWindowsBuild":  22000,
                     "minPowerShell":  "5.1"
@@ -41,8 +41,8 @@
                   },
                   {
                       "path":  "Launcher.ps1",
-                      "size":  21755,
-                      "sha256":  "eef6c178775f94f18c677ee1788568aa9357178588b83598a2f329f8dc7e5e1d",
+                      "size":  21753,
+                      "sha256":  "b342010a229681cfa6102b2f85c5defd32e5853de2bf9c5f3db6411dada22de2",
                       "role":  "launcher",
                       "origin":  "generated",
                       "derivedFrom":  null

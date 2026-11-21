@@ -350,7 +350,7 @@ if ($ResumeFullSetup) {
 }
 while ($true) {
     Clear-Host
-    Write-Host 'cullewie-s-progress — Windows setup toolkit' -ForegroundColor Cyan
+    Write-Host 'cullewie-s-progress - Windows setup toolkit' -ForegroundColor Cyan
     Write-Host 'Choose a script from a category to open it.' -ForegroundColor Gray
     Write-Host ''
     Write-Host '1. Full automatic setup'
