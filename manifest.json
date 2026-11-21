@@ -1,7 +1,7 @@
 {
     "schemaVersion":  1,
     "release":  {
-                    "version":  "1.0.16",
+                    "version":  "1.0.17",
                     "channel":  "main",
                     "minWindowsBuild":  22000,
                     "minPowerShell":  "5.1"
@@ -18,7 +18,7 @@
                   {
                       "path":  "Docs/PROVENANCE.md",
                       "size":  2370,
-                      "sha256":  "bbd018b53d47bdc5a44adeb5ce86285abbe4e37a9fabc7e47ce97fb6fb28070f",
+                      "sha256":  "3c4294abbe83c6747e86aaa19e7af1547755d679631da04813d7fe600fd2e7e6",
                       "role":  "documentation",
                       "origin":  "generated",
                       "derivedFrom":  null
@@ -57,8 +57,8 @@
                   },
                   {
                       "path":  "Scripts/Drivers/NVIDIA/NVIDIA-Driver-Updater.ps1",
-                      "size":  8702,
-                      "sha256":  "25ed28da9d26504a19168262c0c3054df439ef5e90143b940b24e13af05a9adb",
+                      "size":  9211,
+                      "sha256":  "8b44173f608e9e7475df04c3c91ea07ebde5369e7759f8a1411ed592291237c1",
                       "role":  "source",
                       "origin":  "edited-source",
                       "derivedFrom":  "955de18efb9af0d06c14565156dbe426ba2c2f78d64b149d82d65855b88ddded"

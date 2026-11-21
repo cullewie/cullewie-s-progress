@@ -206,7 +206,14 @@
 
         Write-Host "INSTALLING NVIDIA DISPLAY DRIVER..." -ForegroundColor Green
 
-        $Installer = Start-Process -FilePath $TargetPath -ArgumentList @('-s', '-n', 'Display.Driver') -Wait -PassThru
+        $Installer = Start-Process -FilePath $TargetPath -ArgumentList @('-s', '-n', 'Display.Driver') -PassThru
+        $null = $Installer.Handle   # keeps ExitCode readable after a non -Wait start
+        $InstallTimer = [System.Diagnostics.Stopwatch]::StartNew()
+        while (-not $Installer.WaitForExit(1000)) {
+            $InstallStatus = '{0:mm\:ss} elapsed - the screen may flicker while the driver installs' -f $InstallTimer.Elapsed
+            Write-Progress -Activity 'Installing NVIDIA display driver' -Status $InstallStatus
+        }
+        Write-Progress -Activity 'Installing NVIDIA display driver' -Completed
         if ($Installer.ExitCode -notin @(0, 1)) {
             throw "NVIDIA driver installer failed with exit code $($Installer.ExitCode)."
         }

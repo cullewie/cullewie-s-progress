@@ -5,7 +5,7 @@ Kaynak paket 12 PowerShell dosyası içeriyordu; WinGet sürümü bu repodan ç�
 | Dosya | Bayt | SHA-256 |
 |---|---:|---|
 | Scripts/Drivers/DDU/DDU.ps1 | 12491 | 629e5c76b5e4ebb64de675e35112724799c941b929f9855489a7310cb8d92e9e |
-| Scripts/Drivers/NVIDIA/NVIDIA-Driver-Updater.ps1 | 8702 | 25ed28da9d26504a19168262c0c3054df439ef5e90143b940b24e13af05a9adb |
+| Scripts/Drivers/NVIDIA/NVIDIA-Driver-Updater.ps1 | 9211 | 8b44173f608e9e7475df04c3c91ea07ebde5369e7759f8a1411ed592291237c1 |
 | Scripts/NVIDIA/Settings-GitHub.ps1 | 12972 | 5b9c788538179fc4ae1d023e69064a5520ae78fba23e84d0647508c34e149e0c |
 | Scripts/Windows/Copilot-Off.ps1 | 1548 | 2de74ba40c6aa77e7be94a1a5a022bdeea592405fe4ce1edc49613649c79b156 |
 | Scripts/Windows/Power-Plan.ps1 | 16724 | d2c675f55c89d54becbbba0bbbf299f3671a90f1f269603d8b001c183ff28ef0 |
