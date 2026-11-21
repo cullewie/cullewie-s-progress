@@ -14,7 +14,7 @@ Komut, araç dosyalarını indirir, dosyaları kontrol eder ve menüyü açar. B
 
 ## Menüde neler var?
 
-- **Tam otomatik kurulum (1):** Sırayla DDU ile NVIDIA sürücüsünü kaldırır, yeni ekran sürücüsünü kurar, NVIDIA Settings ve NIP ayarlarını uygular, P0 State'i açar, ardından Widgets, Copilot, güç planı, zamanlayıcı, Windows ayarları (Tweaks), Defender ve hizmet araçlarını çalıştırır. Hizmet aracı en sonda bilgisayarı yeniden başlatır. Bir adım başarısız olursa kurulum orada durur.
+- **Tam otomatik kurulum (1):** Güvenli Mod'da DDU ile NVIDIA sürücüsünü kaldırır ve Defender ayarlarını uygular. Normal modda yeni ekran sürücüsünü kurar, NVIDIA Settings ve NIP ayarlarını uygular, P0 State'i açar, ardından Widgets, Copilot, güç planı, zamanlayıcı ve Windows ayarlarını (Tweaks) çalıştırır. En sonda hizmet ayarlarını Güvenli Mod'da uygular. Bilgisayar dört kez kendiliğinden yeniden başlar; her açılışta şifrenizle oturum açmanız yeterli, kurulum kaldığı yerden devam eder. Ayrıntılar `Docs/HOW-IT-WORKS.md` içinde.
 - **Sürücüler:** NVIDIA güncelleme aracı, çoklu ekran kartı sürücü indiricisi, DDU ve sade sürücü kurucusu.
 - **NVIDIA:** GitHub üzerinden kurulan NVIDIA Settings, P0 State ve Digital Vibrance aracı.
 - **Windows:** Widgets, hizmetler, güç planı, Copilot ve zamanlayıcı araçları, Windows ayarları (Tweaks), Defender.

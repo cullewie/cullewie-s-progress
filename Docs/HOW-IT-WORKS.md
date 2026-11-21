@@ -14,6 +14,17 @@ Ana NVIDIA Driver Updater kaynaktaki haliyle korunur. Kaynak, daha büyük bir m
 
 NVIDIA Settings aracı ayrı bir seçenektir; rehberli kurulum bunu çağırmaz.
 
+## Tam otomatik kurulum
+
+FR33THY WinSux gibi dört aşamada çalışır; UAC kapatılmaz.
+
+1. **Normal mod (menüde 1):** Ekran kartının adı saklanır, DDU ve Defender hazırlanır, oturum açma şifresi seçeneği açılır. Bilgisayar Güvenli Mod'da yeniden başlar.
+2. **Güvenli Mod:** DDU NVIDIA sürücüsünü kaldırır, Defender ayarları uygulanır. Güvenli Mod kapatılır ve bilgisayar yeniden başlar.
+3. **Normal mod (oturum açınca kendiliğinden):** En yüksek yetkiyle çalışan bir zamanlanmış görev NVIDIA sürücüsünü, NVIDIA Settings ve NIP ayarlarını, P0 State'i, ardından Widgets, Copilot, güç planı, zamanlayıcı ve Tweaks araçlarını çalıştırır. Görev başlarken kendini siler. NVIDIA adımlarından biri başarısız olursa Windows adımları yine çalışır; başarısız adımlar en sonda listelenir.
+4. **Güvenli Mod:** Services ayarları uygulanır, bilgisayar normal modda yeniden başlar.
+
+Güvenli Mod'da Windows Hello PIN'i çalışmaz; her aşamada hesabın şifresiyle oturum açılır.
+
 ## Rehberli NVIDIA kurulumu
 
 Kurulu NVIDIA sürücüsü varsa DDU normal Windows modunda bir kez çalışır. Safe Mode açılmaz; DDU yeniden başlatma komutu vermez ve geri yükleme noktası oluşturmaz. DDU bittikten sonra aynı launcher oturumu NVIDIA paketinden yalnızca `Display.Driver` bileşenini kurar. NVIDIA App ve NVIDIA Control Panel kurulumu başlatılmaz. Ekran kartının model adı temizlikten önce saklanıp kurucuya aktarılır. İndirme akışı yüzdeyi saniyede birkaç kez günceller; PowerShell 5.1'in yavaş yerleşik ilerleme göstergesini kullanmaz.

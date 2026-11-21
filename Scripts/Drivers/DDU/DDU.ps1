@@ -1,6 +1,8 @@
 [CmdletBinding()]
 param(
-    [switch]$GuidedNvidia
+    [switch]$GuidedNvidia,
+    # Full setup: download and configure DDU only; the safe-mode step runs the cleanup.
+    [switch]$PrepareOnly
 )
 
 # SCRIPT RUN AS ADMIN
@@ -19,7 +21,7 @@ param(
         Write-Host "1. DDU: Auto"
         Write-Host "2. DDU: Manual`n"
         while ($true) {
-        $choice = if ($GuidedNvidia) { '1' } else { Read-Host " " }
+        $choice = if ($GuidedNvidia -or $PrepareOnly) { '1' } else { Read-Host " " }
         if ($choice -match '^[1-2]$') {
         switch ($choice) {
         1 {
@@ -91,6 +93,14 @@ Set-Content -Path "$env:SystemRoot\Temp\ddu\Settings\Settings.xml" -Value $DduCo
 
 # set ddu config to read only
 Set-ItemProperty -Path "$env:SystemRoot\Temp\ddu\Settings\Settings.xml" -Name IsReadOnly -Value $true
+
+if ($PrepareOnly) {
+    if (-not (Test-Path -LiteralPath "$env:SystemRoot\Temp\ddu\Display Driver Uninstaller.exe" -PathType Leaf)) {
+        throw 'The DDU executable was not extracted successfully.'
+    }
+    Write-Host 'DDU is ready for the safe-mode cleanup.' -ForegroundColor Green
+    exit
+}
 
 # The guided NVIDIA path cleans only NVIDIA in normal Windows mode.
 if ($GuidedNvidia) {

@@ -1,5 +1,8 @@
 [CmdletBinding()]
-param()
+param(
+    # Set by the full setup logon task after the first safe-mode restart.
+    [switch]$ResumeFullSetup
+)
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $script:RepoRoot = $PSScriptRoot
@@ -138,21 +141,120 @@ function Start-GuidedNvidiaSetup {
         Remove-Item -LiteralPath $statePath -Force -ErrorAction SilentlyContinue
     }
 }
-function Start-FullSetup {
-    Start-GuidedNvidiaSetup
+# Full setup runs in four stages, like FR33THY WinSux, without turning UAC off:
+#   1 normal  (menu):      save GPU name, prepare DDU and Defender, queue stages 2 and 3, restart into safe mode
+#   2 safe mode (RunOnce): DDU removes the NVIDIA driver, Defender settings apply, restart normally
+#   3 normal  (task):      driver, NVIDIA settings, Windows tools; Services queues stage 4 and restarts
+#   4 safe mode (RunOnce): Services settings apply, restart normally
+$script:FullSetupTask = 'cullewie-full-setup'
+function Invoke-RequiredTool {
+    param([Parameter(Mandatory=$true)][string]$Id, [string[]]$Arguments = @())
+    $tool = $script:Tools | Where-Object { $_.Id -eq $Id } | Select-Object -First 1
+    if ($Arguments.Count) { Invoke-ChildScript -Tool $tool -Arguments $Arguments -NoPause }
+    else { Invoke-ChildScript -Tool $tool -NoPause }
     if ($script:LastChildExitCode -ne 0) {
-        throw 'NVIDIA driver installation did not complete. Full setup stopped before Windows changes.'
+        throw "$($tool.Name) did not complete. Full setup stopped."
     }
-    # Services goes last: it restarts the computer to apply its changes.
-    # Defender only queues its safe-mode step; Services then restarts once for both.
-    foreach ($id in 'settings-github', 'p0-state', 'widgets', 'copilot-off', 'power-plan', 'timer-resolution', 'tweaks', 'defender', 'services') {
-        $tool = $script:Tools | Where-Object { $_.Id -eq $id } | Select-Object -First 1
-        if ($id -eq 'defender') { Invoke-ChildScript -Tool $tool -Arguments '-NoRestart' -NoPause }
-        else { Invoke-ChildScript -Tool $tool -NoPause }
-        if ($script:LastChildExitCode -ne 0) {
-            throw "$($tool.Name) did not complete. Full setup stopped."
+}
+function Start-FullSetup {
+    $statePath = Join-Path $script:RepoRoot 'nvidia-setup-state.json'
+    $dduFlag = Join-Path $env:SystemRoot 'Temp\cullewie-ddu.flag'
+    Remove-Item -LiteralPath $statePath, $dduFlag -Force -ErrorAction SilentlyContinue
+
+    $nvidiaDriver = Get-CimInstance -ClassName Win32_PnPSignedDriver -ErrorAction Stop |
+        Where-Object { $_.DeviceClass -eq 'DISPLAY' -and $_.DeviceID -like 'PCI\VEN_10DE&*' -and $_.DriverProviderName -match 'NVIDIA' } |
+        Select-Object -First 1
+    if ($nvidiaDriver) {
+        if ([string]::IsNullOrWhiteSpace([string]$nvidiaDriver.DeviceName)) {
+            throw 'Could not save the NVIDIA model name before DDU cleanup.'
+        }
+        [IO.File]::WriteAllText($statePath, ([pscustomobject]@{ GpuName = [string]$nvidiaDriver.DeviceName } | ConvertTo-Json -Compress), [Text.UTF8Encoding]::new($false))
+        Write-Host "NVIDIA driver found for $($nvidiaDriver.DeviceName). DDU will remove it in safe mode." -ForegroundColor Yellow
+        Invoke-RequiredTool -Id 'ddu' -Arguments '-PrepareOnly'
+        [IO.File]::WriteAllText($dduFlag, '')
+    }
+    Invoke-RequiredTool -Id 'defender' -Arguments '-QueueOnly'
+
+    # safe mode has no Windows Hello PIN; show the password option at sign-in (as WinSux does)
+    New-Item -Path 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\PasswordLess\Device' -Force | Out-Null
+    Set-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\PasswordLess\Device' -Name 'DevicePasswordLessBuildVersion' -Value 0 -Type DWord
+
+    # stage 2: one safe-mode script runs DDU and Defender in order, then always leaves safe mode
+    $safeScript = Join-Path $env:SystemRoot 'Temp\cullewie-safe.ps1'
+    [IO.File]::WriteAllText($safeScript, @'
+try {
+    $flag = "$env:SystemRoot\Temp\cullewie-ddu.flag"
+    if (Test-Path $flag) {
+        Write-Host 'DDU: removing the NVIDIA driver' -ForegroundColor Yellow
+        Start-Process -FilePath "$env:SystemRoot\Temp\ddu\Display Driver Uninstaller.exe" -ArgumentList '-Silent -NoSafeModeMsg -NoRestorePoint -CleanNvidia -RemovePhysx -RemoveGFE -RemoveNVBROADCAST -RemoveNVCP -RemoveVulkan -RemoveNvidiaDirs -Remove3DTVPlay' -Wait
+        Remove-Item $flag -Force
+    }
+    if (Test-Path "$env:SystemRoot\Temp\defenderoptimize.ps1") {
+        & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -ExecutionPolicy Bypass -File "$env:SystemRoot\Temp\defenderoptimize.ps1"
+    }
+}
+finally {
+    cmd /c "bcdedit /deletevalue {current} safeboot >nul 2>&1"
+    Write-Host 'Restarting' -ForegroundColor Red
+    shutdown -r -t 5
+}
+'@, [Text.UTF8Encoding]::new($false))
+    $runOnce = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce'
+    Set-ItemProperty -Path $runOnce -Name '*cullewiesafe' -Value "powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Maximized -File `"$safeScript`""
+
+    # stage 3: an elevated logon task, so no UAC prompt and UAC stays on; Task Scheduler does not run in safe mode
+    $user = [Security.Principal.WindowsIdentity]::GetCurrent().Name
+    $action = New-ScheduledTaskAction -Execute $script:PowerShellExe -Argument "-NoLogo -NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`" -ResumeFullSetup"
+    $trigger = New-ScheduledTaskTrigger -AtLogOn -User $user
+    $principal = New-ScheduledTaskPrincipal -UserId $user -LogonType Interactive -RunLevel Highest
+    $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -ExecutionTimeLimit ([TimeSpan]::Zero)
+    Register-ScheduledTask -TaskName $script:FullSetupTask -Action $action -Trigger $trigger -Principal $principal -Settings $settings -Force | Out-Null
+
+    cmd /c "bcdedit /set {current} safeboot minimal >nul 2>&1"
+    if ($LASTEXITCODE -ne 0) {
+        Unregister-ScheduledTask -TaskName $script:FullSetupTask -Confirm:$false -ErrorAction SilentlyContinue
+        Remove-ItemProperty -Path $runOnce -Name '*cullewiesafe' -ErrorAction SilentlyContinue
+        throw 'Could not turn on safe boot. Full setup stopped.'
+    }
+    Write-Host 'Restarting into safe mode. Sign in after each restart; setup continues by itself.' -ForegroundColor Cyan
+    shutdown -r -t 5
+    exit
+}
+function Resume-FullSetup {
+    # remove the task first so a failed step never loops on every logon
+    Unregister-ScheduledTask -TaskName $script:FullSetupTask -Confirm:$false -ErrorAction SilentlyContinue
+    $statePath = Join-Path $script:RepoRoot 'nvidia-setup-state.json'
+    $failed = New-Object System.Collections.Generic.List[string]
+    $hasNvidia = @(Get-CimInstance Win32_VideoController | Where-Object { $_.PNPDeviceID -like 'PCI\VEN_10DE&*' }).Count -gt 0
+    if ($hasNvidia) {
+        if (Test-Path -LiteralPath $statePath -PathType Leaf) {
+            $env:CULLEWIE_NVIDIA_GPU_NAME = [string](Get-Content -LiteralPath $statePath -Raw | ConvertFrom-Json).GpuName
+        }
+        # a failed NVIDIA step must not block the Windows steps after it
+        try {
+            Invoke-RequiredTool -Id 'nvidia-updater'
+            Invoke-RequiredTool -Id 'settings-github'
+            Invoke-RequiredTool -Id 'p0-state'
+        }
+        catch { $failed.Add($_.Exception.Message) }
+        finally {
+            Remove-Item Env:\CULLEWIE_NVIDIA_GPU_NAME -ErrorAction SilentlyContinue
+            Remove-Item -LiteralPath $statePath -Force -ErrorAction SilentlyContinue
         }
     }
+    else {
+        Write-Host 'No NVIDIA GPU found. Skipping the NVIDIA steps.' -ForegroundColor Cyan
+    }
+    foreach ($id in 'widgets', 'copilot-off', 'power-plan', 'timer-resolution', 'tweaks') {
+        try { Invoke-RequiredTool -Id $id } catch { $failed.Add($_.Exception.Message) }
+    }
+    if ($failed.Count) {
+        Write-Host ([Environment]::NewLine + 'These steps did not complete:') -ForegroundColor Red
+        $failed | ForEach-Object { Write-Host " - $_" -ForegroundColor Red }
+        [void](Read-Host 'Press Enter to continue with Services and the restart')
+    }
+    # Services goes last: it queues stage 4 in safe mode and restarts.
+    Invoke-RequiredTool -Id 'services'
 }
 if ($PSVersionTable.PSVersion -lt [version]'5.1') {
     throw 'Windows PowerShell 5.1 or newer is required.'
@@ -167,6 +269,13 @@ if (-not (Test-IsAdministrator)) {
 $osVersion = [Environment]::OSVersion.Version
 if ($osVersion.Major -lt 10 -or $osVersion.Build -lt 22000) {
     throw 'This release requires Windows 11 (build 22000 or newer).'
+}
+if ($ResumeFullSetup) {
+    try { Resume-FullSetup }
+    catch {
+        Write-Host "Full setup stopped: $($_.Exception.Message)" -ForegroundColor Red
+        [void](Read-Host 'Press Enter to open the launcher menu')
+    }
 }
 while ($true) {
     Clear-Host

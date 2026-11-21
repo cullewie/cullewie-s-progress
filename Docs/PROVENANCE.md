@@ -4,7 +4,7 @@ Kaynak paket 12 PowerShell dosyası içeriyordu; WinGet sürümü bu repodan ç�
 
 | Dosya | Bayt | SHA-256 |
 |---|---:|---|
-| Scripts/Drivers/DDU/DDU.ps1 | 12051 | 83bdabd9bdac7aa4b2b6ed30daf758b8d3beaa47deaf907790012a32f2f12dce |
+| Scripts/Drivers/DDU/DDU.ps1 | 12491 | 629e5c76b5e4ebb64de675e35112724799c941b929f9855489a7310cb8d92e9e |
 | Scripts/Drivers/Debloated-Installer/Driver-Installer.ps1 | 37422 | 5bf49a8407d7b7cb9acd89465efcf3d68f91729b29ec11327fbf88492260e0c1 |
 | Scripts/Drivers/Multi-GPU/Driver-Downloader.ps1 | 4195 | 95c0a6d05e45e230f9cce80ba8895f9b26072fbe6a3d022944fc0b8c671709cf |
 | Scripts/Drivers/NVIDIA/NVIDIA-Driver-Updater.ps1 | 8702 | 25ed28da9d26504a19168262c0c3054df439ef5e90143b940b24e13af05a9adb |
@@ -15,7 +15,7 @@ Kaynak paket 12 PowerShell dosyası içeriyordu; WinGet sürümü bu repodan ç�
 | Scripts/Windows/Services.ps1 | 29012 | 3db3d332d3e8ed3a820036a9aaccb0041124afc255c5a2e4b008ed2bd66eafd1 |
 | Scripts/Windows/Timer-Resolution.ps1 | 10617 | 36e1a45ba988ed00a21acb5b0be7a355493811f9b5f31618081d4fa77b6dd6a4 |
 | Scripts/Windows/Tweaks.ps1 | 11519 | 4dd36fd3eb646958dd1512b388828752657e92661f107326a269fbf4abd76706 |
-| Scripts/Windows/Defender.ps1 | 12654 | 20280a9a95ff80a47b85e0cb18cf7b11336bf696f77a8476462b977dd8c3d9ff |
+| Scripts/Windows/Defender.ps1 | 12660 | 976595b8b03a40d0656b52318cfb29913b397ffcf70fd6d243eb7bc2b416dae5 |
 | Scripts/NVIDIA/P0-State.ps1 | 1356 | 613c9aba2ad32f0db0609cc6046fac946919cddd66a26919e74677a2403266dc |
 | Scripts/Windows/Widgets.ps1 | 1398 | 95376b109b970b8f66fcb9433fe9a112fde83550a6145925c20c67163dc5396c |
 

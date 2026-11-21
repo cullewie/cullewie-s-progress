@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
-    # Full setup: Services restarts the computer later, so this run only queues the safe-mode step.
-    [switch]$NoRestart
+    # Full setup: write the safe-mode script only; the launcher's safe-mode step runs it and restarts.
+    [switch]$QueueOnly
 )
 
         # SCRIPT RUN AS ADMIN
@@ -147,7 +147,7 @@ foreach ($command in $windowssecuritysettings) {
     Invoke-Expression $command
 }
 
-# full setup: Services Off runs next in this same safe boot, then removes safe boot and restarts
+# full setup: the launcher's safe-mode step removes safe boot and restarts after this script
 $noRestartMarker = "$env:SystemRoot\Temp\defenderoptimize.norestart"
 if (Test-Path $noRestartMarker) {
 Remove-Item $noRestartMarker -Force
@@ -164,11 +164,14 @@ shutdown -r -t 00
 }
 '@
 Set-Content -Path "$env:SystemRoot\Temp\defenderoptimize.ps1" -Value $DefenderOptimize -Force
-if ($NoRestart) { Set-Content -Path "$env:SystemRoot\Temp\defenderoptimize.norestart" -Value '' -Force }
-else { Remove-Item "$env:SystemRoot\Temp\defenderoptimize.norestart" -Force -ErrorAction SilentlyContinue }
+if ($QueueOnly) {
+Set-Content -Path "$env:SystemRoot\Temp\defenderoptimize.norestart" -Value '' -Force
+} else {
+Remove-Item "$env:SystemRoot\Temp\defenderoptimize.norestart" -Force -ErrorAction SilentlyContinue
 
 # install runonce defenderoptimize ps1 file to run in safe boot
 cmd /c "reg add `"HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce`" /v `"*defenderoptimize`" /t REG_SZ /d `"powershell.exe -nop -ep bypass -WindowStyle Maximized -f $env:SystemRoot\Temp\defenderoptimize.ps1`" /f >nul 2>&1"
+}
 
 # smartscreen for microsoft edge - needs normal boot as admin
 cmd /c "reg add `"HKEY_CURRENT_USER\SOFTWARE\Microsoft\Edge\SmartScreenEnabled`" /ve /t REG_DWORD /d `"0`" /f >nul 2>&1"
@@ -183,13 +186,13 @@ schtasks /Change /TN "Microsoft\Windows\Windows Defender\Windows Defender Cleanu
 schtasks /Change /TN "Microsoft\Windows\Windows Defender\Windows Defender Scheduled Scan" /Disable 2>$null | Out-Null
 schtasks /Change /TN "Microsoft\Windows\Windows Defender\Windows Defender Verification" /Disable 2>$null | Out-Null
 
-# turn on safe boot
-cmd /c "bcdedit /set {current} safeboot minimal >nul 2>&1"
-
-if ($NoRestart) {
-    Write-Host "Defender changes run in safe mode at the next restart.`n" -ForegroundColor Yellow
+if ($QueueOnly) {
+    Write-Host "Defender changes are ready for the full setup safe-mode step.`n" -ForegroundColor Yellow
     exit
 }
+
+# turn on safe boot
+cmd /c "bcdedit /set {current} safeboot minimal >nul 2>&1"
 
 Write-Host "Restarting`n" -ForegroundColor Red
 

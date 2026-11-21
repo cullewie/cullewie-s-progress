@@ -1,7 +1,7 @@
 {
     "schemaVersion":  1,
     "release":  {
-                    "version":  "1.0.12",
+                    "version":  "1.0.13",
                     "channel":  "main",
                     "minWindowsBuild":  22000,
                     "minPowerShell":  "5.1"
@@ -9,8 +9,8 @@
     "files":  [
                   {
                       "path":  "Docs/HOW-IT-WORKS.md",
-                      "size":  2006,
-                      "sha256":  "4cc739071dc7874dff451499ea0720c444f913b5e83f342da59662388169cde4",
+                      "size":  3056,
+                      "sha256":  "8d45ad43c2cc5bc7d2711ae61f6a0216ffeb2b5986fefa8f058a38f75310cf49",
                       "role":  "documentation",
                       "origin":  "generated",
                       "derivedFrom":  null
@@ -18,7 +18,7 @@
                   {
                       "path":  "Docs/PROVENANCE.md",
                       "size":  2750,
-                      "sha256":  "81c4e3ae06a91fcde572265fa4e58f34e997a948c5b4996906cf4fc041dc0476",
+                      "sha256":  "7801c44b3748f6f82e188bb30c7b29be415e6533a74ce056ac4d5c2aaf577b31",
                       "role":  "documentation",
                       "origin":  "generated",
                       "derivedFrom":  null
@@ -41,24 +41,24 @@
                   },
                   {
                       "path":  "Launcher.ps1",
-                      "size":  10988,
-                      "sha256":  "6b9c4175253a74e61486f77232a416bfe297424418ee013be56eaeec986867cd",
+                      "size":  17484,
+                      "sha256":  "892ff12fef522fcf5430b5ab316c889d77935c1f464c0a49614451d2b3e49566",
                       "role":  "launcher",
                       "origin":  "generated",
                       "derivedFrom":  null
                   },
                   {
                       "path":  "README.md",
-                      "size":  2627,
-                      "sha256":  "0685033e3179ff5503b2749b8115dc9c038d92fd1072a01daa055d781486f937",
+                      "size":  2788,
+                      "sha256":  "1024509f69b36fdd1d63545ffe4dad469a9f7022f06cc7a588cb8be4d03b8787",
                       "role":  "documentation",
                       "origin":  "generated",
                       "derivedFrom":  null
                   },
                   {
                       "path":  "Scripts/Drivers/DDU/DDU.ps1",
-                      "size":  12051,
-                      "sha256":  "83bdabd9bdac7aa4b2b6ed30daf758b8d3beaa47deaf907790012a32f2f12dce",
+                      "size":  12491,
+                      "sha256":  "629e5c76b5e4ebb64de675e35112724799c941b929f9855489a7310cb8d92e9e",
                       "role":  "source",
                       "origin":  "edited-source",
                       "derivedFrom":  "564657374be33107ae7c69e61825cf8b2b7eb6ff668d40654908524a4d3ce9b5"
@@ -161,8 +161,8 @@
                   },
                   {
                       "path":  "Scripts/Windows/Defender.ps1",
-                      "size":  12654,
-                      "sha256":  "20280a9a95ff80a47b85e0cb18cf7b11336bf696f77a8476462b977dd8c3d9ff",
+                      "size":  12660,
+                      "sha256":  "976595b8b03a40d0656b52318cfb29913b397ffcf70fd6d243eb7bc2b416dae5",
                       "role":  "source",
                       "origin":  "edited-source",
                       "derivedFrom":  "FR33THY Ultimate 33 Defender Optimize.ps1"
