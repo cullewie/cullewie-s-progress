@@ -1,0 +1,199 @@
+{
+    "schemaVersion":  1,
+    "release":  {
+                    "channel":  "main",
+                    "minWindowsBuild":  22000,
+                    "minPowerShell":  "5.1"
+                },
+    "files":  [
+                  {
+                      "path":  "Launcher.ps1",
+                      "size":  19309,
+                      "sha256":  "9ae2e528a5cb825f53cad9ee3be8e088720f602ecf5f6ada6123bada5c53543e",
+                      "role":  "launcher",
+                      "origin":  "project",
+                      "derivedFrom":  null
+                  },
+                  {
+                      "path":  "README.md",
+                      "size":  1029,
+                      "sha256":  "8b0de28ebc088b89aa10773e5ecbc8bbec9255fff094f14ae72359dcff530e63",
+                      "role":  "documentation",
+                      "origin":  "project",
+                      "derivedFrom":  null
+                  },
+                  {
+                      "path":  "Scripts/Drivers/DDU/DDU.ps1",
+                      "size":  12511,
+                      "sha256":  "8a8b993ca8d049c5bff8e0117167195a570d8bf165adeecb6cabb0dcdfb357f5",
+                      "role":  "source",
+                      "origin":  "project",
+                      "derivedFrom":  null
+                  },
+                  {
+                      "path":  "Scripts/Drivers/NVIDIA/NVIDIA-Driver-Updater.ps1",
+                      "size":  9211,
+                      "sha256":  "8b44173f608e9e7475df04c3c91ea07ebde5369e7759f8a1411ed592291237c1",
+                      "role":  "source",
+                      "origin":  "project",
+                      "derivedFrom":  null
+                  },
+                  {
+                      "path":  "Scripts/NVIDIA/Settings-GitHub.ps1",
+                      "size":  12982,
+                      "sha256":  "498f5a7a0c7b9b33224483531e34c2e3a1882610bead991c52e87a4fa85f4035",
+                      "role":  "source",
+                      "origin":  "project",
+                      "derivedFrom":  null
+                  },
+                  {
+                      "path":  "Scripts/Windows/Copilot-Off.ps1",
+                      "size":  1548,
+                      "sha256":  "2de74ba40c6aa77e7be94a1a5a022bdeea592405fe4ce1edc49613649c79b156",
+                      "role":  "source",
+                      "origin":  "project",
+                      "derivedFrom":  null
+                  },
+                  {
+                      "path":  "Scripts/Windows/Power-Plan.ps1",
+                      "size":  31677,
+                      "sha256":  "be139f8ad199040ebe20e3f4baef72374930122a52d4a4cea2d1c6015efed65a",
+                      "role":  "source",
+                      "origin":  "project",
+                      "derivedFrom":  null
+                  },
+                  {
+                      "path":  "Scripts/Windows/Services.ps1",
+                      "size":  29012,
+                      "sha256":  "c4bdc144c0473822cbe0d93608257e2f0e5d8e718c7fa5ec74cd3a5469e971e1",
+                      "role":  "source",
+                      "origin":  "project",
+                      "derivedFrom":  null
+                  },
+                  {
+                      "path":  "Scripts/Windows/Timer-Resolution.ps1",
+                      "size":  10617,
+                      "sha256":  "36e1a45ba988ed00a21acb5b0be7a355493811f9b5f31618081d4fa77b6dd6a4",
+                      "role":  "source",
+                      "origin":  "project",
+                      "derivedFrom":  null
+                  },
+                  {
+                      "path":  "Scripts/Windows/Widgets.ps1",
+                      "size":  1398,
+                      "sha256":  "95376b109b970b8f66fcb9433fe9a112fde83550a6145925c20c67163dc5396c",
+                      "role":  "source",
+                      "origin":  "project",
+                      "derivedFrom":  null
+                  },
+                  {
+                      "path":  "Scripts/Windows/Tweaks.ps1",
+                      "size":  13816,
+                      "sha256":  "76c86d08f131e801806e12e09b2c062844d7d696c02562a7984768fd0ea7264a",
+                      "role":  "source",
+                      "origin":  "project",
+                      "derivedFrom":  null
+                  },
+                  {
+                      "path":  "Scripts/NVIDIA/P0-State.ps1",
+                      "size":  1356,
+                      "sha256":  "613c9aba2ad32f0db0609cc6046fac946919cddd66a26919e74677a2403266dc",
+                      "role":  "source",
+                      "origin":  "project",
+                      "derivedFrom":  null
+                  },
+                  {
+                      "path":  "Scripts/Windows/Defender.ps1",
+                      "size":  12609,
+                      "sha256":  "087b05e45d27644187ecb17459d9487296fc398ea84dab3ed4ffdfe48aa9e5ca",
+                      "role":  "source",
+                      "origin":  "project",
+                      "derivedFrom":  null
+                  },
+                  {
+                      "path":  "Scripts/Windows/Refresh-Rate.ps1",
+                      "size":  4087,
+                      "sha256":  "fbf4da572a84a7f28d5b9f1a79f54a56989ffc1d2039e7912d963f76ec252403",
+                      "role":  "source",
+                      "origin":  "project",
+                      "derivedFrom":  null
+                  }
+              ],
+    "externalAssets":  [
+
+                       ],
+    "modules":  [
+                    {
+                        "id":  "nvidia-driver-updater",
+                        "entry":  "Scripts/Drivers/NVIDIA/NVIDIA-Driver-Updater.ps1",
+                        "adminRequired":  true,
+                        "requiresReboot":  true
+                    },
+                    {
+                        "id":  "ddu",
+                        "entry":  "Scripts/Drivers/DDU/DDU.ps1",
+                        "adminRequired":  true,
+                        "requiresReboot":  true
+                    },
+                    {
+                        "id":  "nvidia-settings-github",
+                        "entry":  "Scripts/NVIDIA/Settings-GitHub.ps1",
+                        "adminRequired":  true,
+                        "requiresReboot":  false
+                    },
+                    {
+                        "id":  "widgets",
+                        "entry":  "Scripts/Windows/Widgets.ps1",
+                        "adminRequired":  true,
+                        "requiresReboot":  false
+                    },
+                    {
+                        "id":  "services",
+                        "entry":  "Scripts/Windows/Services.ps1",
+                        "adminRequired":  true,
+                        "requiresReboot":  false
+                    },
+                    {
+                        "id":  "power-plan",
+                        "entry":  "Scripts/Windows/Power-Plan.ps1",
+                        "adminRequired":  true,
+                        "requiresReboot":  false
+                    },
+                    {
+                        "id":  "copilot-off",
+                        "entry":  "Scripts/Windows/Copilot-Off.ps1",
+                        "adminRequired":  true,
+                        "requiresReboot":  false
+                    },
+                    {
+                        "id":  "timer-resolution",
+                        "entry":  "Scripts/Windows/Timer-Resolution.ps1",
+                        "adminRequired":  true,
+                        "requiresReboot":  false
+                    },
+                    {
+                        "id":  "tweaks",
+                        "entry":  "Scripts/Windows/Tweaks.ps1",
+                        "adminRequired":  true,
+                        "requiresReboot":  false
+                    },
+                    {
+                        "id":  "p0-state",
+                        "entry":  "Scripts/NVIDIA/P0-State.ps1",
+                        "adminRequired":  true,
+                        "requiresReboot":  true
+                    },
+                    {
+                        "id":  "defender",
+                        "entry":  "Scripts/Windows/Defender.ps1",
+                        "adminRequired":  true,
+                        "requiresReboot":  true
+                    },
+                    {
+                        "id":  "refresh-rate",
+                        "entry":  "Scripts/Windows/Refresh-Rate.ps1",
+                        "adminRequired":  true,
+                        "requiresReboot":  false
+                    }
+                ]
+}

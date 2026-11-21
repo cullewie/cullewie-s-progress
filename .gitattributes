@@ -1,0 +1,2 @@
+# Keep files byte-identical on every OS so manifest.json SHA-256 values match.
+* -text
