@@ -1,7 +1,7 @@
 {
     "schemaVersion":  1,
     "release":  {
-                    "version":  "1.0.11",
+                    "version":  "1.0.12",
                     "channel":  "main",
                     "minWindowsBuild":  22000,
                     "minPowerShell":  "5.1"
@@ -18,7 +18,7 @@
                   {
                       "path":  "Docs/PROVENANCE.md",
                       "size":  2750,
-                      "sha256":  "af6e83aa960be2abc5ce566298f3207b35ad5f7065f3ff17f823e35e5c62e847",
+                      "sha256":  "81c4e3ae06a91fcde572265fa4e58f34e997a948c5b4996906cf4fc041dc0476",
                       "role":  "documentation",
                       "origin":  "generated",
                       "derivedFrom":  null
@@ -161,8 +161,8 @@
                   },
                   {
                       "path":  "Scripts/Windows/Defender.ps1",
-                      "size":  11959,
-                      "sha256":  "d49d2eeb6105bb2319ee8f21b2f329facfd3fc82c9c83c0f885eb1e425221a0f",
+                      "size":  12654,
+                      "sha256":  "20280a9a95ff80a47b85e0cb18cf7b11336bf696f77a8476462b977dd8c3d9ff",
                       "role":  "source",
                       "origin":  "edited-source",
                       "derivedFrom":  "FR33THY Ultimate 33 Defender Optimize.ps1"

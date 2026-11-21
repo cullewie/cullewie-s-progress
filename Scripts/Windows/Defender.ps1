@@ -60,6 +60,17 @@ $DefenderOptimize = @'
   		}
         }
 
+# these settings only apply in safe mode; if Windows started normally, queue this step again and restart into safe mode
+if ((Get-CimInstance Win32_ComputerSystem).BootupState -eq 'Normal boot') {
+Remove-Item "$env:SystemRoot\Temp\defenderoptimize.norestart" -Force -ErrorAction SilentlyContinue
+cmd /c "reg add `"HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce`" /v `"*defenderoptimize`" /t REG_SZ /d `"powershell.exe -nop -ep bypass -WindowStyle Maximized -f $env:SystemRoot\Temp\defenderoptimize.ps1`" /f >nul 2>&1"
+cmd /c "bcdedit /set {current} safeboot minimal >nul 2>&1"
+Write-Host "Restarting into safe mode`n" -ForegroundColor Red
+Start-Sleep -Seconds 5
+shutdown -r -t 00
+exit
+}
+
 Write-Host "Defender Optimize: On...`n"
 
 $windowssecuritysettings = @(
