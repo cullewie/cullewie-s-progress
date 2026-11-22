@@ -156,8 +156,9 @@ try {
         throw 'Windows PowerShell executable was not found.'
     }
     Write-Host "Verified release: $releaseId" -ForegroundColor Green
-    # Full automatic setup; CULLEWIE_MODE=guided runs only DDU and the NVIDIA driver, without restarting.
-    $mode = if ($env:CULLEWIE_MODE -eq 'guided') { 'guided' } else { 'full' }
+    # Full automatic setup; CULLEWIE_MODE=guided runs only DDU and the NVIDIA driver, without restarting;
+    # CULLEWIE_MODE=live runs every step in normal Windows without safe mode or restarting.
+    $mode = if ($env:CULLEWIE_MODE -in 'guided', 'live') { $env:CULLEWIE_MODE } else { 'full' }
     Write-Host "Starting: $mode" -ForegroundColor Cyan
     & $windowsPowerShell -NoLogo -NoProfile -ExecutionPolicy Bypass -File $launcher -Mode $mode
     if ($LASTEXITCODE -ne 0) {
