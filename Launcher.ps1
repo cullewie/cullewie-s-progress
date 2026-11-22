@@ -14,8 +14,7 @@ $script:PowerShellExe = Join-Path $PSHOME 'powershell.exe'
 $script:Tools = @(
     [pscustomobject]@{ Id='nvidia-updater'; Name='NVIDIA Driver Updater'; Category='Drivers'; Path='Scripts/Drivers/NVIDIA/NVIDIA-Driver-Updater.ps1'; Wrapper='NvidiaCase' }
     [pscustomobject]@{ Id='ddu'; Name='DDU'; Category='Drivers'; Path='Scripts/Drivers/DDU/DDU.ps1'; Wrapper='' }
-    [pscustomobject]@{ Id='settings-github'; Name='NVIDIA Settings (GitHub)'; Category='NVIDIA'; Path='Scripts/NVIDIA/Settings-GitHub.ps1'; Wrapper='' }
-    [pscustomobject]@{ Id='p0-state'; Name='NVIDIA P0 State On'; Category='NVIDIA'; Path='Scripts/NVIDIA/P0-State.ps1'; Wrapper='' }
+    [pscustomobject]@{ Id='settings-github'; Name='NVIDIA Settings (profile, P0, scaling, vibrance)'; Category='NVIDIA'; Path='Scripts/NVIDIA/Settings-GitHub.ps1'; Wrapper='' }
     [pscustomobject]@{ Id='amd-updater'; Name='AMD Driver Updater'; Category='Drivers'; Path='Scripts/Drivers/AMD/AMD-Driver-Updater.ps1'; Wrapper='' }
     [pscustomobject]@{ Id='amd-settings'; Name='AMD Settings'; Category='AMD'; Path='Scripts/AMD/Settings.ps1'; Wrapper='' }
     [pscustomobject]@{ Id='widgets'; Name='Widgets Off'; Category='Windows'; Path='Scripts/Windows/Widgets.ps1'; Wrapper='' }
@@ -23,11 +22,9 @@ $script:Tools = @(
     [pscustomobject]@{ Id='power-plan'; Name='Power Plan On'; Category='Windows'; Path='Scripts/Windows/Power-Plan.ps1'; Wrapper='' }
     [pscustomobject]@{ Id='copilot-off'; Name='Copilot Off'; Category='Windows'; Path='Scripts/Windows/Copilot-Off.ps1'; Wrapper='' }
     [pscustomobject]@{ Id='timer-resolution'; Name='Timer Resolution On'; Category='Windows'; Path='Scripts/Windows/Timer-Resolution.ps1'; Wrapper='' }
-    [pscustomobject]@{ Id='tweaks'; Name='Windows Tweaks'; Category='Windows'; Path='Scripts/Windows/Tweaks.ps1'; Wrapper='' }
+    [pscustomobject]@{ Id='tweaks'; Name='Windows Tweaks (bloatware, tweaks, extras)'; Category='Windows'; Path='Scripts/Windows/Tweaks.ps1'; Wrapper='' }
     [pscustomobject]@{ Id='defender'; Name='Defender Optimize'; Category='Windows'; Path='Scripts/Windows/Defender.ps1'; Wrapper='' }
     [pscustomobject]@{ Id='refresh-rate'; Name='Highest Refresh Rate'; Category='Windows'; Path='Scripts/Windows/Refresh-Rate.ps1'; Wrapper='' }
-    [pscustomobject]@{ Id='extras'; Name='Extra Windows Settings'; Category='Windows'; Path='Scripts/Windows/Extras.ps1'; Wrapper='' }
-    [pscustomobject]@{ Id='bloatware'; Name='Remove Bloatware'; Category='Windows'; Path='Scripts/Windows/Bloatware.ps1'; Wrapper='' }
     [pscustomobject]@{ Id='display-options'; Name='Scaling and Vibrance'; Category='Windows'; Path='Scripts/Windows/Display-Options.ps1'; Wrapper='' }
 )
 function Test-IsAdministrator {
@@ -197,6 +194,10 @@ function Invoke-RequiredTool {
     }
 }
 function Start-FullSetup {
+    # pending updates would be applied at the safe-mode boot, fail there and get rolled back
+    if (Test-PendingReboot) {
+        throw 'Windows is waiting for a restart to finish updates. Restart Windows normally once, then run the setup again.'
+    }
     $statePath = Join-Path $script:RepoRoot 'nvidia-setup-state.json'
     $dduFlag = Join-Path $env:ProgramData 'Cullewie\Work\cullewie-ddu.flag'
     Remove-Item -LiteralPath $statePath, $dduFlag -Force -ErrorAction SilentlyContinue
@@ -319,8 +320,8 @@ function Resume-FullSetup {
         # a failed NVIDIA step must not block the Windows steps after it
         try {
             Invoke-RequiredTool -Id 'nvidia-updater'
+            # profile, P0 state, then the scaling and vibrance questions
             Invoke-RequiredTool -Id 'settings-github'
-            Invoke-RequiredTool -Id 'p0-state'
         }
         catch { $failed.Add($_.Exception.Message) }
         finally {
@@ -343,8 +344,10 @@ function Resume-FullSetup {
     # the GPU driver is in: Windows Update may deliver drivers again (chipset, audio, Wi-Fi, Bluetooth)
     Remove-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate' -Name 'ExcludeWUDriversInQualityUpdate' -ErrorAction SilentlyContinue
     # refresh-rate after the driver: a fresh driver often starts the display at 60 Hz
-    # display-options asks two questions (scaling, vibrance), so it runs last, right before Services
-    foreach ($id in 'refresh-rate', 'widgets', 'copilot-off', 'power-plan', 'timer-resolution', 'tweaks', 'extras', 'bloatware', 'display-options') {
+    # NVIDIA Settings already asked the scaling and vibrance questions; AMD cards get them here
+    $windowsIds = @('refresh-rate', 'widgets', 'copilot-off', 'power-plan', 'timer-resolution', 'tweaks')
+    if (-not $hasNvidia) { $windowsIds += 'display-options' }
+    foreach ($id in $windowsIds) {
         try { Invoke-RequiredTool -Id $id } catch { $failed.Add($_.Exception.Message) }
     }
     if ($failed.Count) {
@@ -352,8 +355,18 @@ function Resume-FullSetup {
         $failed | ForEach-Object { Write-Host " - $_" -ForegroundColor Red }
         [void](Read-Host 'Press Enter to continue with Services and the restart')
     }
-    # Services goes last: it queues stage 4 in safe mode and restarts.
-    Invoke-RequiredTool -Id 'services'
+    # Services goes last and applies in normal Windows, then a normal restart. Not in safe mode: Bloatware has just
+    # queued feature changes that Windows applies at the next boot, and in safe mode they fail and get rolled back
+    # ("undoing changes"), with extra restarts.
+    Invoke-RequiredTool -Id 'services' -Arguments '-Live'
+    Write-Host 'Setup finished. Restarting normally.' -ForegroundColor Green
+    shutdown -r -t 10
+}
+function Test-PendingReboot {
+    # Windows has updates or feature changes waiting for a restart
+    (Test-Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Component Based Servicing\RebootPending') -or
+    (Test-Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update\RebootRequired') -or
+    (Test-Path "$env:SystemRoot\WinSxS\pending.xml")
 }
 function Start-LiveSetup {
     # Same steps as stages 3 and 4, in normal Windows and without restarting. Skipped: DDU (cleans best in safe mode),
@@ -363,14 +376,16 @@ function Start-LiveSetup {
     $steps = New-Object System.Collections.Generic.List[string]
     $hasNvidia = @(Get-PciGpu '10DE').Count -gt 0
     $ids = @()
-    if ($hasNvidia) { $ids += 'nvidia-updater', 'settings-github', 'p0-state' }
+    if ($hasNvidia) { $ids += 'nvidia-updater', 'settings-github' }
     elseif (@(Get-PciGpu '1002').Count) { $ids += 'amd-updater' }
-    $ids += 'refresh-rate', 'widgets', 'copilot-off', 'power-plan', 'timer-resolution', 'tweaks', 'extras', 'bloatware'
+    $ids += 'refresh-rate', 'widgets', 'copilot-off', 'power-plan', 'timer-resolution', 'tweaks'
     foreach ($id in $ids) {
         $tool = $script:Tools | Where-Object { $_.Id -eq $id } | Select-Object -First 1
         $sw = [Diagnostics.Stopwatch]::StartNew()
-        Invoke-ChildScript -Tool $tool
-        $steps.Add(('{0,-26} exit {1,3}  {2:mm\:ss}' -f $tool.Name, $script:LastChildExitCode, $sw.Elapsed))
+        # no questions in live mode: NVIDIA Settings leaves scaling and vibrance as they are
+        if ($id -eq 'settings-github') { Invoke-ChildScript -Tool $tool -Arguments @('-SkipDisplay') }
+        else { Invoke-ChildScript -Tool $tool }
+        $steps.Add(('{0,-50} exit {1,3}  {2:mm\:ss}' -f $tool.Name, $script:LastChildExitCode, $sw.Elapsed))
     }
     if ((-not $hasNvidia) -and (Test-Path (Join-Path $env:ProgramData 'Cullewie\Work\amd-installed.flag'))) { Invoke-ChildScript -Tool ($script:Tools | Where-Object { $_.Id -eq 'amd-settings' }) }
     $tool = $script:Tools | Where-Object { $_.Id -eq 'services' } | Select-Object -First 1

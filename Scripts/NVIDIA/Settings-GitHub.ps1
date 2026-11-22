@@ -1,3 +1,7 @@
+# NVIDIA in one step: driver settings and Profile Inspector profile, P0 state, then full-screen scaling and digital
+# vibrance (two questions, through Scripts/Windows/Display-Options.ps1, which AMD and the vibrance sign-in task also use).
+# -SkipDisplay: no questions (live mode); scaling and vibrance are left as they are.
+param([switch]$SkipDisplay)
         # SCRIPT RUN AS ADMIN
         If (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]"Administrator"))
         {Start-Process PowerShell.exe -ArgumentList ("-NoProfile -ExecutionPolicy Bypass -File `"{0}`"" -f $PSCommandPath) -Verb RunAs
@@ -283,8 +287,23 @@ else {
     Write-Host "Importing profile: $(([xml]$nipfile).ArrayOfProfile.Profile.Settings.ProfileSetting.Count) settings"
     $import = Start-Process -Wait -PassThru $inspector -ArgumentList $importArgs
     if ($import.ExitCode -ne 0) { Write-Host "Profile Inspector exit code $($import.ExitCode): open it and check the Base Profile." -ForegroundColor Yellow }
-    else { Write-Host 'NVIDIA Settings: done.' -ForegroundColor Green }
+    else { Write-Host 'NVIDIA profile: imported.' -ForegroundColor Green }
 }
+
+# P0 state: the GPU always stays at its highest performance state (max boost clock)
+Write-Host 'P0 state: on'
+Get-ChildItem 'HKLM:\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}' -ErrorAction SilentlyContinue |
+    Where-Object { $_.PSChildName -match '^\d{4}$' } |
+    ForEach-Object { Set-ItemProperty -Path $_.PSPath -Name 'DisableDynamicPstate' -Value 1 -Type DWord -ErrorAction SilentlyContinue }
+
+# full-screen scaling and digital vibrance
+$displayOptions = Join-Path $PSScriptRoot '..\Windows\Display-Options.ps1'
+if ($SkipDisplay) { Write-Host 'Scaling and vibrance: skipped (no questions in this mode).' }
+elseif (Test-Path $displayOptions) {
+    & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -ExecutionPolicy Bypass -File $displayOptions
+    if ($LASTEXITCODE -ne 0) { Write-Host "Scaling and vibrance: $LASTEXITCODE step(s) failed, see above." -ForegroundColor Yellow }
+}
+Write-Host 'NVIDIA Settings: done.' -ForegroundColor Green
 Stop-Transcript | Out-Null
 
 exit 0

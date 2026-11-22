@@ -31,6 +31,8 @@ using System.Threading;
 using System.Diagnostics;
 [assembly: AssemblyVersion("2.1")]
 [assembly: AssemblyProduct("Set Timer Resolution service")]
+[assembly: AssemblyTitle("Timer Resolution 0.5 ms (cullewie)")]
+[assembly: AssemblyCompany("cullewie-s-progress")]
 namespace WindowsService
 {
     class WindowsService : ServiceBase
@@ -223,14 +225,59 @@ sc.exe delete "Set Timer Resolution Service" | Out-Null
 Start-Sleep -Seconds 2
 }
 
+# icon for Task Manager: a stopwatch with "0.5" on a dark rounded square, drawn here (no image file in the repo);
+# PNG frames inside an .ico, which Windows reads since Vista
+Add-Type -AssemblyName System.Drawing
+$iconPath = "$env:ProgramData\Cullewie\Work\timer-resolution.ico"
+New-Item -ItemType Directory -Path (Split-Path $iconPath) -Force | Out-Null
+$frames = foreach ($size in 256, 48, 32, 16) {
+    $bmp = New-Object System.Drawing.Bitmap $size, $size
+    $g = [System.Drawing.Graphics]::FromImage($bmp)
+    $g.SmoothingMode = 'AntiAlias'; $g.TextRenderingHint = 'AntiAliasGridFit'
+    $s = $size / 256.0
+    $bg = New-Object System.Drawing.Drawing2D.GraphicsPath
+    $r = 56 * $s; $w = $size - 1
+    $bg.AddArc(0, 0, $r, $r, 180, 90); $bg.AddArc($w - $r, 0, $r, $r, 270, 90)
+    $bg.AddArc($w - $r, $w - $r, $r, $r, 0, 90); $bg.AddArc(0, $w - $r, $r, $r, 90, 90); $bg.CloseFigure()
+    $g.FillPath((New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::FromArgb(255, 18, 20, 24))), $bg)
+    $green = [System.Drawing.Color]::FromArgb(255, 118, 185, 0)
+    $pen = New-Object System.Drawing.Pen $green, ([Math]::Max(1.5, 16 * $s))
+    $g.FillRectangle((New-Object System.Drawing.SolidBrush $green), [float](112 * $s), [float](22 * $s), [float](32 * $s), [float](22 * $s))
+    $g.DrawEllipse($pen, [float](40 * $s), [float](52 * $s), [float](176 * $s), [float](176 * $s))
+    if ($size -ge 32) {
+        $font = New-Object System.Drawing.Font 'Segoe UI', ([float](64 * $s)), ([System.Drawing.FontStyle]::Bold), ([System.Drawing.GraphicsUnit]::Pixel)
+        $fmt = New-Object System.Drawing.StringFormat; $fmt.Alignment = 'Center'; $fmt.LineAlignment = 'Center'
+        $face = New-Object System.Drawing.RectangleF ([float](40 * $s)), ([float](52 * $s)), ([float](176 * $s)), ([float](176 * $s))
+        $g.DrawString('0.5', $font, [System.Drawing.Brushes]::White, $face, $fmt)
+    }
+    else { $g.DrawLine($pen, [float](128 * $s), [float](140 * $s), [float](128 * $s), [float](86 * $s)) }
+    $g.Dispose()
+    $ms = New-Object System.IO.MemoryStream
+    $bmp.Save($ms, [System.Drawing.Imaging.ImageFormat]::Png); $bmp.Dispose()
+    , @($size, $ms.ToArray())
+}
+$ico = New-Object System.IO.MemoryStream
+$bw = New-Object System.IO.BinaryWriter $ico
+$bw.Write([uint16]0); $bw.Write([uint16]1); $bw.Write([uint16]$frames.Count)
+$offset = 6 + 16 * $frames.Count
+foreach ($f in $frames) {
+    $dim = if ($f[0] -ge 256) { 0 } else { $f[0] }
+    $bw.Write([byte]$dim); $bw.Write([byte]$dim); $bw.Write([byte]0); $bw.Write([byte]0)
+    $bw.Write([uint16]1); $bw.Write([uint16]32); $bw.Write([uint32]$f[1].Length); $bw.Write([uint32]$offset)
+    $offset += $f[1].Length
+}
+foreach ($f in $frames) { $bw.Write([byte[]]$f[1]) }
+[IO.File]::WriteAllBytes($iconPath, $ico.ToArray())
+
 # compile and create service
-Start-Process -Wait "C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe" -ArgumentList "-out:C:\Windows\SetTimerResolutionService.exe C:\Windows\SetTimerResolutionService.cs" -WindowStyle Hidden
+Start-Process -Wait "C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe" -ArgumentList "-out:C:\Windows\SetTimerResolutionService.exe `"-win32icon:$iconPath`" C:\Windows\SetTimerResolutionService.cs" -WindowStyle Hidden
 
 # remove cs file
 Remove-Item "$env:SystemDrive\Windows\SetTimerResolutionService.cs" -ErrorAction SilentlyContinue | Out-Null
 
 # install and start service
 New-Service -Name "Set Timer Resolution Service" -BinaryPathName "$env:SystemDrive\Windows\SetTimerResolutionService.exe" -ErrorAction SilentlyContinue | Out-Null
+sc.exe description "Set Timer Resolution Service" "Keeps the Windows timer at its finest step (0.5 ms) for smoother frame pacing in games. Installed by cullewie-s-progress." | Out-Null
 Set-Service -Name "Set Timer Resolution Service" -StartupType Auto -ErrorAction SilentlyContinue | Out-Null
 Set-Service -Name "Set Timer Resolution Service" -Status Running -ErrorAction SilentlyContinue | Out-Null
 

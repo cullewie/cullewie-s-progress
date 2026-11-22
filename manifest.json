@@ -8,8 +8,8 @@
     "files":  [
                   {
                       "path":  "Launcher.ps1",
-                      "size":  25101,
-                      "sha256":  "13c0dbd07ed77e5b1e17f70877bb9a5ffb6ba0618c69c32981280c5fab780f1c",
+                      "size":  25947,
+                      "sha256":  "bcb17720acf06c0cc95bee7cecad5ba671350dbea4524ebabf4977d46bd12ca4",
                       "role":  "launcher",
                       "origin":  "project",
                       "derivedFrom":  null
@@ -40,8 +40,8 @@
                   },
                   {
                       "path":  "Scripts/NVIDIA/Settings-GitHub.ps1",
-                      "size":  13813,
-                      "sha256":  "65f052513d729673fb4da942e95817c8a9cd651a4ce4d416b987cd7316dc7a33",
+                      "size":  15193,
+                      "sha256":  "77563fe833a8576fb5faa26e4a5b38e557a02f949d95be793f8da622b9bcf90f",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null
@@ -72,8 +72,8 @@
                   },
                   {
                       "path":  "Scripts/Windows/Timer-Resolution.ps1",
-                      "size":  10617,
-                      "sha256":  "36e1a45ba988ed00a21acb5b0be7a355493811f9b5f31618081d4fa77b6dd6a4",
+                      "size":  13769,
+                      "sha256":  "ab9fdaec5487c65e73cbbd67e47200cbe34a6f8fb8f7b98264217c074b1d33e4",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null
@@ -88,16 +88,8 @@
                   },
                   {
                       "path":  "Scripts/Windows/Tweaks.ps1",
-                      "size":  13816,
-                      "sha256":  "76c86d08f131e801806e12e09b2c062844d7d696c02562a7984768fd0ea7264a",
-                      "role":  "source",
-                      "origin":  "project",
-                      "derivedFrom":  null
-                  },
-                  {
-                      "path":  "Scripts/NVIDIA/P0-State.ps1",
-                      "size":  1340,
-                      "sha256":  "77d3129e9d1b193ba0ad7c541545df0a9a61875a25855294e55adbaeadbc0627",
+                      "size":  68037,
+                      "sha256":  "5c0c8819a01069674c184ebdc582c7c059c23888045fd681d659a19a83d0760c",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null
@@ -130,22 +122,6 @@
                       "path":  "Scripts/AMD/Settings.ps1",
                       "size":  3836,
                       "sha256":  "9ae962cfd81e00c25401582c8c2fc028cf36f0da28fda92bd0983dab45a9a3c2",
-                      "role":  "source",
-                      "origin":  "project",
-                      "derivedFrom":  null
-                  },
-                  {
-                      "path":  "Scripts/Windows/Extras.ps1",
-                      "size":  48116,
-                      "sha256":  "47de3cd702de7d6decc86b81bef9c55e21140a21f4e708c3745fd9998c378a72",
-                      "role":  "source",
-                      "origin":  "project",
-                      "derivedFrom":  null
-                  },
-                  {
-                      "path":  "Scripts/Windows/Bloatware.ps1",
-                      "size":  6646,
-                      "sha256":  "0ae66421212a1909520cbde7d0220ca02b78f6f862e9dca1d7f7adba84a6147c",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null
@@ -226,12 +202,6 @@
                         "requiresReboot":  false
                     },
                     {
-                        "id":  "p0-state",
-                        "entry":  "Scripts/NVIDIA/P0-State.ps1",
-                        "adminRequired":  true,
-                        "requiresReboot":  true
-                    },
-                    {
                         "id":  "defender",
                         "entry":  "Scripts/Windows/Defender.ps1",
                         "adminRequired":  true,
@@ -254,18 +224,6 @@
                         "entry":  "Scripts/AMD/Settings.ps1",
                         "adminRequired":  true,
                         "requiresReboot":  false
-                    },
-                    {
-                        "id":  "extras",
-                        "entry":  "Scripts/Windows/Extras.ps1",
-                        "adminRequired":  true,
-                        "requiresReboot":  false
-                    },
-                    {
-                        "id":  "bloatware",
-                        "entry":  "Scripts/Windows/Bloatware.ps1",
-                        "adminRequired":  true,
-                        "requiresReboot":  true
                     },
                     {
                         "id":  "display-options",
