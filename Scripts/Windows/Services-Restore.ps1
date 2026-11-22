@@ -19,8 +19,6 @@ $defaults = [ordered]@{
     SamSs = 2; VaultSvc = 3; TokenBroker = 3; wlidsvc = 3
     # desktop
     Themes = 2; FontCache = 2
-    # controllers in games
-    GameInputSvc = 3
 }
 
 $work = Join-Path $env:ProgramData 'Cullewie\Work'

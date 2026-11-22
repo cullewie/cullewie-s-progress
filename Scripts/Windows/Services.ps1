@@ -300,6 +300,9 @@ Windows Registry Editor Version 5.00
 [HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\FrameServer]
 "Start"=dword:00000004
 
+[HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\GameInputSvc]
+"Start"=dword:00000004
+
 [HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\gpsvc]
 "Start"=dword:00000002
 

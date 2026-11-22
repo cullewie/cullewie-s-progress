@@ -64,8 +64,8 @@
                   },
                   {
                       "path":  "Scripts/Windows/Services.ps1",
-                      "size":  29707,
-                      "sha256":  "01ee45903de148c664db02cd142e23ae721fa92fd6378f11c625a90617932873",
+                      "size":  29795,
+                      "sha256":  "e41a961dc113696f1557baefe81a8c55af2daa868b991bebc9ee516750e41004",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null
@@ -88,8 +88,8 @@
                   },
                   {
                       "path":  "Scripts/Windows/Tweaks.ps1",
-                      "size":  67323,
-                      "sha256":  "571e8854fa8427a7a297f77e478b20360fc3d2dac99a1493e4a3d50c2ea5915d",
+                      "size":  67367,
+                      "sha256":  "2d3495fe9f61ba3ad5b8941317fe2b00f143c8b87dd5da09ba73196d6ac6ed94",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null
@@ -136,8 +136,8 @@
                   },
                   {
                       "path":  "Scripts/Windows/Services-Restore.ps1",
-                      "size":  3088,
-                      "sha256":  "25290bae97ae5b4bff0b331a507f851607d01f0f3c79c151186fc5ac4d5656c3",
+                      "size":  3040,
+                      "sha256":  "d5c9d8ac423fcaa30a8847297843850f7b43e9e8c5d87fb3ffe873a8f6f1b5fb",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null

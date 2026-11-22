@@ -1,7 +1,8 @@
 # Windows tweaks: Bloatware, Tweaks and Extras in one script, in this order:
 #  1. Removes preinstalled Windows apps, optional capabilities and legacy features a gaming PC does not need. Only what
 #     is named in the lists is removed: apps the user installed (Claude, ChatGPT, games, Store apps) are never touched.
-#     Kept on purpose: Microsoft Store, App Installer (winget), the Xbox app, Gaming Services, GameInput, WSL/Hyper-V.
+#     Kept on purpose: Microsoft Store, App Installer (winget), the Xbox app, Gaming Services, WSL/Hyper-V.
+#     Microsoft GameInput is removed.
 #  2. General tweaks: privacy, telemetry, Explorer, game settings, Nagle, MSI mode, HDCP, memory compression, runtimes.
 #     System Restore is turned off so Windows never creates restore points.
 #  3. Extra settings: Game Bar off, new Start menu, Edge kept (WebView2 draws the Start search box), Notepad, Control
@@ -80,6 +81,7 @@ function Remove-MsiProduct([string]$Like) {
         if (-not $DryRun) { Start-Process 'msiexec.exe' -ArgumentList "/x $($p.PSChildName) /qn /norestart" -Wait -NoNewWindow }
     }
 }
+Remove-MsiProduct '*Microsoft GameInput*'
 Remove-MsiProduct '*Update for x64-based Windows Systems*'
 Remove-MsiProduct '*Microsoft Update Health Tools*'
 Write-Plan 'program' 'OneDrive'
@@ -328,7 +330,7 @@ function Import-AppSettings([string]$SettingsDat, [string]$Name, [string]$Conten
     }
 }
 
-# only the Game Bar overlay goes; the Xbox app, Gaming Services (Game Pass games) and GameInput (controllers) stay
+# only the Game Bar overlay goes; the Xbox app and Gaming Services (Game Pass games) stay
 Write-Host 'Game Bar: off'
 Stop-Process -Force -Name GameBar -ErrorAction SilentlyContinue
 Get-AppxPackage -AllUsers Microsoft.XboxGamingOverlay | Remove-AppxPackage -AllUsers -ErrorAction SilentlyContinue
