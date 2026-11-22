@@ -48,7 +48,7 @@ Kurulum üç aşamada ilerler. Bilgisayar arada üç kez kendiliğinden yeniden 
   - Cihazlar: USB ve diğer cihazların güç tasarrufu kapanır, uykuya geçip gecikme yaratmazlar.
   - Görünüm: koyu tema, klasik sağ tık menüsü, dosya uzantıları görünür. Duvar kâğıdın ve görev çubuğunun sağ köşesindeki "masaüstünü göster" düğmesi yerinde kalır.
   - Telefon bağlantısı ve "kaldığın yerden devam et" özelliği kapanır.
-  - DirectX ve Visual C++ çalışma dosyalarını kurar (çoğu oyunun açılması için gerekli).
+  - Visual C++ çalışma dosyalarını kurar (birçok oyun ve programın açılması için gerekli). Eski DirectX paketi kurulmaz: Windows 11'de DirectX 12 zaten var, eski DirectX dosyalarına ihtiyaç duyan oyunlar onları kendileri kurar.
   - Yalnızca C: sürücüsündeki geçici dosyaları siler; takılı USB belleklere dokunmaz.
 - **Ekran ayarları (son adım):** Tam ekran ölçekleme sorulmadan açılır ve ekrana not düşülür; 4:3 gibi düşük çözünürlükler tüm ekrana yayılır. Ardından tek soru gelir: **dijital canlılık** (AMD'de doygunluk) yüzde kaç olsun? NVIDIA bu değeri yeniden başlatınca unuttuğu için her oturum açılışında yeniden uygulanır.
 - **Gereksiz Windows hizmetlerini kapatır** (yaklaşık 200 hizmet). Ağ, Wi-Fi, güvenlik duvarı, aygıt kurulumu, oturum açma, parola kasası ve Microsoft Store'un ihtiyaç duyduğu hizmetlere dokunmaz. Başlamadan önce açık kalacak her hizmetin, kapatılacak bir hizmete bağlı olup olmadığını kontrol eder; bağlıysa hiçbir şeyi değiştirmeden durur.

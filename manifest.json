@@ -16,8 +16,8 @@
                   },
                   {
                       "path":  "README.md",
-                      "size":  9095,
-                      "sha256":  "10cab670c737897532113c0c3cdddbfac6ddbd4f5f6f5ed6ab957c5354047605",
+                      "size":  9237,
+                      "sha256":  "eb906a56b6eed2be1e381786af92ed4dbb5b671b7888bd9afbc46c4ebeca47bd",
                       "role":  "documentation",
                       "origin":  "project",
                       "derivedFrom":  null
@@ -72,8 +72,8 @@
                   },
                   {
                       "path":  "Scripts/Windows/Tweaks.ps1",
-                      "size":  68500,
-                      "sha256":  "aacfaf047dc4e43700f8e8e849cd4eb5b743247036e65ac03eab4b97991cd2ce",
+                      "size":  68602,
+                      "sha256":  "b491e5a3121c9f2db8f7418635c458838d440b94cdabcaf964190c15ed46362f",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null

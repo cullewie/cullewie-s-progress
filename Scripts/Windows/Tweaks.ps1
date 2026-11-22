@@ -3,7 +3,8 @@
 #     is named in the lists is removed: apps the user installed (Claude, ChatGPT, games, Store apps) are never touched.
 #     Kept on purpose: Microsoft Store, App Installer (winget), the Xbox app, Gaming Services, WSL/Hyper-V.
 #     Microsoft GameInput is removed.
-#  2. General tweaks: privacy, telemetry, Explorer, game settings, Nagle, MSI mode, HDCP, memory compression, runtimes.
+#  2. General tweaks: privacy, telemetry, Explorer, game settings, Nagle, MSI mode, HDCP, memory compression,
+#     Visual C++ runtimes.
 #     System Restore is turned off so Windows never creates restore points.
 #  3. Extra settings: Game Bar off, new Start menu, Edge kept (WebView2 draws the Start search box), Notepad, Control
 #     Panel and Settings options, audio Enhancements tab, device and network power saving/wake off, IPv4 only, disk
@@ -293,8 +294,9 @@ Get-ChildItem "HKLM:\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-
 Write-Host "Memory compression off"
 Disable-MMAgent -MemoryCompression -ErrorAction SilentlyContinue | Out-Null
 
-Write-Host "DirectX and Visual C++ runtimes"
-foreach ($id in "Microsoft.DirectX","Microsoft.VCRedist.2015+.x64","Microsoft.VCRedist.2015+.x86") {
+# no legacy DirectX package: Windows 11 already has DirectX 12, and games that need old DirectX 9 files install them
+Write-Host "Visual C++ runtimes"
+foreach ($id in "Microsoft.VCRedist.2015+.x64","Microsoft.VCRedist.2015+.x86") {
     winget install --id $id --exact --silent --accept-package-agreements --accept-source-agreements >$null 2>&1
 }
 
