@@ -1,6 +1,6 @@
 # NVIDIA in one step: driver settings and Profile Inspector profile, P0 state, highest refresh rate (Refresh-Rate.ps1,
 # which AMD cards run on their own), then full-screen scaling and digital
-# vibrance (two questions, through Scripts/Windows/Display-Options.ps1, which AMD and the vibrance sign-in task also use).
+# vibrance (two questions, through Scripts/GPU/Display-Options.ps1, which AMD and the vibrance sign-in task also use).
 # -SkipDisplay: no questions here. The full setup uses it and asks them at the very end, after every other setting;
 # live mode uses it and leaves scaling and vibrance as they are.
 param([switch]$SkipDisplay)
@@ -299,14 +299,14 @@ Get-ChildItem 'HKLM:\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-
     ForEach-Object { Set-ItemProperty -Path $_.PSPath -Name 'DisableDynamicPstate' -Value 1 -Type DWord -ErrorAction SilentlyContinue }
 
 # highest refresh rate: a fresh driver often starts the display at 60 Hz
-$refreshRate = Join-Path $PSScriptRoot '..\Windows\Refresh-Rate.ps1'
+$refreshRate = Join-Path $PSScriptRoot '..\GPU\Refresh-Rate.ps1'
 if (Test-Path $refreshRate) {
     & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -ExecutionPolicy Bypass -File $refreshRate
     if ($LASTEXITCODE -ne 0) { Write-Host "Refresh rate: $LASTEXITCODE display(s) could not be changed, see above." -ForegroundColor Yellow }
 }
 
 # full-screen scaling and digital vibrance
-$displayOptions = Join-Path $PSScriptRoot '..\Windows\Display-Options.ps1'
+$displayOptions = Join-Path $PSScriptRoot '..\GPU\Display-Options.ps1'
 if ($SkipDisplay) { Write-Host 'Scaling and vibrance: skipped (no questions in this mode).' }
 elseif (Test-Path $displayOptions) {
     & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -ExecutionPolicy Bypass -File $displayOptions

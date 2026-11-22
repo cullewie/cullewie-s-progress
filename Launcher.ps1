@@ -12,18 +12,18 @@ $ErrorActionPreference = 'Stop'
 $script:RepoRoot = $PSScriptRoot
 $script:PowerShellExe = Join-Path $PSHOME 'powershell.exe'
 $script:Tools = @(
-    [pscustomobject]@{ Id='nvidia-updater'; Name='NVIDIA Driver Updater'; Category='Drivers'; Path='Scripts/Drivers/NVIDIA/NVIDIA-Driver-Updater.ps1'; Wrapper='NvidiaCase' }
-    [pscustomobject]@{ Id='ddu'; Name='DDU'; Category='Drivers'; Path='Scripts/Drivers/DDU/DDU.ps1'; Wrapper='' }
-    [pscustomobject]@{ Id='settings-github'; Name='NVIDIA Settings (profile, P0, refresh rate)'; Category='NVIDIA'; Path='Scripts/NVIDIA/Settings-GitHub.ps1'; Wrapper='' }
-    [pscustomobject]@{ Id='amd-updater'; Name='AMD Driver Updater'; Category='Drivers'; Path='Scripts/Drivers/AMD/AMD-Driver-Updater.ps1'; Wrapper='' }
-    [pscustomobject]@{ Id='amd-settings'; Name='AMD Settings'; Category='AMD'; Path='Scripts/AMD/Settings.ps1'; Wrapper='' }
+    [pscustomobject]@{ Id='nvidia-updater'; Name='NVIDIA Driver'; Category='NVIDIA'; Path='Scripts/NVIDIA/Driver.ps1'; Wrapper='NvidiaCase' }
+    [pscustomobject]@{ Id='ddu'; Name='DDU (driver cleanup)'; Category='GPU'; Path='Scripts/GPU/DDU.ps1'; Wrapper='' }
+    [pscustomobject]@{ Id='settings-github'; Name='NVIDIA Settings (profile, P0, refresh rate)'; Category='NVIDIA'; Path='Scripts/NVIDIA/Settings.ps1'; Wrapper='' }
+    [pscustomobject]@{ Id='amd-updater'; Name='AMD Driver'; Category='AMD'; Path='Scripts/AMD/Driver.ps1'; Wrapper='' }
+    [pscustomobject]@{ Id='amd-settings'; Name='AMD Settings (Adrenalin, refresh rate)'; Category='AMD'; Path='Scripts/AMD/Settings.ps1'; Wrapper='' }
     [pscustomobject]@{ Id='services'; Name='Services Off'; Category='Windows'; Path='Scripts/Windows/Services.ps1'; Wrapper='' }
     [pscustomobject]@{ Id='power-plan'; Name='Power Plan On'; Category='Windows'; Path='Scripts/Windows/Power-Plan.ps1'; Wrapper='' }
     [pscustomobject]@{ Id='timer-resolution'; Name='Timer Resolution On'; Category='Windows'; Path='Scripts/Windows/Timer-Resolution.ps1'; Wrapper='' }
     [pscustomobject]@{ Id='tweaks'; Name='Windows Tweaks (apps, widgets, Copilot, settings)'; Category='Windows'; Path='Scripts/Windows/Tweaks.ps1'; Wrapper='' }
     [pscustomobject]@{ Id='defender'; Name='Defender Optimize'; Category='Windows'; Path='Scripts/Windows/Defender.ps1'; Wrapper='' }
-    [pscustomobject]@{ Id='refresh-rate'; Name='Highest Refresh Rate'; Category='Windows'; Path='Scripts/Windows/Refresh-Rate.ps1'; Wrapper='' }
-    [pscustomobject]@{ Id='display-options'; Name='Scaling and Vibrance'; Category='Windows'; Path='Scripts/Windows/Display-Options.ps1'; Wrapper='' }
+    [pscustomobject]@{ Id='refresh-rate'; Name='Highest Refresh Rate'; Category='GPU'; Path='Scripts/GPU/Refresh-Rate.ps1'; Wrapper='' }
+    [pscustomobject]@{ Id='display-options'; Name='Display: full-screen scaling and vibrance'; Category='GPU'; Path='Scripts/GPU/Display-Options.ps1'; Wrapper='' }
 )
 function Test-IsAdministrator {
     $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
@@ -341,11 +341,11 @@ function Resume-FullSetup {
     }
     # the GPU driver is in: Windows Update may deliver drivers again (chipset, audio, Wi-Fi, Bluetooth)
     Remove-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate' -Name 'ExcludeWUDriversInQualityUpdate' -ErrorAction SilentlyContinue
-    # refresh-rate after the driver: a fresh driver often starts the display at 60 Hz
     # display-options asks the two questions (full-screen scaling, vibrance), so it runs last, after every other setting
-    # NVIDIA Settings already set the refresh rate; other cards get it here
+    # NVIDIA Settings and AMD Settings set the highest refresh rate themselves; a PC with neither gets it here
     $windowsIds = @('power-plan', 'timer-resolution', 'tweaks', 'display-options')
-    if (-not $hasNvidia) { $windowsIds = @('refresh-rate') + $windowsIds }
+    $amdSettingsRan = Test-Path (Join-Path $env:ProgramData 'Cullewie\Work\amd-installed.flag')
+    if (-not $hasNvidia -and -not $amdSettingsRan) { $windowsIds = @('refresh-rate') + $windowsIds }
     foreach ($id in $windowsIds) {
         try { Invoke-RequiredTool -Id $id } catch { $failed.Add($_.Exception.Message) }
     }
@@ -377,7 +377,6 @@ function Start-LiveSetup {
     $ids = @()
     if ($hasNvidia) { $ids += 'nvidia-updater', 'settings-github' }
     elseif (@(Get-PciGpu '1002').Count) { $ids += 'amd-updater' }
-    if (-not $hasNvidia) { $ids += 'refresh-rate' }
     $ids += 'power-plan', 'timer-resolution', 'tweaks'
     foreach ($id in $ids) {
         $tool = $script:Tools | Where-Object { $_.Id -eq $id } | Select-Object -First 1
@@ -387,7 +386,14 @@ function Start-LiveSetup {
         else { Invoke-ChildScript -Tool $tool }
         $steps.Add(('{0,-50} exit {1,3}  {2:mm\:ss}' -f $tool.Name, $script:LastChildExitCode, $sw.Elapsed))
     }
-    if ((-not $hasNvidia) -and (Test-Path (Join-Path $env:ProgramData 'Cullewie\Work\amd-installed.flag'))) { Invoke-ChildScript -Tool ($script:Tools | Where-Object { $_.Id -eq 'amd-settings' }) }
+    # NVIDIA Settings and AMD Settings set the highest refresh rate themselves; a PC with neither gets it on its own.
+    # Decided here, after the AMD updater has (re)written its flag.
+    if (-not $hasNvidia) {
+        $id = if (Test-Path (Join-Path $env:ProgramData 'Cullewie\Work\amd-installed.flag')) { 'amd-settings' } else { 'refresh-rate' }
+        $tool = $script:Tools | Where-Object { $_.Id -eq $id } | Select-Object -First 1
+        Invoke-ChildScript -Tool $tool
+        $steps.Add(('{0,-50} exit {1,3}' -f $tool.Name, $script:LastChildExitCode))
+    }
     $tool = $script:Tools | Where-Object { $_.Id -eq 'services' } | Select-Object -First 1
     Invoke-ChildScript -Tool $tool -Arguments @('-Live')
     $steps.Add(('{0,-26} exit {1,3}' -f $tool.Name, $script:LastChildExitCode))

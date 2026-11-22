@@ -54,6 +54,34 @@ Kurulum üç aşamada ilerler. Bilgisayar arada üç kez kendiliğinden yeniden 
 - **Gereksiz Windows hizmetlerini kapatır** (yaklaşık 200 hizmet). Ağ, Wi-Fi, güvenlik duvarı, aygıt kurulumu, oturum açma, parola kasası ve Microsoft Store'un ihtiyaç duyduğu hizmetlere dokunmaz. Başlamadan önce açık kalacak her hizmetin, kapatılacak bir hizmete bağlı olup olmadığını kontrol eder; bağlıysa hiçbir şeyi değiştirmeden durur.
 - **Son kez normal yeniden başlatır.** Kurulum tamam.
 
+## Dosyalar nerede?
+
+Her betik, işini yaptığı şeyin klasöründe durur:
+
+```
+IWR.ps1                  tek satırlık komutun indirdiği başlangıç dosyası: her dosyayı indirip doğrular, Launcher'ı başlatır
+Launcher.ps1             kurulumun sırasını yöneten ana dosya
+manifest.json            her dosyanın SHA-256 parmak izi
+Scripts/
+├── NVIDIA/
+│   ├── Driver.ps1       en yeni NVIDIA sürücüsünü bulur, indirir, imzasını kontrol eder, kurar
+│   └── Settings.ps1     NVIDIA profili (30 ayar), P0 durumu, en yüksek yenileme hızı
+├── AMD/
+│   ├── Driver.ps1       en yeni AMD sürücüsünü (RX 5000–9000) bulur, indirir, imzasını kontrol eder, kurar
+│   └── Settings.ps1     AMD Software ayarları, en yüksek yenileme hızı
+├── GPU/                 iki marka için ortak
+│   ├── DDU.ps1          eski sürücüyü güvenli modda siler
+│   ├── Refresh-Rate.ps1 ekranı en yüksek yenileme hızına alır (NVIDIA ve AMD Settings çağırır)
+│   └── Display-Options.ps1  tam ekran ölçekleme ve dijital canlılık (son adım)
+└── Windows/
+    ├── Tweaks.ps1       gereksiz uygulamalar, Widgets, Copilot ve bütün Windows ayarları
+    ├── Power-Plan.ps1   güç planı
+    ├── Timer-Resolution.ps1  0,5 ms zamanlayıcı hizmeti
+    ├── Defender.ps1     Windows Defender ayarları (güvenli modda)
+    ├── Services.ps1     gereksiz hizmetleri kapatır
+    └── Services-Restore.ps1  eski bir sürümün bozduğu hizmetleri onarır
+```
+
 ## Bilmen gerekenler
 
 Bu araç bilgisayarı hızlandırmak için bazı Windows özelliklerinden vazgeçer. Kurmadan önce bunları bil:

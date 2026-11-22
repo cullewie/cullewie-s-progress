@@ -8,22 +8,22 @@
     "files":  [
                   {
                       "path":  "Launcher.ps1",
-                      "size":  25851,
-                      "sha256":  "27c8fc8fe25c0e3d74029673f44637f9986053622b1f7b32945ff2fb92f6c05f",
+                      "size":  26204,
+                      "sha256":  "485ddc6039dc632053ac20d9e566a42cf06d340a23c6dd2cdcb04020cb774384",
                       "role":  "launcher",
                       "origin":  "project",
                       "derivedFrom":  null
                   },
                   {
                       "path":  "README.md",
-                      "size":  7511,
-                      "sha256":  "709b2848ca4bf567178cd932d0a17ae69a4ab62bb95b0a813d24362ddef5f49a",
+                      "size":  9095,
+                      "sha256":  "10cab670c737897532113c0c3cdddbfac6ddbd4f5f6f5ed6ab957c5354047605",
                       "role":  "documentation",
                       "origin":  "project",
                       "derivedFrom":  null
                   },
                   {
-                      "path":  "Scripts/Drivers/DDU/DDU.ps1",
+                      "path":  "Scripts/GPU/DDU.ps1",
                       "size":  12856,
                       "sha256":  "e600f5d64a343e0b24f34beac08a85e994ac44c9f6cb379953f2339d0dfb9998",
                       "role":  "source",
@@ -31,7 +31,7 @@
                       "derivedFrom":  null
                   },
                   {
-                      "path":  "Scripts/Drivers/NVIDIA/NVIDIA-Driver-Updater.ps1",
+                      "path":  "Scripts/NVIDIA/Driver.ps1",
                       "size":  13320,
                       "sha256":  "db9b93999c4298abbd58a6dfeaf8597a5a190888a50150e568feb03657b82a71",
                       "role":  "source",
@@ -39,9 +39,9 @@
                       "derivedFrom":  null
                   },
                   {
-                      "path":  "Scripts/NVIDIA/Settings-GitHub.ps1",
-                      "size":  15817,
-                      "sha256":  "2dc8650f26c212f61d4873360eff09a47eaf1504ad720e368119154de0a92c5b",
+                      "path":  "Scripts/NVIDIA/Settings.ps1",
+                      "size":  15805,
+                      "sha256":  "d3c943e3f3a4790215867c1ea15e40cf8c6b96f786e72cdab01b5f761e3f4e96",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null
@@ -87,7 +87,7 @@
                       "derivedFrom":  null
                   },
                   {
-                      "path":  "Scripts/Windows/Refresh-Rate.ps1",
+                      "path":  "Scripts/GPU/Refresh-Rate.ps1",
                       "size":  4087,
                       "sha256":  "fbf4da572a84a7f28d5b9f1a79f54a56989ffc1d2039e7912d963f76ec252403",
                       "role":  "source",
@@ -95,7 +95,7 @@
                       "derivedFrom":  null
                   },
                   {
-                      "path":  "Scripts/Drivers/AMD/AMD-Driver-Updater.ps1",
+                      "path":  "Scripts/AMD/Driver.ps1",
                       "size":  9182,
                       "sha256":  "fbc2746268dfc6fb5d07018dfeed9d487a3afc66c58e2eb14e58a8f5ab9fe274",
                       "role":  "source",
@@ -104,14 +104,14 @@
                   },
                   {
                       "path":  "Scripts/AMD/Settings.ps1",
-                      "size":  3836,
-                      "sha256":  "9ae962cfd81e00c25401582c8c2fc028cf36f0da28fda92bd0983dab45a9a3c2",
+                      "size":  4345,
+                      "sha256":  "bfd86c291989df5e92ea2eeb0ab33c8eb30f958ae70eb7cb16727df20e4f23d5",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null
                   },
                   {
-                      "path":  "Scripts/Windows/Display-Options.ps1",
+                      "path":  "Scripts/GPU/Display-Options.ps1",
                       "size":  16762,
                       "sha256":  "cca9b941c2cf9edf975bde1ca79fe2fe30b131933380f28ac5a1d3a8a7f6849a",
                       "role":  "source",
@@ -133,19 +133,19 @@
     "modules":  [
                     {
                         "id":  "nvidia-driver-updater",
-                        "entry":  "Scripts/Drivers/NVIDIA/NVIDIA-Driver-Updater.ps1",
+                        "entry":  "Scripts/NVIDIA/Driver.ps1",
                         "adminRequired":  true,
                         "requiresReboot":  true
                     },
                     {
                         "id":  "ddu",
-                        "entry":  "Scripts/Drivers/DDU/DDU.ps1",
+                        "entry":  "Scripts/GPU/DDU.ps1",
                         "adminRequired":  true,
                         "requiresReboot":  true
                     },
                     {
                         "id":  "nvidia-settings-github",
-                        "entry":  "Scripts/NVIDIA/Settings-GitHub.ps1",
+                        "entry":  "Scripts/NVIDIA/Settings.ps1",
                         "adminRequired":  true,
                         "requiresReboot":  false
                     },
@@ -181,13 +181,13 @@
                     },
                     {
                         "id":  "refresh-rate",
-                        "entry":  "Scripts/Windows/Refresh-Rate.ps1",
+                        "entry":  "Scripts/GPU/Refresh-Rate.ps1",
                         "adminRequired":  true,
                         "requiresReboot":  false
                     },
                     {
                         "id":  "amd-driver-updater",
-                        "entry":  "Scripts/Drivers/AMD/AMD-Driver-Updater.ps1",
+                        "entry":  "Scripts/AMD/Driver.ps1",
                         "adminRequired":  true,
                         "requiresReboot":  true
                     },
@@ -199,7 +199,7 @@
                     },
                     {
                         "id":  "display-options",
-                        "entry":  "Scripts/Windows/Display-Options.ps1",
+                        "entry":  "Scripts/GPU/Display-Options.ps1",
                         "adminRequired":  true,
                         "requiresReboot":  false
                     }

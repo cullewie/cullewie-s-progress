@@ -1,4 +1,4 @@
-# AMD Software (Adrenalin) settings. Writes only to AMD display adapters.
+# AMD Software (Adrenalin) settings. Writes only to AMD display adapters. Ends with the highest refresh rate.
 $ErrorActionPreference = 'Continue'
 $classKey = 'HKLM:\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}'
 $adapters = @(Get-ChildItem $classKey -ErrorAction SilentlyContinue |
@@ -60,6 +60,13 @@ foreach ($a in $adapters) {
 Remove-Item 'HKCU:\Software\AMD\CN\Notification' -Recurse -Force -ErrorAction SilentlyContinue
 New-Item 'HKCU:\Software\AMD\CN\Notification' -Force | Out-Null
 foreach ($k in 'FreeSync', 'OverlayNotification', 'VirtualSuperResolution') { Set-Value "HKCU:\Software\AMD\CN\$k" 'AlreadyNotified' 1 DWord }
+
+# highest refresh rate: a fresh driver often starts the display at 60 Hz (same script NVIDIA Settings runs)
+$refreshRate = Join-Path $PSScriptRoot '..\GPU\Refresh-Rate.ps1'
+if (Test-Path $refreshRate) {
+    & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -ExecutionPolicy Bypass -File $refreshRate
+    if ($LASTEXITCODE -ne 0) { Write-Host "Refresh rate: $LASTEXITCODE display(s) could not be changed, see above." -ForegroundColor Yellow }
+}
 
 Write-Host 'AMD settings applied.' -ForegroundColor Green
 exit 0
