@@ -1,7 +1,8 @@
 [CmdletBinding()]
 param(
     # full: the full automatic setup. guided: DDU and NVIDIA driver only, no restart (for testing on a running PC).
-    [ValidateSet('full', 'guided')][string]$Mode = 'full',
+    # live: every step in normal Windows, no safe mode and no restart (no DDU, no Defender, no questions); restart later.
+    [ValidateSet('full', 'guided', 'live')][string]$Mode = 'full',
     # Set by the full setup logon task after the first safe-mode restart.
     [switch]$ResumeFullSetup
 )
@@ -145,10 +146,17 @@ function Get-NvidiaNameCandidates {
     if ($laptop) { return @("$name Laptop GPU", $name) }
     return @($name)
 }
+function Get-PciGpu {
+    # PCI display-class devices (class code 03) of one vendor: found even with no driver, when Windows
+    # may not list the card as a video controller. Skips the card's HD audio function (class 04).
+    param([Parameter(Mandatory=$true)][string]$VendorId)
+    @(Get-CimInstance Win32_PnPEntity -Filter "PNPDeviceID LIKE 'PCI\\VEN_$VendorId%'" |
+        Where-Object { @($_.CompatibleID) -match '^PCI\\CC_03' })
+}
 function Resolve-NvidiaGpuName {
     # Without an NVIDIA driver Windows names the card "Microsoft Basic Display Adapter";
     # look the PCI device ID up in pci.ids and pick the name NVIDIA's catalog uses.
-    $gpu = Get-CimInstance Win32_VideoController | Where-Object { $_.PNPDeviceID -like 'PCI\VEN_10DE&*' } | Select-Object -First 1
+    $gpu = Get-PciGpu '10DE' | Select-Object -First 1
     if (-not $gpu) { return $null }
     if ($gpu.Name -match 'NVIDIA|GeForce|Quadro|RTX|GTX') { return [string]$gpu.Name }
     if ($gpu.PNPDeviceID -notmatch 'DEV_([0-9A-F]{4})') { return $null }
@@ -299,7 +307,7 @@ function Resume-FullSetup {
     $failed = New-Object System.Collections.Generic.List[string]
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
     try { Wait-Internet } catch { $failed.Add($_.Exception.Message) }
-    $hasNvidia = @(Get-CimInstance Win32_VideoController | Where-Object { $_.PNPDeviceID -like 'PCI\VEN_10DE&*' }).Count -gt 0
+    $hasNvidia = @(Get-PciGpu '10DE').Count -gt 0
     if ($hasNvidia) {
         if (Test-Path -LiteralPath $statePath -PathType Leaf) {
             $env:CULLEWIE_NVIDIA_GPU_NAME = [string](Get-Content -LiteralPath $statePath -Raw | ConvertFrom-Json).GpuName
@@ -320,7 +328,7 @@ function Resume-FullSetup {
             Remove-Item -LiteralPath $statePath -Force -ErrorAction SilentlyContinue
         }
     }
-    elseif (@(Get-CimInstance Win32_VideoController | Where-Object { $_.PNPDeviceID -like 'PCI\VEN_1002&*' }).Count) {
+    elseif (@(Get-PciGpu '1002').Count) {
         # the updater itself skips integrated Radeon graphics and cards older than RX 5000
         try {
             Invoke-RequiredTool -Id 'amd-updater'
@@ -347,6 +355,32 @@ function Resume-FullSetup {
     # Services goes last: it queues stage 4 in safe mode and restarts.
     Invoke-RequiredTool -Id 'services'
 }
+function Start-LiveSetup {
+    # Same steps as stages 3 and 4, in normal Windows and without restarting. Skipped: DDU (cleans best in safe mode),
+    # Defender (Tamper Protection undoes it outside safe mode) and Scaling and Vibrance (it asks questions).
+    $log = Join-Path $env:ProgramData ('Cullewie\Work\live-setup-' + (Get-Date -Format 'yyyyMMdd-HHmmss') + '.log')
+    Start-Transcript -Path $log -Force | Out-Null
+    $steps = New-Object System.Collections.Generic.List[string]
+    $hasNvidia = @(Get-PciGpu '10DE').Count -gt 0
+    $ids = @()
+    if ($hasNvidia) { $ids += 'nvidia-updater', 'settings-github', 'p0-state' }
+    elseif (@(Get-PciGpu '1002').Count) { $ids += 'amd-updater' }
+    $ids += 'refresh-rate', 'widgets', 'copilot-off', 'power-plan', 'timer-resolution', 'tweaks', 'extras', 'bloatware'
+    foreach ($id in $ids) {
+        $tool = $script:Tools | Where-Object { $_.Id -eq $id } | Select-Object -First 1
+        $sw = [Diagnostics.Stopwatch]::StartNew()
+        Invoke-ChildScript -Tool $tool
+        $steps.Add(('{0,-26} exit {1,3}  {2:mm\:ss}' -f $tool.Name, $script:LastChildExitCode, $sw.Elapsed))
+    }
+    if ((-not $hasNvidia) -and (Test-Path (Join-Path $env:ProgramData 'Cullewie\Work\amd-installed.flag'))) { Invoke-ChildScript -Tool ($script:Tools | Where-Object { $_.Id -eq 'amd-settings' }) }
+    $tool = $script:Tools | Where-Object { $_.Id -eq 'services' } | Select-Object -First 1
+    Invoke-ChildScript -Tool $tool -Arguments @('-Live')
+    $steps.Add(('{0,-26} exit {1,3}' -f $tool.Name, $script:LastChildExitCode))
+    Write-Host ([Environment]::NewLine + 'Live setup summary (exit 0 = done):') -ForegroundColor Cyan
+    $steps | ForEach-Object { Write-Host "  $_" }
+    Write-Host "Nothing was restarted. Restart Windows when you are ready; services change then. Log: $log" -ForegroundColor Yellow
+    Stop-Transcript | Out-Null
+}
 if ($PSVersionTable.PSVersion -lt [version]'5.1') {
     throw 'Windows PowerShell 5.1 or newer is required.'
 }
@@ -368,6 +402,7 @@ try {
         Start-GuidedNvidiaSetup
         Write-Host 'Guided NVIDIA setup finished. Nothing was restarted.' -ForegroundColor Green
     }
+    elseif ($Mode -eq 'live') { Start-LiveSetup }
     else { Start-FullSetup }
 }
 catch { Write-Host "Setup stopped: $($_.Exception.Message)" -ForegroundColor Red }

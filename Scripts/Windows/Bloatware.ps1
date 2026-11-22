@@ -89,7 +89,8 @@ if (-not $DryRun) {
     Get-ScheduledTask | Where-Object { $_.TaskName -match 'OneDrive' } | Unregister-ScheduledTask -Confirm:$false -ErrorAction SilentlyContinue
 
     # Remote Desktop Connection: the uninstaller opens a window, close it as soon as it appears
-    Start-Process 'mstsc' -ArgumentList '/Uninstall' -ErrorAction SilentlyContinue
+    # already removed on a second run: nothing to start
+    if (Get-Command mstsc -ErrorAction SilentlyContinue) { Start-Process 'mstsc' -ArgumentList '/Uninstall' -ErrorAction SilentlyContinue }
     for ($i = 0; $i -lt 100; $i++) {
         $p = Get-Process -Name mstsc -ErrorAction SilentlyContinue
         if (-not $p) { break }

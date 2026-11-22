@@ -118,6 +118,24 @@ $nipfile = @'
         <ValueType>Dword</ValueType>
       </ProfileSetting>
       <ProfileSetting>
+        <SettingNameInfo>Maximum Pre-Rendered Frames</SettingNameInfo>
+        <SettingID>8102046</SettingID>
+        <SettingValue>0</SettingValue>
+        <ValueType>Dword</ValueType>
+      </ProfileSetting>
+      <ProfileSetting>
+        <SettingNameInfo>Ultra Low Latency - CPL State</SettingNameInfo>
+        <SettingID>390467</SettingID>
+        <SettingValue>0</SettingValue>
+        <ValueType>Dword</ValueType>
+      </ProfileSetting>
+      <ProfileSetting>
+        <SettingNameInfo>Ultra Low Latency - Enabled</SettingNameInfo>
+        <SettingID>277041152</SettingID>
+        <SettingValue>0</SettingValue>
+        <ValueType>Dword</ValueType>
+      </ProfileSetting>
+      <ProfileSetting>
         <SettingNameInfo>Preferred Refresh Rate</SettingNameInfo>
         <SettingID>6600001</SettingID>
         <SettingValue>1</SettingValue>
@@ -249,11 +267,24 @@ $nipfile = @'
 '@
 Set-Content -Path "$env:ProgramData\Cullewie\Work\inspector.nip" -Value $nipfile -Force
 
-# import nip (Low Latency / Ultra Low Latency are left as they are)
-Write-Host "Importing profile: $(([xml]$nipfile).ArrayOfProfile.Profile.Settings.ProfileSetting.Count) settings"
-$import = Start-Process -Wait -PassThru "$env:SystemDrive\Program Files (x86)\Nvidia Profile Inspector\Nvidia Profile Inspector.exe" -ArgumentList "-silentImport -silent `"$env:ProgramData\Cullewie\Work\inspector.nip`""
-if ($import.ExitCode -ne 0) { Write-Host "Profile Inspector exit code $($import.ExitCode): open it and check the Base Profile." -ForegroundColor Yellow }
-else { Write-Host 'NVIDIA Settings: done.' -ForegroundColor Green }
+# import nip (Low Latency Mode: Off)
+$inspector = "$env:SystemDrive\Program Files (x86)\Nvidia Profile Inspector\Nvidia Profile Inspector.exe"
+$importArgs = "-silentImport -silent `"$env:ProgramData\Cullewie\Work\inspector.nip`""
+# right after a fresh driver install (or with no driver) the driver is not loaded until a restart, and Profile Inspector
+# crashes; then import at the next sign-in instead (HKLM RunOnce runs elevated)
+$gpu = Get-CimInstance Win32_PnPEntity -Filter "PNPDeviceID LIKE 'PCI\\VEN_10DE%'" | Where-Object { @($_.CompatibleID) -match '^PCI\\CC_03' } | Select-Object -First 1
+$driverReady = $gpu -and $gpu.ConfigManagerErrorCode -eq 0 -and $gpu.Name -match 'NVIDIA|GeForce|Quadro|RTX|GTX|TITAN' -and (Test-Path "$env:SystemRoot\System32\nvapi64.dll")
+if (-not $driverReady) {
+    New-Item -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce' -Force | Out-Null
+    Set-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce' -Name 'CullewieNvidiaProfile' -Value "`"$inspector`" $importArgs"
+    Write-Host 'NVIDIA driver is not loaded yet (restart pending): the profile is imported at the next sign-in.' -ForegroundColor Yellow
+}
+else {
+    Write-Host "Importing profile: $(([xml]$nipfile).ArrayOfProfile.Profile.Settings.ProfileSetting.Count) settings"
+    $import = Start-Process -Wait -PassThru $inspector -ArgumentList $importArgs
+    if ($import.ExitCode -ne 0) { Write-Host "Profile Inspector exit code $($import.ExitCode): open it and check the Base Profile." -ForegroundColor Yellow }
+    else { Write-Host 'NVIDIA Settings: done.' -ForegroundColor Green }
+}
 Stop-Transcript | Out-Null
 
 exit 0

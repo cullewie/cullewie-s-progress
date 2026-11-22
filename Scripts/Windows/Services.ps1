@@ -1,3 +1,5 @@
+# -Live: apply in normal Windows without safe mode or a restart (Launcher -Mode live)
+param([switch]$Live)
         # SCRIPT RUN AS ADMIN
         If (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]"Administrator"))
         {Start-Process PowerShell.exe -ArgumentList ("-NoProfile -ExecutionPolicy Bypass -File `"{0}`"" -f $PSCommandPath) -Verb RunAs
@@ -895,6 +897,17 @@ if ($conflicts) {
 # edit servicesoff.ps1
 $ServicesOffPs1 = "$env:ProgramData\Cullewie\Work\servicesoff.ps1"
 (Get-Content $ServicesOffPs1 -Raw) -replace "``'@","'@" | Set-Content $ServicesOffPs1 -NoNewline
+
+# -Live: apply now in normal Windows (as TrustedInstaller, then as admin), no safe mode and no restart.
+# The new start types take effect at the next restart, whenever the user restarts.
+if ($Live) {
+    $livePs1 = "$env:ProgramData\Cullewie\Work\servicesoff-live.ps1"
+    $text = (Get-Content $ServicesOffPs1 -Raw).Replace('shutdown -r -t 00', '').Replace('Start-Sleep -Seconds 5', '').Replace('Write-Host "Restarting`n" -ForegroundColor Red', 'Write-Host "Services: applied. They change at the next restart." -ForegroundColor Green')
+    if ($text -match 'shutdown -r|safeboot minimal') { Write-Host 'Services: could not build the no-restart script; nothing was changed.' -ForegroundColor Red; exit 1 }
+    Set-Content -Path $livePs1 -Value $text -NoNewline
+    & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -ExecutionPolicy Bypass -File $livePs1
+    exit $LASTEXITCODE
+}
 
 # install runonce servicesoff ps1 file to run in safe boot
 cmd /c "reg add `"HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce`" /v `"*servicesoff`" /t REG_SZ /d `"powershell.exe -nop -ep bypass -WindowStyle Maximized -f $env:ProgramData\Cullewie\Work\servicesoff.ps1`" /f >nul 2>&1"

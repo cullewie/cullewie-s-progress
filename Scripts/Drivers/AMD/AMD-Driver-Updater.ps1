@@ -13,7 +13,8 @@ $installedFlag = Join-Path $root 'amd-installed.flag'
 function Get-AmdPackageLetter {
     # Navi 1x/2x (RX 5000/6000) use package "a", Navi 3x/4x (RX 7000/9000) use package "b".
     # Integrated Radeon graphics, older cards and Radeon PRO cards are not handled here.
-    $gpus = @(Get-CimInstance Win32_VideoController | Where-Object { $_.PNPDeviceID -like 'PCI\VEN_1002&*' })
+    # PCI display class (03): found even with no driver; skips the HD audio function
+    $gpus = @(Get-CimInstance Win32_PnPEntity -Filter "PNPDeviceID LIKE 'PCI\\VEN_1002%'" | Where-Object { @($_.CompatibleID) -match '^PCI\\CC_03' })
     if (-not $gpus.Count) { return $null }
     $content = (Invoke-WebRequest -Uri 'https://pci-ids.ucw.cz/v2.2/pci.ids' -UseBasicParsing -TimeoutSec 60).Content
     if ($content -is [byte[]]) { $content = [Text.Encoding]::UTF8.GetString($content) }
@@ -77,7 +78,7 @@ New-Item -ItemType Directory -Path $root -Force | Out-Null
 if ($Resolve) {
     # never remove a working driver unless the new one is known: no NVIDIA card next to it, a supported Radeon, a live link
     try {
-        if (@(Get-CimInstance Win32_VideoController | Where-Object { $_.PNPDeviceID -like 'PCI\VEN_10DE&*' }).Count) { Write-Host 'NVIDIA GPU present; the AMD path is not used.'; exit 3 }
+        if (@(Get-CimInstance Win32_PnPEntity -Filter "PNPDeviceID LIKE 'PCI\\VEN_10DE%'" | Where-Object { @($_.CompatibleID) -match '^PCI\\CC_03' }).Count) { Write-Host 'NVIDIA GPU present; the AMD path is not used.'; exit 3 }
         $letter = Get-AmdPackageLetter
         if (-not $letter) { Write-Host 'No supported discrete AMD GPU (RX 5000-9000).'; exit 3 }
         $target = Get-AmdDriverLink $letter

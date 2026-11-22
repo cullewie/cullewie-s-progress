@@ -14,9 +14,12 @@
     try {
         Write-Host "DETECTING NVIDIA GPU..." -ForegroundColor Yellow
 
+        # Any PCI device from NVIDIA with display class code 03, so the card is found even with no driver
+        # (then Windows lists it as "Microsoft Basic Display Adapter" or "Video Controller", or not as a video controller at all).
+        # The NVIDIA HD audio function (class 04) is skipped.
         $GPUs = @(
-            Get-CimInstance Win32_VideoController |
-            Where-Object { $_.PNPDeviceID -like 'PCI\VEN_10DE&*' }
+            Get-CimInstance Win32_PnPEntity -Filter "PNPDeviceID LIKE 'PCI\\VEN_10DE%'" |
+            Where-Object { @($_.CompatibleID) -match '^PCI\\CC_03' }
         )
 
         if ($GPUs.Count -ne 1) {
@@ -25,10 +28,8 @@
 
         $GPU = $GPUs[0]
         if (-not [string]::IsNullOrWhiteSpace($env:CULLEWIE_NVIDIA_GPU_NAME)) {
-            $GPU = [PSCustomObject]@{ Name = $env:CULLEWIE_NVIDIA_GPU_NAME }
+            $GPU = [PSCustomObject]@{ Name = $env:CULLEWIE_NVIDIA_GPU_NAME; PNPDeviceID = $GPU.PNPDeviceID }
         }
-
-        Write-Host "GPU: $($GPU.Name)" -ForegroundColor Green
 
         # NVIDIA lookup API
         $API = "https://www.nvidia.com/Download/API/lookupValueSearch.aspx?TypeID="
@@ -38,6 +39,37 @@
 
         $Products = (Invoke-RestMethod `
             -Uri "${API}3" -Headers $Headers -UseBasicParsing).LookupValueSearch.LookupValues.LookupValue
+
+        # No driver: the Windows name is generic. Look the PCI device ID up in pci.ids and pick the name NVIDIA's catalog uses,
+        # e.g. "GB203 [GeForce RTX 5070 Ti]" -> "GeForce RTX 5070 Ti", "AD106M [GeForce RTX 4070 Max-Q / Mobile]" -> "GeForce RTX 4070 Laptop GPU".
+        if ($GPU.Name -notmatch 'NVIDIA|GeForce|Quadro|RTX|GTX|TITAN') {
+            Write-Host "No NVIDIA driver name ($($GPU.Name)); looking up the PCI device ID..." -ForegroundColor Yellow
+            if ($GPU.PNPDeviceID -notmatch 'DEV_([0-9A-F]{4})') { throw "Could not read the PCI device ID: $($GPU.PNPDeviceID)" }
+            $DeviceId = $Matches[1].ToLowerInvariant()
+            $PciIds = (Invoke-WebRequest -Uri 'https://pci-ids.ucw.cz/v2.2/pci.ids' -UseBasicParsing -TimeoutSec 60).Content
+            if ($PciIds -is [byte[]]) { $PciIds = [Text.Encoding]::UTF8.GetString($PciIds) }
+            $CatalogNames = @($Products | ForEach-Object { [string]$_.Name -replace '^NVIDIA\s+', '' })
+            $InVendor = $false
+            $Resolved = $null
+            foreach ($Line in $PciIds -split "`n") {
+                if ($Line -match '^10de\s') { $InVendor = $true; continue }
+                if ($InVendor -and $Line -match '^[0-9a-f]{4}\s') { break }
+                if ($InVendor -and $Line -match "^\t$DeviceId  (\S+).*?\[(.+)\]") {
+                    $Chip = $Matches[1]
+                    $Name = ($Matches[2] -split ' / ')[0]
+                    $Laptop = $Chip -match 'M$' -or $Matches[2] -match 'Mobile|Max-Q|Laptop GPU'
+                    $Name = $Name -replace '\s+(Max-Q|Mobile|Laptop GPU|Lite Hash Rate|Engineering Sample|Refresh|GDDR6X|OEM|Rev\.\s*\S+|\d+\s?GB)\b', ''
+                    $Name = ($Name -replace '\s+', ' ').Trim()
+                    $Candidates = if ($Laptop) { @("$Name Laptop GPU", $Name) } else { @($Name) }
+                    $Resolved = $Candidates | Where-Object { $CatalogNames -contains $_ } | Select-Object -First 1
+                    break
+                }
+            }
+            if (!$Resolved) { throw "PCI device 10de:$DeviceId is not in NVIDIA's driver catalog." }
+            $GPU = [PSCustomObject]@{ Name = $Resolved; PNPDeviceID = $GPU.PNPDeviceID }
+        }
+
+        Write-Host "GPU: $($GPU.Name)" -ForegroundColor Green
 
         $OSList = (Invoke-RestMethod `
             -Uri "${API}4" -Headers $Headers -UseBasicParsing).LookupValueSearch.LookupValues.LookupValue
@@ -203,6 +235,13 @@
             Publisher    = $Signer
             File         = $TargetPath
         } | Format-List
+
+        # Do not let Windows fetch NVIDIA Control Panel from the Store after the driver installs
+        # ("download manufacturers' apps for devices" = No); with Store services off that install only fails.
+        foreach ($Key in 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Device Metadata', 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\Device Metadata') {
+            New-Item -Path $Key -Force | Out-Null
+            Set-ItemProperty -Path $Key -Name 'PreventDeviceMetadataFromNetwork' -Value 1 -Type DWord
+        }
 
         Write-Host "INSTALLING NVIDIA DISPLAY DRIVER..." -ForegroundColor Green
 
