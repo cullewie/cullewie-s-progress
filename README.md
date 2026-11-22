@@ -18,9 +18,11 @@ iwr 'https://github.com/cullewie/cullewie-s-progress/raw/refs/heads/main/IWR.ps1
 - NVIDIA veya AMD Radeon (RX 5000 ve üstü) ekran kartı sürücüsünü temizler ve en yenisini kurar.
 - Ekran kartı ve Windows ayarlarını oyun için düzenler: Game Bar kapanır, gizlilik ve bildirim ayarları sıkılaşır, cihaz ve ağ kartı güç tasarrufu kapanır, ağ yalnızca IPv4 kullanır, tema siyah olur.
 - Tam ekran ölçekleme açılsın mı ve dijital canlılık (AMD'de doygunluk) ne olsun diye sorar.
-- Gereksiz Windows hizmetlerini ve özelliklerini kapatır.
-- Hazır gelen gereksiz uygulamaları kaldırır; Hesap Makinesi, Terminal, Snipping Tool, Not Defteri, Paint, Fotoğraflar ve Türkçe dil bileşenleri kalır.
+- Gereksiz Windows hizmetlerini ve özelliklerini kapatır. Ağ, Wi-Fi, güvenlik duvarı, aygıt kurulumu, oturum açma ve Microsoft Store'un ihtiyaç duyduğu hizmetlere dokunmaz.
+- Yalnızca adı listede yazılı olan hazır uygulamaları kaldırır (Bing Haberler, Solitaire, Teams, Clipchamp vb.). Senin kurduğun uygulamalar, Microsoft Store, App Installer ve Xbox kalır.
 
-Bilgisayar kurulum sırasında dört kez kendiliğinden yeniden başlar. Her açılışta şifrenle giriş yapman yeterli; kurulum kaldığı yerden devam eder. Yapılan değişiklikler geri alınamaz.
+Bilgisayar kurulum sırasında dört kez kendiliğinden yeniden başlar. Her açılışta şifrenle giriş yapman yeterli; kurulum kaldığı yerden devam eder.
+
+Eski bir sürüm Wi-Fi'yi, Store'u ya da uygulamalarda oturum açmayı bozduysa, Yönetici PowerShell'de `Scripts\Windows\Services-Restore.ps1` dosyasını çalıştırıp bilgisayarı yeniden başlat.
 
 İndirilen her dosyanın bozulmadığı ve değiştirilmediği SHA-256 ile kontrol edilir.

@@ -12,22 +12,9 @@
         # SCRIPT SILENT
         $progresspreference = 'silentlycontinue'
 
-# download nvidia control panel
-IWR "https://github.com/cullewie/cullewie-s-progress/releases/download/files/nvp.appx" -OutFile "$env:ProgramData\Cullewie\Work\nvp.appx"
-if ((Get-FileHash "$env:ProgramData\Cullewie\Work\nvp.appx" -Algorithm SHA256).Hash -ne 'dd9ca6be34a6f9d90d8eb85ff39c4292f14df32dd7f6e032fec0c8de76b98eeb') { throw 'nvp.appx SHA-256 mismatch; download stopped.' }
-
-# install nvidia control panel
-Add-AppxPackage -Path "$env:ProgramData\Cullewie\Work\nvp.appx" -ErrorAction SilentlyContinue | Out-Null
-
-# create desktop shortcut
-$WshShell = New-Object -comObject WScript.Shell
-$Desktop = (New-Object -ComObject Shell.Application).Namespace('shell:Desktop').Self.Path
-$Shortcut = $WshShell.CreateShortcut("$Desktop\NVIDIA Control Panel.lnk")
-$Shortcut.TargetPath = "shell:appsFolder\NVIDIACorp.NVIDIAControlPanel_56jybvy8sckqj!NVIDIACorp.NVIDIAControlPanel"
-$Shortcut.WorkingDirectory = "shell:appsFolder"
-$Shortcut.Save()
-
-Clear-Host
+        # LOG: everything shown on screen also goes to the log; any error is printed and the script exits with code 1
+        Start-Transcript -Path "$env:ProgramData\Cullewie\Work\nvidia-settings.log" -Force | Out-Null
+        trap { Write-Host "NVIDIA Settings failed: $_" -ForegroundColor Red; Stop-Transcript | Out-Null; exit 1 }
 
         while ($true) {
         $choice = '1'
@@ -131,26 +118,8 @@ $nipfile = @'
         <ValueType>Dword</ValueType>
       </ProfileSetting>
       <ProfileSetting>
-        <SettingNameInfo>Maximum Pre-Rendered Frames</SettingNameInfo>
-        <SettingID>8102046</SettingID>
-        <SettingValue>1</SettingValue>
-        <ValueType>Dword</ValueType>
-      </ProfileSetting>
-      <ProfileSetting>
         <SettingNameInfo>Preferred Refresh Rate</SettingNameInfo>
         <SettingID>6600001</SettingID>
-        <SettingValue>1</SettingValue>
-        <ValueType>Dword</ValueType>
-      </ProfileSetting>
-      <ProfileSetting>
-        <SettingNameInfo>Ultra Low Latency - CPL State</SettingNameInfo>
-        <SettingID>390467</SettingID>
-        <SettingValue>2</SettingValue>
-        <ValueType>Dword</ValueType>
-      </ProfileSetting>
-      <ProfileSetting>
-        <SettingNameInfo>Ultra Low Latency - Enabled</SettingNameInfo>
-        <SettingID>277041152</SettingID>
         <SettingValue>1</SettingValue>
         <ValueType>Dword</ValueType>
       </ProfileSetting>
@@ -280,13 +249,14 @@ $nipfile = @'
 '@
 Set-Content -Path "$env:ProgramData\Cullewie\Work\inspector.nip" -Value $nipfile -Force
 
-# import nip
-Start-Process -Wait "$env:SystemDrive\Program Files (x86)\Nvidia Profile Inspector\Nvidia Profile Inspector.exe" -ArgumentList "-silentImport -silent $env:ProgramData\Cullewie\Work\inspector.nip"
+# import nip (Low Latency / Ultra Low Latency are left as they are)
+Write-Host "Importing profile: $(([xml]$nipfile).ArrayOfProfile.Profile.Settings.ProfileSetting.Count) settings"
+$import = Start-Process -Wait -PassThru "$env:SystemDrive\Program Files (x86)\Nvidia Profile Inspector\Nvidia Profile Inspector.exe" -ArgumentList "-silentImport -silent `"$env:ProgramData\Cullewie\Work\inspector.nip`""
+if ($import.ExitCode -ne 0) { Write-Host "Profile Inspector exit code $($import.ExitCode): open it and check the Base Profile." -ForegroundColor Yellow }
+else { Write-Host 'NVIDIA Settings: done.' -ForegroundColor Green }
+Stop-Transcript | Out-Null
 
-# open nvidiacontrolpanel
-Start-Process "shell:appsFolder\NVIDIACorp.NVIDIAControlPanel_56jybvy8sckqj!NVIDIACorp.NVIDIAControlPanel"
-
-exit
+exit 0
 
           }
         } } else { Write-Host "Invalid input. Please select a valid option (1)." } }

@@ -16,8 +16,8 @@
                   },
                   {
                       "path":  "README.md",
-                      "size":  1494,
-                      "sha256":  "c2e670a1afd1ee09c353fb8b8e8a1daa68da9fcc26e2753e0ea425fb8cd9a462",
+                      "size":  1814,
+                      "sha256":  "817582153287d4c6c2fa052fe864ba0e4ce17daf0a4fb5c8c6b0aa35f49f90c6",
                       "role":  "documentation",
                       "origin":  "project",
                       "derivedFrom":  null
@@ -40,8 +40,8 @@
                   },
                   {
                       "path":  "Scripts/NVIDIA/Settings-GitHub.ps1",
-                      "size":  13124,
-                      "sha256":  "6ad08a6f5984da47d09685ead3f5b15ff591a43128a1c56ec4fee777e9e3a428",
+                      "size":  12083,
+                      "sha256":  "23882e9ad5694d476792b2487ff2c66d0677964d919979719424f50a5325dc34",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null
@@ -64,8 +64,8 @@
                   },
                   {
                       "path":  "Scripts/Windows/Services.ps1",
-                      "size":  29496,
-                      "sha256":  "10ea7de950cbe00d6bc9dd3d86d495662b56a59134e94c9aa79c03308baf564f",
+                      "size":  28693,
+                      "sha256":  "35881e1f94067bb108ea1ed4ff96bd21cfa344669c72bbb2525930ba02790760",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null
@@ -144,8 +144,8 @@
                   },
                   {
                       "path":  "Scripts/Windows/Bloatware.ps1",
-                      "size":  7381,
-                      "sha256":  "378a8e0c4b039972cc693d73cadf10c75cf3986465eca192f59e6f72c7ed7346",
+                      "size":  6533,
+                      "sha256":  "1835cb4a01042943e28c4d56fed072be74c29f7aa1cbd3dd4e004321590861d6",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null
@@ -154,6 +154,14 @@
                       "path":  "Scripts/Windows/Display-Options.ps1",
                       "size":  16644,
                       "sha256":  "dc8f18cb2591c254db7197252c7c556e6c182563a768c320b12da01a3b6f5d6b",
+                      "role":  "source",
+                      "origin":  "project",
+                      "derivedFrom":  null
+                  },
+                  {
+                      "path":  "Scripts/Windows/Services-Restore.ps1",
+                      "size":  3040,
+                      "sha256":  "d5c9d8ac423fcaa30a8847297843850f7b43e9e8c5d87fb3ffe873a8f6f1b5fb",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null

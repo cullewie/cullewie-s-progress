@@ -1,7 +1,7 @@
-# Removes preinstalled apps, optional Windows capabilities and legacy features that a gaming PC does not need.
-# Kept: Windows shell, Start and search, File Explorer, Notepad, Paint, Photos, Calculator, Terminal, Snipping Tool,
-# media codecs, Windows Security, the GPU control panels, Wi-Fi/Ethernet, and every language component of the
-# languages in use (Turkish always). -DryRun only writes what would be removed to bloatware-dryrun.txt.
+# Removes preinstalled Windows apps, optional capabilities and legacy features that a gaming PC does not need.
+# Only what is named in the lists below is removed: apps the user installed (Claude, ChatGPT, games, Store apps)
+# are never touched. Kept on purpose: Microsoft Store, App Installer (winget), Xbox and Game Bar, WSL/Hyper-V.
+# -DryRun only writes what would be removed to bloatware-dryrun.txt.
 param([switch]$DryRun)
 $ErrorActionPreference = 'Continue'
 $ProgressPreference = 'SilentlyContinue'
@@ -10,60 +10,49 @@ New-Item -ItemType Directory -Path (Split-Path $log) -Force | Out-Null
 if ($DryRun) { Set-Content -Path $log -Value "Dry run $(Get-Date -Format s)" -Encoding UTF8 }
 function Write-Plan([string]$Kind, [string]$Name) { if ($DryRun) { Add-Content -Path $log -Value "$Kind`t$Name" -Encoding UTF8 } }
 
-# languages in use: display language, regional format, keyboard languages, system locale; Turkish always
-$languages = @('tr-TR', (Get-UICulture).Name, (Get-Culture).Name, (Get-WinSystemLocale).Name) + @((Get-WinUserLanguageList).LanguageTag)
-$languages = @($languages | Where-Object { $_ } | ForEach-Object { $_.ToLowerInvariant() } | Select-Object -Unique)
-# a bare tag like "tr" also covers "tr-TR"
-function Test-KeptLanguage([string]$Text) {
-    foreach ($l in $languages) { if ($Text -match "(?i)(~~~|LanguageExperiencePack|\b)$([regex]::Escape($l))(-[a-z]{2})?(~|$)") { return $true } }
-    return $false
-}
-
 Write-Host 'Removing apps...'
-$keepApps = @(
-    '*CBS*', 'MicrosoftWindows.Client.*', 'Microsoft.Windows.Search*',                       # Start, search, taskbar parts
-    'Microsoft.Windows.ShellExperienceHost*', 'Microsoft.Windows.StartMenuExperienceHost*', 'windows.immersivecontrolpanel*',
-    'Microsoft.AV1VideoExtension*', 'Microsoft.AVCEncoderVideoExtension*', 'Microsoft.HEIFImageExtension*', 'Microsoft.HEVCVideoExtension*',
-    'Microsoft.MPEG2VideoExtension*', 'Microsoft.RawImageExtension*', 'Microsoft.VP9VideoExtensions*', 'Microsoft.WebMediaExtensions*', 'Microsoft.WebpImageExtension*',
-    'Microsoft.Paint*', 'Microsoft.Windows.Photos*', 'Microsoft.WindowsNotepad*', 'Microsoft.SecHealthUI*',
-    'Microsoft.WindowsCalculator*', 'Microsoft.WindowsTerminal*', 'Microsoft.ScreenSketch*',
-    'NVIDIACorp.NVIDIAControlPanel*', 'AdvancedMicroDevicesInc*',
-    'Microsoft.LanguageExperiencePack*',
-    'Microsoft.AsyncTextService*', '*InpApp*', '*Speion*',                                     # text input, emoji panel, speech
-    'Microsoft.CredDialogHost*', 'Microsoft.AAD.BrokerPlugin*', 'Microsoft.AccountsControl*', # sign-in and password dialogs
-    'Microsoft.LockApp*', 'Microsoft.Windows.CloudExperienceHost*', 'Microsoft.BioEnrollment*', 'Microsoft.Win32WebViewHost*',
-    'Microsoft.Windows.CapturePicker*', 'Microsoft.DirectXRuntime*'
+$removeApps = @(
+    'Microsoft.BingNews', 'Microsoft.BingWeather', 'Microsoft.BingSearch', 'Microsoft.BingFinance', 'Microsoft.BingSports',
+    'Microsoft.GetHelp', 'Microsoft.Getstarted', 'Microsoft.MicrosoftOfficeHub', 'Microsoft.MicrosoftSolitaireCollection',
+    'Microsoft.People', 'Microsoft.PowerAutomateDesktop', 'Microsoft.Todos', 'Microsoft.WindowsAlarms',
+    'Microsoft.WindowsFeedbackHub', 'Microsoft.WindowsMaps', 'Microsoft.WindowsSoundRecorder', 'Microsoft.ZuneMusic',
+    'Microsoft.ZuneVideo', 'Microsoft.YourPhone', 'Microsoft.OutlookForWindows', 'microsoft.windowscommunicationsapps',
+    'MicrosoftTeams', 'MSTeams', 'Clipchamp.Clipchamp', 'Microsoft.549981C3F5F10', 'Microsoft.Copilot',
+    'Microsoft.Windows.DevHome', 'MicrosoftCorporationII.QuickAssist', 'MicrosoftCorporationII.MicrosoftFamily',
+    'Microsoft.MixedReality.Portal', 'Microsoft.SkypeApp', 'Microsoft.Messaging', 'Microsoft.Microsoft3DViewer',
+    'Microsoft.3DBuilder', 'Microsoft.Office.OneNote', 'Microsoft.Wallet',
+    'Microsoft.Windows.Ai.Copilot.Provider', 'MicrosoftWindows.CrossDevice'
 )
-foreach ($app in Get-AppxPackage -AllUsers) {
-    $name = $app.Name
-    # shared runtimes the kept apps and games depend on
-    if ($app.IsFramework) { continue }
-    if ($keepApps | Where-Object { $name -like $_ }) { continue }
-    Write-Plan 'app' $name
+foreach ($app in Get-AppxPackage -AllUsers | Where-Object { $removeApps -contains $_.Name }) {
+    Write-Plan 'app' $app.Name
     if (-not $DryRun) { $app | Remove-AppxPackage -AllUsers -ErrorAction SilentlyContinue }
+}
+# stop Windows from installing them again for new accounts
+foreach ($app in Get-AppxProvisionedPackage -Online | Where-Object { $removeApps -contains $_.DisplayName }) {
+    Write-Plan 'provisioned' $app.DisplayName
+    if (-not $DryRun) { $app | Remove-AppxProvisionedPackage -Online -ErrorAction SilentlyContinue | Out-Null }
 }
 
 Write-Host 'Removing optional capabilities...'
-$keepCapabilities = @(
-    '*Microsoft.Windows.Ethernet*', '*Microsoft.Windows.Wifi*', '*Microsoft.Windows.MSPaint*', '*Microsoft.Windows.Notepad*',
-    '*NetFX3*', '*VBSCRIPT*', '*WMIC*', '*Windows.Client.ShellComponents*', '*DirectX.Configuration.Database*'
+$removeCapabilities = @(
+    'App.StepsRecorder*', 'App.Support.QuickAssist*', 'Browser.InternetExplorer*', 'MathRecognizer*',
+    'Microsoft.Windows.WordPad*', 'OneCoreUAP.OneSync*', 'Print.Fax.Scan*', 'Print.Management.Console*', 'Hello.Face*'
 )
 foreach ($cap in Get-WindowsCapability -Online | Where-Object { $_.State -eq 'Installed' }) {
     $name = $cap.Name
-    if ($keepCapabilities | Where-Object { $name -like $_ }) { continue }
-    if ($name -like 'Language.*' -and (Test-KeptLanguage $name)) { continue }
+    if (-not ($removeCapabilities | Where-Object { $name -like $_ })) { continue }
     Write-Plan 'capability' $name
     if (-not $DryRun) { try { Remove-WindowsCapability -Online -Name $name -ErrorAction Stop | Out-Null } catch { } }
 }
 
 Write-Host 'Turning off legacy features...'
-$keepFeatures = @(
-    '*DirectPlay*', '*LegacyComponents*', '*NetFx3*', '*NetFx4*', '*SearchEngine-Client-Package*', '*Windows-Defender*',
-    '*Server-Shell*', '*Server-Drivers-General*', '*ServerCore-Drivers-General*', '*Server-Gui-Mgmt*', '*WirelessNetworking*'
+$removeFeatures = @(
+    'Internet-Explorer-Optional-amd64', 'SMB1Protocol', 'SMB1Protocol-Client', 'SMB1Protocol-Server',
+    'MicrosoftWindowsPowerShellV2Root', 'MicrosoftWindowsPowerShellV2', 'WorkFolders-Client',
+    'Printing-XPSServices-Features', 'Recall'
 )
-foreach ($feature in Get-WindowsOptionalFeature -Online | Where-Object { $_.State -eq 'Enabled' }) {
+foreach ($feature in Get-WindowsOptionalFeature -Online | Where-Object { $_.State -eq 'Enabled' -and $removeFeatures -contains $_.FeatureName }) {
     $name = $feature.FeatureName
-    if ($keepFeatures | Where-Object { $name -like $_ }) { continue }
     Write-Plan 'feature' $name
     if (-not $DryRun) { try { Disable-WindowsOptionalFeature -Online -FeatureName $name -NoRestart -WarningAction SilentlyContinue -ErrorAction Stop | Out-Null } catch { } }
 }
@@ -76,7 +65,6 @@ function Remove-MsiProduct([string]$Like) {
         if (-not $DryRun) { Start-Process 'msiexec.exe' -ArgumentList "/x $($p.PSChildName) /qn /norestart" -Wait -NoNewWindow }
     }
 }
-Remove-MsiProduct '*Microsoft GameInput*'
 Remove-MsiProduct '*Update for x64-based Windows Systems*'
 Remove-MsiProduct '*Microsoft Update Health Tools*'
 Write-Plan 'program' 'OneDrive'

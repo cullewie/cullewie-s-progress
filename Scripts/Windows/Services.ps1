@@ -103,9 +103,6 @@ Windows Registry Editor Version 5.00
 [HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\AppMgmt]
 "Start"=dword:00000004
 
-[HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\AppReadiness]
-"Start"=dword:00000004
-
 [HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\AppVClient]
 "Start"=dword:00000004
 
@@ -134,9 +131,6 @@ Windows Registry Editor Version 5.00
 "Start"=dword:00000004
 
 [HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\BDESVC]
-"Start"=dword:00000004
-
-[HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\BFE]
 "Start"=dword:00000004
 
 [HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\BITS]
@@ -176,9 +170,6 @@ Windows Registry Editor Version 5.00
 "Start"=dword:00000004
 
 [HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\CertPropSvc]
-"Start"=dword:00000004
-
-[HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\ClipSVC]
 "Start"=dword:00000004
 
 [HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\CloudBackupRestoreSvc]
@@ -229,9 +220,6 @@ Windows Registry Editor Version 5.00
 [HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\DevicesFlowUserSvc]
 "Start"=dword:00000004
 
-[HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\DevQueryBroker]
-"Start"=dword:00000004
-
 [HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\Dhcp]
 "Start"=dword:00000002
 
@@ -262,16 +250,10 @@ Windows Registry Editor Version 5.00
 [HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\Dnscache]
 "Start"=dword:00000002
 
-[HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\DoSvc]
-"Start"=dword:00000004
-
 [HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\dot3svc]
 "Start"=dword:00000004
 
 [HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\DPS]
-"Start"=dword:00000004
-
-[HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\DsmSvc]
 "Start"=dword:00000004
 
 [HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\DsSvc]
@@ -295,9 +277,6 @@ Windows Registry Editor Version 5.00
 [HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\EventLog]
 "Start"=dword:00000002
 
-[HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\EventSystem]
-"Start"=dword:00000004
-
 [HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\Fax]
 "Start"=dword:00000004
 
@@ -310,9 +289,6 @@ Windows Registry Editor Version 5.00
 [HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\fhsvc]
 "Start"=dword:00000004
 
-[HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\FontCache]
-"Start"=dword:00000004
-
 [HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\FontCache3.0.0.0]
 "Start"=dword:00000004
 
@@ -320,9 +296,6 @@ Windows Registry Editor Version 5.00
 "Start"=dword:00000004
 
 [HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\FrameServer]
-"Start"=dword:00000004
-
-[HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\GameInputSvc]
 "Start"=dword:00000004
 
 [HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\gpsvc]
@@ -346,9 +319,6 @@ Windows Registry Editor Version 5.00
 [HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\IKEEXT]
 "Start"=dword:00000004
 
-[HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\InstallService]
-"Start"=dword:00000004
-
 [HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\InventorySvc]
 "Start"=dword:00000004
 
@@ -367,13 +337,7 @@ Windows Registry Editor Version 5.00
 [HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\LanmanServer]
 "Start"=dword:00000004
 
-[HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\LanmanWorkstation]
-"Start"=dword:00000004
-
 [HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\lfsvc]
-"Start"=dword:00000004
-
-[HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\LicenseManager]
 "Start"=dword:00000004
 
 [HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\lltdsvc]
@@ -412,9 +376,6 @@ Windows Registry Editor Version 5.00
 [HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\MixedRealityOpenXRSvc]
 "Start"=dword:00000004
 
-[HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\mpssvc]
-"Start"=dword:00000004
-
 [HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\MSDTC]
 "Start"=dword:00000004
 
@@ -431,9 +392,6 @@ Windows Registry Editor Version 5.00
 "Start"=dword:00000004
 
 [HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\NcaSvc]
-"Start"=dword:00000004
-
-[HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\NcbService]
 "Start"=dword:00000004
 
 [HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\NcdAutoSetup]
@@ -459,9 +417,6 @@ Windows Registry Editor Version 5.00
 
 [HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\NgcSvc]
 "Start"=dword:00000003
-
-[HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\NlaSvc]
-"Start"=dword:00000004
 
 [HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\NPSMSvc]
 "Start"=dword:00000004
@@ -503,9 +458,6 @@ Windows Registry Editor Version 5.00
 "Start"=dword:00000004
 
 [HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\pla]
-"Start"=dword:00000004
-
-[HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\PlugPlay]
 "Start"=dword:00000004
 
 [HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\PNRPAutoReg]
@@ -570,9 +522,6 @@ Windows Registry Editor Version 5.00
 
 [HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\RpcSs]
 "Start"=dword:00000002
-
-[HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\SamSs]
-"Start"=dword:00000004
 
 [HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\SCardSvr]
 "Start"=dword:00000004
@@ -667,9 +616,6 @@ Windows Registry Editor Version 5.00
 [HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\StiSvc]
 "Start"=dword:00000004
 
-[HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\StorSvc]
-"Start"=dword:00000004
-
 [HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\svsvc]
 "Start"=dword:00000004
 
@@ -694,17 +640,11 @@ Windows Registry Editor Version 5.00
 [HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\TextInputManagementService]
 "Start"=dword:00000002
 
-[HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\Themes]
-"Start"=dword:00000004
-
 [HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\TieringEngineService]
 "Start"=dword:00000004
 
 [HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\TimeBrokerSvc]
 "Start"=dword:00000003
-
-[HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\TokenBroker]
-"Start"=dword:00000004
 
 [HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\TrkWks]
 "Start"=dword:00000004
@@ -746,9 +686,6 @@ Windows Registry Editor Version 5.00
 "Start"=dword:00000004
 
 [HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\VacSvc]
-"Start"=dword:00000004
-
-[HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\VaultSvc]
 "Start"=dword:00000004
 
 [HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\vds]
@@ -799,9 +736,6 @@ Windows Registry Editor Version 5.00
 [HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\WbioSrvc]
 "Start"=dword:00000004
 
-[HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\Wcmsvc]
-"Start"=dword:00000002
-
 [HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\wcncsvc]
 "Start"=dword:00000004
 
@@ -847,9 +781,6 @@ Windows Registry Editor Version 5.00
 ; [HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\WinDefend]
 ; "Start"=dword:00000004
 
-[HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\WinHttpAutoProxySvc]
-"Start"=dword:00000004
-
 [HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\Winmgmt]
 "Start"=dword:00000002
 
@@ -861,9 +792,6 @@ Windows Registry Editor Version 5.00
 
 [HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\WlanSvc]
 "Start"=dword:00000002
-
-[HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\wlidsvc]
-"Start"=dword:00000004
 
 [HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\wlpasvc]
 "Start"=dword:00000003
@@ -945,6 +873,24 @@ Start-Sleep -Seconds 5
 shutdown -r -t 00
 '@
 Set-Content -Path "$env:ProgramData\Cullewie\Work\servicesoff.ps1" -Value $ServicesOff -Force
+
+# dependency check: a service left on must not depend on one this list turns off (e.g. SENS needs EventSystem).
+# Stops before safe mode is turned on, so nothing has changed yet.
+$planned = @{}
+foreach ($m in [regex]::Matches($ServicesOff, '(?m)^\[HKEY_LOCAL_MACHINE\\SYSTEM\\ControlSet001\\Services\\([^\]]+)\]\r?\n"Start"=dword:0*(\d)')) { $planned[$m.Groups[1].Value] = [int]$m.Groups[2].Value }
+$conflicts = @()
+foreach ($svc in Get-ChildItem 'HKLM:\SYSTEM\CurrentControlSet\Services' -ErrorAction SilentlyContinue) {
+    $p = Get-ItemProperty $svc.PSPath -ErrorAction SilentlyContinue
+    if (-not $p -or $p.PSObject.Properties.Name -notcontains 'Start' -or $p.PSObject.Properties.Name -notcontains 'DependOnService') { continue }
+    $start = if ($planned.ContainsKey($svc.PSChildName)) { $planned[$svc.PSChildName] } else { [int]$p.Start }
+    if ($start -ne 2) { continue }
+    foreach ($dep in $p.DependOnService) { if ($planned[$dep] -eq 4) { $conflicts += "$($svc.PSChildName) starts automatically but needs $dep, which this list disables" } }
+}
+if ($conflicts) {
+    Write-Host "Services: stopped, nothing was changed.`n" -ForegroundColor Red
+    $conflicts | ForEach-Object { Write-Host "  $_" -ForegroundColor Red }
+    exit 1
+}
 
 # edit servicesoff.ps1
 $ServicesOffPs1 = "$env:ProgramData\Cullewie\Work\servicesoff.ps1"
