@@ -8,16 +8,16 @@
     "files":  [
                   {
                       "path":  "Launcher.ps1",
-                      "size":  25957,
-                      "sha256":  "1ad3a858f7653bc7340ec7ff9ee12b1da3d3f6658b2c7ed0ccf9dddec8c5b0fd",
+                      "size":  25851,
+                      "sha256":  "27c8fc8fe25c0e3d74029673f44637f9986053622b1f7b32945ff2fb92f6c05f",
                       "role":  "launcher",
                       "origin":  "project",
                       "derivedFrom":  null
                   },
                   {
                       "path":  "README.md",
-                      "size":  1814,
-                      "sha256":  "817582153287d4c6c2fa052fe864ba0e4ce17daf0a4fb5c8c6b0aa35f49f90c6",
+                      "size":  7511,
+                      "sha256":  "709b2848ca4bf567178cd932d0a17ae69a4ab62bb95b0a813d24362ddef5f49a",
                       "role":  "documentation",
                       "origin":  "project",
                       "derivedFrom":  null
@@ -40,16 +40,8 @@
                   },
                   {
                       "path":  "Scripts/NVIDIA/Settings-GitHub.ps1",
-                      "size":  15290,
-                      "sha256":  "14c3a20a0803e1c80fc33e738b769a7ad053d3183221eda9b6e89cd44b5b7957",
-                      "role":  "source",
-                      "origin":  "project",
-                      "derivedFrom":  null
-                  },
-                  {
-                      "path":  "Scripts/Windows/Copilot-Off.ps1",
-                      "size":  1548,
-                      "sha256":  "2de74ba40c6aa77e7be94a1a5a022bdeea592405fe4ce1edc49613649c79b156",
+                      "size":  15817,
+                      "sha256":  "2dc8650f26c212f61d4873360eff09a47eaf1504ad720e368119154de0a92c5b",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null
@@ -79,17 +71,9 @@
                       "derivedFrom":  null
                   },
                   {
-                      "path":  "Scripts/Windows/Widgets.ps1",
-                      "size":  1398,
-                      "sha256":  "95376b109b970b8f66fcb9433fe9a112fde83550a6145925c20c67163dc5396c",
-                      "role":  "source",
-                      "origin":  "project",
-                      "derivedFrom":  null
-                  },
-                  {
                       "path":  "Scripts/Windows/Tweaks.ps1",
-                      "size":  67367,
-                      "sha256":  "2d3495fe9f61ba3ad5b8941317fe2b00f143c8b87dd5da09ba73196d6ac6ed94",
+                      "size":  68500,
+                      "sha256":  "aacfaf047dc4e43700f8e8e849cd4eb5b743247036e65ac03eab4b97991cd2ce",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null
@@ -166,12 +150,6 @@
                         "requiresReboot":  false
                     },
                     {
-                        "id":  "widgets",
-                        "entry":  "Scripts/Windows/Widgets.ps1",
-                        "adminRequired":  true,
-                        "requiresReboot":  false
-                    },
-                    {
                         "id":  "services",
                         "entry":  "Scripts/Windows/Services.ps1",
                         "adminRequired":  true,
@@ -180,12 +158,6 @@
                     {
                         "id":  "power-plan",
                         "entry":  "Scripts/Windows/Power-Plan.ps1",
-                        "adminRequired":  true,
-                        "requiresReboot":  false
-                    },
-                    {
-                        "id":  "copilot-off",
-                        "entry":  "Scripts/Windows/Copilot-Off.ps1",
                         "adminRequired":  true,
                         "requiresReboot":  false
                     },

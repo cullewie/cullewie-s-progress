@@ -14,15 +14,13 @@ $script:PowerShellExe = Join-Path $PSHOME 'powershell.exe'
 $script:Tools = @(
     [pscustomobject]@{ Id='nvidia-updater'; Name='NVIDIA Driver Updater'; Category='Drivers'; Path='Scripts/Drivers/NVIDIA/NVIDIA-Driver-Updater.ps1'; Wrapper='NvidiaCase' }
     [pscustomobject]@{ Id='ddu'; Name='DDU'; Category='Drivers'; Path='Scripts/Drivers/DDU/DDU.ps1'; Wrapper='' }
-    [pscustomobject]@{ Id='settings-github'; Name='NVIDIA Settings (profile, P0, scaling, vibrance)'; Category='NVIDIA'; Path='Scripts/NVIDIA/Settings-GitHub.ps1'; Wrapper='' }
+    [pscustomobject]@{ Id='settings-github'; Name='NVIDIA Settings (profile, P0, refresh rate)'; Category='NVIDIA'; Path='Scripts/NVIDIA/Settings-GitHub.ps1'; Wrapper='' }
     [pscustomobject]@{ Id='amd-updater'; Name='AMD Driver Updater'; Category='Drivers'; Path='Scripts/Drivers/AMD/AMD-Driver-Updater.ps1'; Wrapper='' }
     [pscustomobject]@{ Id='amd-settings'; Name='AMD Settings'; Category='AMD'; Path='Scripts/AMD/Settings.ps1'; Wrapper='' }
-    [pscustomobject]@{ Id='widgets'; Name='Widgets Off'; Category='Windows'; Path='Scripts/Windows/Widgets.ps1'; Wrapper='' }
     [pscustomobject]@{ Id='services'; Name='Services Off'; Category='Windows'; Path='Scripts/Windows/Services.ps1'; Wrapper='' }
     [pscustomobject]@{ Id='power-plan'; Name='Power Plan On'; Category='Windows'; Path='Scripts/Windows/Power-Plan.ps1'; Wrapper='' }
-    [pscustomobject]@{ Id='copilot-off'; Name='Copilot Off'; Category='Windows'; Path='Scripts/Windows/Copilot-Off.ps1'; Wrapper='' }
     [pscustomobject]@{ Id='timer-resolution'; Name='Timer Resolution On'; Category='Windows'; Path='Scripts/Windows/Timer-Resolution.ps1'; Wrapper='' }
-    [pscustomobject]@{ Id='tweaks'; Name='Windows Tweaks (bloatware, tweaks, extras)'; Category='Windows'; Path='Scripts/Windows/Tweaks.ps1'; Wrapper='' }
+    [pscustomobject]@{ Id='tweaks'; Name='Windows Tweaks (apps, widgets, Copilot, settings)'; Category='Windows'; Path='Scripts/Windows/Tweaks.ps1'; Wrapper='' }
     [pscustomobject]@{ Id='defender'; Name='Defender Optimize'; Category='Windows'; Path='Scripts/Windows/Defender.ps1'; Wrapper='' }
     [pscustomobject]@{ Id='refresh-rate'; Name='Highest Refresh Rate'; Category='Windows'; Path='Scripts/Windows/Refresh-Rate.ps1'; Wrapper='' }
     [pscustomobject]@{ Id='display-options'; Name='Scaling and Vibrance'; Category='Windows'; Path='Scripts/Windows/Display-Options.ps1'; Wrapper='' }
@@ -345,7 +343,10 @@ function Resume-FullSetup {
     Remove-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate' -Name 'ExcludeWUDriversInQualityUpdate' -ErrorAction SilentlyContinue
     # refresh-rate after the driver: a fresh driver often starts the display at 60 Hz
     # display-options asks the two questions (full-screen scaling, vibrance), so it runs last, after every other setting
-    foreach ($id in 'refresh-rate', 'widgets', 'copilot-off', 'power-plan', 'timer-resolution', 'tweaks', 'display-options') {
+    # NVIDIA Settings already set the refresh rate; other cards get it here
+    $windowsIds = @('power-plan', 'timer-resolution', 'tweaks', 'display-options')
+    if (-not $hasNvidia) { $windowsIds = @('refresh-rate') + $windowsIds }
+    foreach ($id in $windowsIds) {
         try { Invoke-RequiredTool -Id $id } catch { $failed.Add($_.Exception.Message) }
     }
     if ($failed.Count) {
@@ -376,7 +377,8 @@ function Start-LiveSetup {
     $ids = @()
     if ($hasNvidia) { $ids += 'nvidia-updater', 'settings-github' }
     elseif (@(Get-PciGpu '1002').Count) { $ids += 'amd-updater' }
-    $ids += 'refresh-rate', 'widgets', 'copilot-off', 'power-plan', 'timer-resolution', 'tweaks'
+    if (-not $hasNvidia) { $ids += 'refresh-rate' }
+    $ids += 'power-plan', 'timer-resolution', 'tweaks'
     foreach ($id in $ids) {
         $tool = $script:Tools | Where-Object { $_.Id -eq $id } | Select-Object -First 1
         $sw = [Diagnostics.Stopwatch]::StartNew()

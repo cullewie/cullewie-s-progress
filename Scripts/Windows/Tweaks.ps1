@@ -121,8 +121,21 @@ if ($DryRun) { Write-Host "Dry run: nothing was removed or changed. List: $log" 
 
 # ---- general tweaks ----
 $ProgressPreference = 'SilentlyContinue'
-Clear-Host
 Write-Host "Windows Tweaks...`n"
+
+Write-Host "Widgets off"
+cmd /c "reg add `"HKLM\SOFTWARE\Microsoft\PolicyManager\default\NewsAndInterests\AllowNewsAndInterests`" /v `"value`" /t REG_DWORD /d `"0`" /f >nul 2>&1"
+cmd /c "reg add `"HKLM\SOFTWARE\Policies\Microsoft\Dsh`" /v `"AllowNewsAndInterests`" /t REG_DWORD /d `"0`" /f >nul 2>&1"
+Stop-Process -Force -Name Widgets -ErrorAction SilentlyContinue
+Stop-Process -Force -Name WidgetService -ErrorAction SilentlyContinue
+
+Write-Host "Copilot off"
+Stop-Process -Name "Copilot" -Force -ErrorAction SilentlyContinue
+Get-AppxPackage -AllUsers *Copilot* | Remove-AppxPackage -AllUsers -ErrorAction SilentlyContinue
+# provisioned package too, so new or reset user profiles do not get it back
+Get-AppxProvisionedPackage -Online | Where-Object DisplayName -like "*Copilot*" | Remove-AppxProvisionedPackage -Online -ErrorAction SilentlyContinue | Out-Null
+cmd /c "reg add `"HKCU\Software\Policies\Microsoft\Windows\WindowsCopilot`" /v `"TurnOffWindowsCopilot`" /t REG_DWORD /d `"1`" /f >nul 2>&1"
+cmd /c "reg add `"HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsCopilot`" /v `"TurnOffWindowsCopilot`" /t REG_DWORD /d `"1`" /f >nul 2>&1"
 
 function Set-Reg {
     param($Path, $Name, $Value, $Type = "DWord")
