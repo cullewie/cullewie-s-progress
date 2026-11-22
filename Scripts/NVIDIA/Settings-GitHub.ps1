@@ -1,6 +1,7 @@
 # NVIDIA in one step: driver settings and Profile Inspector profile, P0 state, then full-screen scaling and digital
 # vibrance (two questions, through Scripts/Windows/Display-Options.ps1, which AMD and the vibrance sign-in task also use).
-# -SkipDisplay: no questions (live mode); scaling and vibrance are left as they are.
+# -SkipDisplay: no questions here. The full setup uses it and asks them at the very end, after every other setting;
+# live mode uses it and leaves scaling and vibrance as they are.
 param([switch]$SkipDisplay)
         # SCRIPT RUN AS ADMIN
         If (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]"Administrator"))

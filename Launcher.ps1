@@ -320,8 +320,8 @@ function Resume-FullSetup {
         # a failed NVIDIA step must not block the Windows steps after it
         try {
             Invoke-RequiredTool -Id 'nvidia-updater'
-            # profile, P0 state, then the scaling and vibrance questions
-            Invoke-RequiredTool -Id 'settings-github'
+            # profile and P0 state; the scaling and vibrance questions come last, after every other setting
+            Invoke-RequiredTool -Id 'settings-github' -Arguments '-SkipDisplay'
         }
         catch { $failed.Add($_.Exception.Message) }
         finally {
@@ -344,10 +344,8 @@ function Resume-FullSetup {
     # the GPU driver is in: Windows Update may deliver drivers again (chipset, audio, Wi-Fi, Bluetooth)
     Remove-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate' -Name 'ExcludeWUDriversInQualityUpdate' -ErrorAction SilentlyContinue
     # refresh-rate after the driver: a fresh driver often starts the display at 60 Hz
-    # NVIDIA Settings already asked the scaling and vibrance questions; AMD cards get them here
-    $windowsIds = @('refresh-rate', 'widgets', 'copilot-off', 'power-plan', 'timer-resolution', 'tweaks')
-    if (-not $hasNvidia) { $windowsIds += 'display-options' }
-    foreach ($id in $windowsIds) {
+    # display-options asks the two questions (full-screen scaling, vibrance), so it runs last, after every other setting
+    foreach ($id in 'refresh-rate', 'widgets', 'copilot-off', 'power-plan', 'timer-resolution', 'tweaks', 'display-options') {
         try { Invoke-RequiredTool -Id $id } catch { $failed.Add($_.Exception.Message) }
     }
     if ($failed.Count) {

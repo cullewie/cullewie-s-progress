@@ -8,8 +8,8 @@
     "files":  [
                   {
                       "path":  "Launcher.ps1",
-                      "size":  25947,
-                      "sha256":  "bcb17720acf06c0cc95bee7cecad5ba671350dbea4524ebabf4977d46bd12ca4",
+                      "size":  25957,
+                      "sha256":  "1ad3a858f7653bc7340ec7ff9ee12b1da3d3f6658b2c7ed0ccf9dddec8c5b0fd",
                       "role":  "launcher",
                       "origin":  "project",
                       "derivedFrom":  null
@@ -40,8 +40,8 @@
                   },
                   {
                       "path":  "Scripts/NVIDIA/Settings-GitHub.ps1",
-                      "size":  15193,
-                      "sha256":  "77563fe833a8576fb5faa26e4a5b38e557a02f949d95be793f8da622b9bcf90f",
+                      "size":  15290,
+                      "sha256":  "14c3a20a0803e1c80fc33e738b769a7ad053d3183221eda9b6e89cd44b5b7957",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null
