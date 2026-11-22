@@ -11,6 +11,7 @@ $ErrorActionPreference = 'Stop'
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 $script:RepoRoot = $PSScriptRoot
 $script:PowerShellExe = Join-Path $PSHOME 'powershell.exe'
+$script:CaptureChildOutput = $false
 $script:Tools = @(
     [pscustomobject]@{ Id='nvidia-updater'; Name='NVIDIA Driver'; Category='NVIDIA'; Path='Scripts/NVIDIA/Driver.ps1'; Wrapper='NvidiaCase' }
     [pscustomobject]@{ Id='ddu'; Name='DDU (driver cleanup)'; Category='GPU'; Path='Scripts/GPU/DDU.ps1'; Wrapper='' }
@@ -58,7 +59,10 @@ function Invoke-ChildScript {
             $launchPath = $generatedWrapper
         }
         $childArguments = @('-NoLogo', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $launchPath) + $Arguments
-        & $script:PowerShellExe @childArguments
+        # live mode asks nothing, so the child's lines can go through Out-Host and into the live-setup log.
+        # Not otherwise: a piped child may show its questions late.
+        if ($script:CaptureChildOutput) { & $script:PowerShellExe @childArguments | Out-Host }
+        else { & $script:PowerShellExe @childArguments }
         $childExitCode = $LASTEXITCODE
         $script:LastChildExitCode = [int]$childExitCode
         if ($childExitCode -ne 0) {
@@ -372,6 +376,7 @@ function Start-LiveSetup {
     # Defender (Tamper Protection undoes it outside safe mode) and Scaling and Vibrance (it asks questions).
     $log = Join-Path $env:ProgramData ('Cullewie\Work\live-setup-' + (Get-Date -Format 'yyyyMMdd-HHmmss') + '.log')
     Start-Transcript -Path $log -Force | Out-Null
+    $script:CaptureChildOutput = $true
     $steps = New-Object System.Collections.Generic.List[string]
     $hasNvidia = @(Get-PciGpu '10DE').Count -gt 0
     $ids = @()

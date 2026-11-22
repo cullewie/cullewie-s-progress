@@ -301,9 +301,11 @@ Get-ChildItem 'HKLM:\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-
 # highest refresh rate: a fresh driver often starts the display at 60 Hz
 $refreshRate = Join-Path $PSScriptRoot '..\GPU\Refresh-Rate.ps1'
 if (Test-Path $refreshRate) {
-    & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -ExecutionPolicy Bypass -File $refreshRate
+    # through Out-Host so its lines also land in this script's log
+    & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -ExecutionPolicy Bypass -File $refreshRate | Out-Host
     if ($LASTEXITCODE -ne 0) { Write-Host "Refresh rate: $LASTEXITCODE display(s) could not be changed, see above." -ForegroundColor Yellow }
 }
+else { Write-Host "Refresh rate: skipped, $refreshRate not found." -ForegroundColor Yellow }
 
 # full-screen scaling and digital vibrance
 $displayOptions = Join-Path $PSScriptRoot '..\GPU\Display-Options.ps1'

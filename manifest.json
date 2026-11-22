@@ -8,8 +8,8 @@
     "files":  [
                   {
                       "path":  "Launcher.ps1",
-                      "size":  26204,
-                      "sha256":  "485ddc6039dc632053ac20d9e566a42cf06d340a23c6dd2cdcb04020cb774384",
+                      "size":  26559,
+                      "sha256":  "2d54e1640e4b29df4150548740b23f6b49b2181b26c3300c26fc4d13887be3b6",
                       "role":  "launcher",
                       "origin":  "project",
                       "derivedFrom":  null
@@ -40,8 +40,8 @@
                   },
                   {
                       "path":  "Scripts/NVIDIA/Settings.ps1",
-                      "size":  15805,
-                      "sha256":  "d3c943e3f3a4790215867c1ea15e40cf8c6b96f786e72cdab01b5f761e3f4e96",
+                      "size":  15978,
+                      "sha256":  "5a4981c7f47fc133a3e42561a00866279b6463c970d2b93c0aae13ee0edbcded",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null
@@ -104,8 +104,8 @@
                   },
                   {
                       "path":  "Scripts/AMD/Settings.ps1",
-                      "size":  4345,
-                      "sha256":  "bfd86c291989df5e92ea2eeb0ab33c8eb30f958ae70eb7cb16727df20e4f23d5",
+                      "size":  4449,
+                      "sha256":  "52a64dd630262ad12daae7ca3ef648932aa0e0cbf8b7ae3688aa4648bda44a46",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null

@@ -64,9 +64,10 @@ foreach ($k in 'FreeSync', 'OverlayNotification', 'VirtualSuperResolution') { Se
 # highest refresh rate: a fresh driver often starts the display at 60 Hz (same script NVIDIA Settings runs)
 $refreshRate = Join-Path $PSScriptRoot '..\GPU\Refresh-Rate.ps1'
 if (Test-Path $refreshRate) {
-    & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -ExecutionPolicy Bypass -File $refreshRate
+    & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -ExecutionPolicy Bypass -File $refreshRate | Out-Host
     if ($LASTEXITCODE -ne 0) { Write-Host "Refresh rate: $LASTEXITCODE display(s) could not be changed, see above." -ForegroundColor Yellow }
 }
+else { Write-Host "Refresh rate: skipped, $refreshRate not found." -ForegroundColor Yellow }
 
 Write-Host 'AMD settings applied.' -ForegroundColor Green
 exit 0
