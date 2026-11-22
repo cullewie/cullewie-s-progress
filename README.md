@@ -16,7 +16,7 @@ iwr 'https://github.com/cullewie/cullewie-s-progress/raw/refs/heads/main/IWR.ps1
 ## Ne yapar?
 
 - NVIDIA veya AMD Radeon (RX 5000 ve üstü) ekran kartı sürücüsünü temizler ve en yenisini kurar.
-- Ekran kartı ve Windows ayarlarını oyun için düzenler.
+- Ekran kartı ve Windows ayarlarını oyun için düzenler: Game Bar kapanır, gizlilik ve bildirim ayarları sıkılaşır, cihaz ve ağ kartı güç tasarrufu kapanır, ağ yalnızca IPv4 kullanır, tema siyah olur.
 - Tam ekran ölçekleme açılsın mı ve dijital canlılık (AMD'de doygunluk) ne olsun diye sorar.
 - Gereksiz Windows hizmetlerini ve özelliklerini kapatır.
 - Hazır gelen gereksiz uygulamaları kaldırır; Hesap Makinesi, Terminal, Snipping Tool, Not Defteri, Paint, Fotoğraflar ve Türkçe dil bileşenleri kalır.

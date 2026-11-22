@@ -8,16 +8,16 @@
     "files":  [
                   {
                       "path":  "Launcher.ps1",
-                      "size":  22692,
-                      "sha256":  "67f93075c90585cf6d80c148d1dc8719928d947ec5458575daa4f1619f6a8feb",
+                      "size":  22837,
+                      "sha256":  "813134eb40f7e202661644e480de92671fb74d7d9e2f3359724d0c1e7d59c8a3",
                       "role":  "launcher",
                       "origin":  "project",
                       "derivedFrom":  null
                   },
                   {
                       "path":  "README.md",
-                      "size":  1336,
-                      "sha256":  "97ac0017a31d61443804301c09e483a62d11e37b61273534768efc651fc0e195",
+                      "size":  1494,
+                      "sha256":  "c2e670a1afd1ee09c353fb8b8e8a1daa68da9fcc26e2753e0ea425fb8cd9a462",
                       "role":  "documentation",
                       "origin":  "project",
                       "derivedFrom":  null
@@ -135,6 +135,14 @@
                       "derivedFrom":  null
                   },
                   {
+                      "path":  "Scripts/Windows/Extras.ps1",
+                      "size":  48116,
+                      "sha256":  "47de3cd702de7d6decc86b81bef9c55e21140a21f4e708c3745fd9998c378a72",
+                      "role":  "source",
+                      "origin":  "project",
+                      "derivedFrom":  null
+                  },
+                  {
                       "path":  "Scripts/Windows/Bloatware.ps1",
                       "size":  7381,
                       "sha256":  "378a8e0c4b039972cc693d73cadf10c75cf3986465eca192f59e6f72c7ed7346",
@@ -236,6 +244,12 @@
                     {
                         "id":  "amd-settings",
                         "entry":  "Scripts/AMD/Settings.ps1",
+                        "adminRequired":  true,
+                        "requiresReboot":  false
+                    },
+                    {
+                        "id":  "extras",
+                        "entry":  "Scripts/Windows/Extras.ps1",
                         "adminRequired":  true,
                         "requiresReboot":  false
                     },
