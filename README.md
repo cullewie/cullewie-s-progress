@@ -1,6 +1,6 @@
 # cullewie's-progress
 
-Windows'u formatladıktan sonra bilgisayarı oyuna hazırlayan açık kaynak bir kurulum aracı. Tek komutla çalışır ve hiçbir şey sormaz.
+Windows'u formatladıktan sonra bilgisayarı oyuna hazırlayan açık kaynak bir kurulum aracı. Tek komutla çalışır; sonda yalnızca iki soru sorar.
 
 Açık kaynaktır: yaptığı her şey bu depodaki dosyalarda yazılıdır ve herkes okuyabilir.
 
@@ -15,8 +15,9 @@ iwr 'https://github.com/cullewie/cullewie-s-progress/raw/refs/heads/main/IWR.ps1
 
 ## Ne yapar?
 
-- NVIDIA ekran kartı sürücüsünü temizler ve en yenisini kurar.
+- NVIDIA veya AMD Radeon (RX 5000 ve üstü) ekran kartı sürücüsünü temizler ve en yenisini kurar.
 - Ekran kartı ve Windows ayarlarını oyun için düzenler.
+- Tam ekran ölçekleme açılsın mı ve dijital canlılık (AMD'de doygunluk) ne olsun diye sorar.
 - Gereksiz Windows hizmetlerini ve özelliklerini kapatır.
 
 Bilgisayar kurulum sırasında dört kez kendiliğinden yeniden başlar. Her açılışta şifrenle giriş yapman yeterli; kurulum kaldığı yerden devam eder. Yapılan değişiklikler geri alınamaz.

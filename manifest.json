@@ -8,16 +8,16 @@
     "files":  [
                   {
                       "path":  "Launcher.ps1",
-                      "size":  19309,
-                      "sha256":  "9ae2e528a5cb825f53cad9ee3be8e088720f602ecf5f6ada6123bada5c53543e",
+                      "size":  21229,
+                      "sha256":  "f6165e90952f3710e0399badd26cedf0c586748b16fa8a0a177dd13d9e7ef88e",
                       "role":  "launcher",
                       "origin":  "project",
                       "derivedFrom":  null
                   },
                   {
                       "path":  "README.md",
-                      "size":  1029,
-                      "sha256":  "8b0de28ebc088b89aa10773e5ecbc8bbec9255fff094f14ae72359dcff530e63",
+                      "size":  1175,
+                      "sha256":  "2aa14464061378bd57cbf85e3d4a9e9c08b7af8c62eca961b9bb938db6ecb797",
                       "role":  "documentation",
                       "origin":  "project",
                       "derivedFrom":  null
@@ -117,6 +117,30 @@
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null
+                  },
+                  {
+                      "path":  "Scripts/Drivers/AMD/AMD-Driver-Updater.ps1",
+                      "size":  6156,
+                      "sha256":  "c5168002e89e6ddabe4891fba566fd9c2ac33dbad3fa9634960b3712973d0a84",
+                      "role":  "source",
+                      "origin":  "project",
+                      "derivedFrom":  null
+                  },
+                  {
+                      "path":  "Scripts/AMD/Settings.ps1",
+                      "size":  3836,
+                      "sha256":  "9ae962cfd81e00c25401582c8c2fc028cf36f0da28fda92bd0983dab45a9a3c2",
+                      "role":  "source",
+                      "origin":  "project",
+                      "derivedFrom":  null
+                  },
+                  {
+                      "path":  "Scripts/Windows/Display-Options.ps1",
+                      "size":  16546,
+                      "sha256":  "90dd56f95fb9299c5e89877098e0d574b45db2f2916dc329690a99a438006866",
+                      "role":  "source",
+                      "origin":  "project",
+                      "derivedFrom":  null
                   }
               ],
     "externalAssets":  [
@@ -192,6 +216,24 @@
                     {
                         "id":  "refresh-rate",
                         "entry":  "Scripts/Windows/Refresh-Rate.ps1",
+                        "adminRequired":  true,
+                        "requiresReboot":  false
+                    },
+                    {
+                        "id":  "amd-driver-updater",
+                        "entry":  "Scripts/Drivers/AMD/AMD-Driver-Updater.ps1",
+                        "adminRequired":  true,
+                        "requiresReboot":  true
+                    },
+                    {
+                        "id":  "amd-settings",
+                        "entry":  "Scripts/AMD/Settings.ps1",
+                        "adminRequired":  true,
+                        "requiresReboot":  false
+                    },
+                    {
+                        "id":  "display-options",
+                        "entry":  "Scripts/Windows/Display-Options.ps1",
                         "adminRequired":  true,
                         "requiresReboot":  false
                     }

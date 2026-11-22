@@ -15,6 +15,8 @@ $script:Tools = @(
     [pscustomobject]@{ Id='ddu'; Name='DDU'; Category='Drivers'; Path='Scripts/Drivers/DDU/DDU.ps1'; Wrapper='' }
     [pscustomobject]@{ Id='settings-github'; Name='NVIDIA Settings (GitHub)'; Category='NVIDIA'; Path='Scripts/NVIDIA/Settings-GitHub.ps1'; Wrapper='' }
     [pscustomobject]@{ Id='p0-state'; Name='NVIDIA P0 State On'; Category='NVIDIA'; Path='Scripts/NVIDIA/P0-State.ps1'; Wrapper='' }
+    [pscustomobject]@{ Id='amd-updater'; Name='AMD Driver Updater'; Category='Drivers'; Path='Scripts/Drivers/AMD/AMD-Driver-Updater.ps1'; Wrapper='' }
+    [pscustomobject]@{ Id='amd-settings'; Name='AMD Settings'; Category='AMD'; Path='Scripts/AMD/Settings.ps1'; Wrapper='' }
     [pscustomobject]@{ Id='widgets'; Name='Widgets Off'; Category='Windows'; Path='Scripts/Windows/Widgets.ps1'; Wrapper='' }
     [pscustomobject]@{ Id='services'; Name='Services Off'; Category='Windows'; Path='Scripts/Windows/Services.ps1'; Wrapper='' }
     [pscustomobject]@{ Id='power-plan'; Name='Power Plan On'; Category='Windows'; Path='Scripts/Windows/Power-Plan.ps1'; Wrapper='' }
@@ -23,6 +25,7 @@ $script:Tools = @(
     [pscustomobject]@{ Id='tweaks'; Name='Windows Tweaks'; Category='Windows'; Path='Scripts/Windows/Tweaks.ps1'; Wrapper='' }
     [pscustomobject]@{ Id='defender'; Name='Defender Optimize'; Category='Windows'; Path='Scripts/Windows/Defender.ps1'; Wrapper='' }
     [pscustomobject]@{ Id='refresh-rate'; Name='Highest Refresh Rate'; Category='Windows'; Path='Scripts/Windows/Refresh-Rate.ps1'; Wrapper='' }
+    [pscustomobject]@{ Id='display-options'; Name='Scaling and Vibrance'; Category='Windows'; Path='Scripts/Windows/Display-Options.ps1'; Wrapper='' }
 )
 function Test-IsAdministrator {
     $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
@@ -198,7 +201,17 @@ function Start-FullSetup {
         [IO.File]::WriteAllText($statePath, ([pscustomobject]@{ GpuName = [string]$nvidiaDriver.DeviceName } | ConvertTo-Json -Compress), [Text.UTF8Encoding]::new($false))
         Write-Host "NVIDIA driver found for $($nvidiaDriver.DeviceName). DDU will remove it in safe mode." -ForegroundColor Yellow
         Invoke-RequiredTool -Id 'ddu' -Arguments '-PrepareOnly'
-        [IO.File]::WriteAllText($dduFlag, '')
+        [IO.File]::WriteAllText($dduFlag, 'nvidia')
+    }
+    else {
+        # a discrete Radeon with its driver installed (integrated Radeon graphics are left alone)
+        $amdDriver = Get-CimInstance Win32_VideoController |
+            Where-Object { $_.PNPDeviceID -like 'PCI\VEN_1002&*' -and $_.Name -match 'Radeon.*\bRX\b' } | Select-Object -First 1
+        if ($amdDriver) {
+            Write-Host "AMD driver found for $($amdDriver.Name). DDU will remove it in safe mode." -ForegroundColor Yellow
+            Invoke-RequiredTool -Id 'ddu' -Arguments '-PrepareOnly'
+            [IO.File]::WriteAllText($dduFlag, 'amd')
+        }
     }
     Invoke-RequiredTool -Id 'defender' -Arguments '-QueueOnly'
 
@@ -225,8 +238,15 @@ function Start-FullSetup {
 try {
     $flag = "$env:SystemRoot\Temp\cullewie-ddu.flag"
     if (Test-Path $flag) {
-        Write-Host 'DDU: removing the NVIDIA driver' -ForegroundColor Yellow
-        Start-Process -FilePath "$env:SystemRoot\Temp\ddu\Display Driver Uninstaller.exe" -ArgumentList '-Silent -NoSafeModeMsg -NoRestorePoint -CleanNvidia -RemovePhysx -RemoveGFE -RemoveNVBROADCAST -RemoveNVCP -RemoveVulkan -RemoveNvidiaDirs -Remove3DTVPlay' -Wait
+        $ddu = "$env:SystemRoot\Temp\ddu\Display Driver Uninstaller.exe"
+        if ((Get-Content $flag -Raw) -match 'amd') {
+            Write-Host 'DDU: removing the AMD driver' -ForegroundColor Yellow
+            Start-Process -FilePath $ddu -ArgumentList '-Silent -NoSafeModeMsg -NoRestorePoint -CleanAmd -RemoveAMDDirs -RemoveCrimsonCache -RemoveAMDCP -RemoveAMDKMPFD -RemoveVulkan' -Wait
+        }
+        else {
+            Write-Host 'DDU: removing the NVIDIA driver' -ForegroundColor Yellow
+            Start-Process -FilePath $ddu -ArgumentList '-Silent -NoSafeModeMsg -NoRestorePoint -CleanNvidia -RemovePhysx -RemoveGFE -RemoveNVBROADCAST -RemoveNVCP -RemoveVulkan -RemoveNvidiaDirs -Remove3DTVPlay' -Wait
+        }
         Remove-Item $flag -Force
     }
     if (Test-Path "$env:SystemRoot\Temp\defenderoptimize.ps1") {
@@ -288,11 +308,20 @@ function Resume-FullSetup {
             Remove-Item -LiteralPath $statePath -Force -ErrorAction SilentlyContinue
         }
     }
+    elseif (@(Get-CimInstance Win32_VideoController | Where-Object { $_.PNPDeviceID -like 'PCI\VEN_1002&*' }).Count) {
+        # the updater itself skips integrated Radeon graphics and cards older than RX 5000
+        try {
+            Invoke-RequiredTool -Id 'amd-updater'
+            Invoke-RequiredTool -Id 'amd-settings'
+        }
+        catch { $failed.Add($_.Exception.Message) }
+    }
     else {
-        Write-Host 'No NVIDIA GPU found. Skipping the NVIDIA steps.' -ForegroundColor Cyan
+        Write-Host 'No NVIDIA or AMD GPU found. Skipping the GPU steps.' -ForegroundColor Cyan
     }
     # refresh-rate after the driver: a fresh driver often starts the display at 60 Hz
-    foreach ($id in 'refresh-rate', 'widgets', 'copilot-off', 'power-plan', 'timer-resolution', 'tweaks') {
+    # display-options asks two questions (scaling, vibrance), so it runs last, right before Services
+    foreach ($id in 'refresh-rate', 'widgets', 'copilot-off', 'power-plan', 'timer-resolution', 'tweaks', 'display-options') {
         try { Invoke-RequiredTool -Id $id } catch { $failed.Add($_.Exception.Message) }
     }
     if ($failed.Count) {
