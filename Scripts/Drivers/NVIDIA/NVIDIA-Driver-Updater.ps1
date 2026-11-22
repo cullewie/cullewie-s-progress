@@ -140,6 +140,23 @@
             throw "Untrusted NVIDIA download URL."
         }
 
+        # Same version already installed: nothing to download. Windows reports 32.0.16.2124 for NVIDIA 621.24
+        # (the last five digits).
+        $Installed = Get-CimInstance Win32_PnPSignedDriver |
+            Where-Object { $_.DeviceClass -eq 'DISPLAY' -and $_.DeviceID -like 'PCI\VEN_10DE&*' -and $_.DriverProviderName -match 'NVIDIA' } |
+            Select-Object -First 1
+        if ($Installed -and $Installed.DriverVersion) {
+            $Digits = $Installed.DriverVersion -replace '\D', ''
+            if ($Digits.Length -ge 5) {
+                $InstalledVersion = $Digits.Substring($Digits.Length - 5).Insert(3, '.')
+                if ($InstalledVersion -eq $Driver.Version) {
+                    Write-Host "`nNVIDIA driver $InstalledVersion is already installed (latest). Skipping the download." -ForegroundColor Green
+                    exit
+                }
+                Write-Host "Installed: $InstalledVersion -> latest: $($Driver.Version)"
+            }
+        }
+
         # Download
         $TargetPath = Join-Path "$env:ProgramData\Cullewie\Work" "nvidia-driver-$($Driver.Version).exe"
 

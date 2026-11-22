@@ -1,7 +1,7 @@
-# Asks two display questions after the GPU driver install and applies the answers:
-#   full-screen GPU scaling (stretch lower resolutions to the whole screen)
-#   digital vibrance (NVIDIA) / saturation (AMD)
-# -Scaling / -Level skip the questions. -TestOnly validates and reads, but changes nothing.
+# Display options, last step of the setup:
+#   full-screen GPU scaling (stretch lower resolutions to the whole screen): always on, no question, a note is printed
+#   digital vibrance (NVIDIA) / saturation (AMD): asked
+# -Scaling no skips the scaling, -Level skips the question. -TestOnly validates and reads, but changes nothing.
 param(
     [ValidateSet('', 'yes', 'no')][string]$Scaling = '',
     [string]$Level = '',
@@ -185,10 +185,8 @@ if ($Reapply) {
     $Scaling = 'no'
 }
 Write-Host 'Display options' -ForegroundColor Cyan
-if (-not $Scaling) {
-    $answer = Read-Host 'Tam ekran olcekleme acilsin mi? Dusuk cozunurlukler (or. 4:3) tum ekrana yayilir. (E/H)'
-    $Scaling = if ($answer -match '^\s*[eEyY]') { 'yes' } else { 'no' }
-}
+# full-screen scaling is always turned on, without a question (-Scaling no skips it)
+if (-not $Scaling) { $Scaling = 'yes' }
 if (-not $PSBoundParameters.ContainsKey('Level')) {
     if ($hasNvidia) { $Level = Read-Host 'Dijital canlilik yuzde kac olsun? 50 = varsayilan, 100 = en yuksek (bos = dokunma)' }
     elseif ($hasAmd) { $Level = Read-Host 'Doygunluk yuzde kac olsun? 100 = varsayilan, 200 = en yuksek, en az 100 (bos = dokunma)' }
@@ -207,8 +205,10 @@ if ("$Level".Trim()) {
 if ($Scaling -eq 'yes') {
     # current displays right away, through Windows itself (NVIDIA and AMD both honour it)
     $result = [DisplayOptions]::SetStretched(-not $TestOnly)
-    Write-Host "Full-screen scaling: $result$(if ($TestOnly) { ' (test only)' })"
-    if ($result -notmatch 'result=0$') { $failed++ }
+    if ($result -match 'result=0$') {
+        Write-Host "Not: Tam ekran olcekleme acildi. Dusuk cozunurlukler (or. 4:3) artik tum ekrana yayilir.$(if ($TestOnly) { ' (test only)' })" -ForegroundColor Green
+    }
+    else { Write-Host "Full-screen scaling failed: $result" -ForegroundColor Red; $failed++ }
     # every display layout Windows has saved, so other monitors or layouts get it too
     if (-not $TestOnly) {
         Get-ChildItem 'HKLM:\SYSTEM\CurrentControlSet\Control\GraphicsDrivers\Configuration' -Recurse -ErrorAction SilentlyContinue |

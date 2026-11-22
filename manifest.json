@@ -32,8 +32,8 @@
                   },
                   {
                       "path":  "Scripts/Drivers/NVIDIA/NVIDIA-Driver-Updater.ps1",
-                      "size":  12326,
-                      "sha256":  "66d2a0ab2598c391dccba0d4e4e5b243bcec64f9611965f51e6db64b86129b6d",
+                      "size":  13320,
+                      "sha256":  "db9b93999c4298abbd58a6dfeaf8597a5a190888a50150e568feb03657b82a71",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null
@@ -128,8 +128,8 @@
                   },
                   {
                       "path":  "Scripts/Windows/Display-Options.ps1",
-                      "size":  16644,
-                      "sha256":  "dc8f18cb2591c254db7197252c7c556e6c182563a768c320b12da01a3b6f5d6b",
+                      "size":  16762,
+                      "sha256":  "cca9b941c2cf9edf975bde1ca79fe2fe30b131933380f28ac5a1d3a8a7f6849a",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null
