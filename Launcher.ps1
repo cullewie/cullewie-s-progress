@@ -25,6 +25,7 @@ $script:Tools = @(
     [pscustomobject]@{ Id='tweaks'; Name='Windows Tweaks'; Category='Windows'; Path='Scripts/Windows/Tweaks.ps1'; Wrapper='' }
     [pscustomobject]@{ Id='defender'; Name='Defender Optimize'; Category='Windows'; Path='Scripts/Windows/Defender.ps1'; Wrapper='' }
     [pscustomobject]@{ Id='refresh-rate'; Name='Highest Refresh Rate'; Category='Windows'; Path='Scripts/Windows/Refresh-Rate.ps1'; Wrapper='' }
+    [pscustomobject]@{ Id='bloatware'; Name='Remove Bloatware'; Category='Windows'; Path='Scripts/Windows/Bloatware.ps1'; Wrapper='' }
     [pscustomobject]@{ Id='display-options'; Name='Scaling and Vibrance'; Category='Windows'; Path='Scripts/Windows/Display-Options.ps1'; Wrapper='' }
 )
 function Test-IsAdministrator {
@@ -334,7 +335,7 @@ function Resume-FullSetup {
     Remove-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate' -Name 'ExcludeWUDriversInQualityUpdate' -ErrorAction SilentlyContinue
     # refresh-rate after the driver: a fresh driver often starts the display at 60 Hz
     # display-options asks two questions (scaling, vibrance), so it runs last, right before Services
-    foreach ($id in 'refresh-rate', 'widgets', 'copilot-off', 'power-plan', 'timer-resolution', 'tweaks', 'display-options') {
+    foreach ($id in 'refresh-rate', 'widgets', 'copilot-off', 'power-plan', 'timer-resolution', 'tweaks', 'bloatware', 'display-options') {
         try { Invoke-RequiredTool -Id $id } catch { $failed.Add($_.Exception.Message) }
     }
     if ($failed.Count) {

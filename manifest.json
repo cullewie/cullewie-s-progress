@@ -8,16 +8,16 @@
     "files":  [
                   {
                       "path":  "Launcher.ps1",
-                      "size":  22544,
-                      "sha256":  "daf5a680c0bc47e003cd98c77bf8d8b5cca57c23533322d948bdfd1d9450676a",
+                      "size":  22692,
+                      "sha256":  "67f93075c90585cf6d80c148d1dc8719928d947ec5458575daa4f1619f6a8feb",
                       "role":  "launcher",
                       "origin":  "project",
                       "derivedFrom":  null
                   },
                   {
                       "path":  "README.md",
-                      "size":  1175,
-                      "sha256":  "2aa14464061378bd57cbf85e3d4a9e9c08b7af8c62eca961b9bb938db6ecb797",
+                      "size":  1336,
+                      "sha256":  "97ac0017a31d61443804301c09e483a62d11e37b61273534768efc651fc0e195",
                       "role":  "documentation",
                       "origin":  "project",
                       "derivedFrom":  null
@@ -135,6 +135,14 @@
                       "derivedFrom":  null
                   },
                   {
+                      "path":  "Scripts/Windows/Bloatware.ps1",
+                      "size":  7381,
+                      "sha256":  "378a8e0c4b039972cc693d73cadf10c75cf3986465eca192f59e6f72c7ed7346",
+                      "role":  "source",
+                      "origin":  "project",
+                      "derivedFrom":  null
+                  },
+                  {
                       "path":  "Scripts/Windows/Display-Options.ps1",
                       "size":  16644,
                       "sha256":  "dc8f18cb2591c254db7197252c7c556e6c182563a768c320b12da01a3b6f5d6b",
@@ -230,6 +238,12 @@
                         "entry":  "Scripts/AMD/Settings.ps1",
                         "adminRequired":  true,
                         "requiresReboot":  false
+                    },
+                    {
+                        "id":  "bloatware",
+                        "entry":  "Scripts/Windows/Bloatware.ps1",
+                        "adminRequired":  true,
+                        "requiresReboot":  true
                     },
                     {
                         "id":  "display-options",

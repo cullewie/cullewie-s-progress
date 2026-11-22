@@ -19,6 +19,7 @@ iwr 'https://github.com/cullewie/cullewie-s-progress/raw/refs/heads/main/IWR.ps1
 - Ekran kartı ve Windows ayarlarını oyun için düzenler.
 - Tam ekran ölçekleme açılsın mı ve dijital canlılık (AMD'de doygunluk) ne olsun diye sorar.
 - Gereksiz Windows hizmetlerini ve özelliklerini kapatır.
+- Hazır gelen gereksiz uygulamaları kaldırır; Hesap Makinesi, Terminal, Snipping Tool, Not Defteri, Paint, Fotoğraflar ve Türkçe dil bileşenleri kalır.
 
 Bilgisayar kurulum sırasında dört kez kendiliğinden yeniden başlar. Her açılışta şifrenle giriş yapman yeterli; kurulum kaldığı yerden devam eder. Yapılan değişiklikler geri alınamaz.
 
