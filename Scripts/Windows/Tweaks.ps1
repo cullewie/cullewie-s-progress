@@ -283,20 +283,11 @@ foreach ($id in "Microsoft.DirectX","Microsoft.VCRedist.2015+.x64","Microsoft.VC
     winget install --id $id --exact --silent --accept-package-agreements --accept-source-agreements >$null 2>&1
 }
 
-Write-Host "Temporary files and Disk Cleanup"
+# Only the temp folders on the system drive. No Disk Cleanup (cleanmgr /sagerun): it always scans every drive,
+# USB sticks included (its /d option is ignored with /sagerun), and it hung there.
+Write-Host "Temporary files ($env:SystemDrive only)"
 Remove-Item -Path "$env:TEMP\*" -Recurse -Force -ErrorAction SilentlyContinue
 Remove-Item -Path "$env:SystemRoot\Temp\*" -Recurse -Force -ErrorAction SilentlyContinue
-# Downloads, Recycle Bin and File History versions hold user files; Disk Cleanup leaves them alone.
-$keep = "DownloadsFolder","Recycle Bin","User file versions"
-Get-ChildItem "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches" -ErrorAction SilentlyContinue |
-    Where-Object { $keep -notcontains $_.PSChildName } |
-    ForEach-Object { Set-ItemProperty -Path $_.PSPath -Name "StateFlags0001" -Type DWord -Value 2 -ErrorAction SilentlyContinue }
-# Disk Cleanup can hang waiting on a window nobody sees; give it 10 minutes, then move on (nothing breaks, files just stay)
-$cleanup = Start-Process cleanmgr.exe -ArgumentList "/sagerun:1" -PassThru -ErrorAction SilentlyContinue
-if ($cleanup -and -not $cleanup.WaitForExit(600000)) {
-    Stop-Process -Id $cleanup.Id -Force -ErrorAction SilentlyContinue
-    Write-Host "Disk Cleanup did not finish in 10 minutes; skipped." -ForegroundColor Yellow
-}
 
 
 # ---- extra settings ----
