@@ -136,8 +136,8 @@
                   },
                   {
                       "path":  "Scripts/Windows/Services-Restore.ps1",
-                      "size":  3040,
-                      "sha256":  "d5c9d8ac423fcaa30a8847297843850f7b43e9e8c5d87fb3ffe873a8f6f1b5fb",
+                      "size":  3088,
+                      "sha256":  "25290bae97ae5b4bff0b331a507f851607d01f0f3c79c151186fc5ac4d5656c3",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null
