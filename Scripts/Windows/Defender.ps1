@@ -13,6 +13,7 @@ param(
         $Host.PrivateData.ProgressBackgroundColor = "Black"
         $Host.PrivateData.ProgressForegroundColor = "White"
         Clear-Host
+        New-Item -ItemType Directory -Path "$env:ProgramData\Cullewie\Work" -Force | Out-Null
 
 # Kept as Windows default because FACEIT Anti-Cheat needs them: virtualization based
 # security (hypervisor, VBS), memory integrity, the vulnerable driver blocklist and
@@ -48,9 +49,14 @@ $DefenderOptimize = @'
   		}
         $bytes = [System.Text.Encoding]::Unicode.GetBytes($command)
         $base64Command = [Convert]::ToBase64String($bytes)
-        sc.exe config TrustedInstaller binPath= "cmd.exe /c powershell.exe -encodedcommand $base64Command" | Out-Null
-        sc.exe start TrustedInstaller | Out-Null
-        sc.exe config TrustedInstaller binpath= "`"$DefaultBinPath`"" | Out-Null
+        # the original path always comes back, even if this is interrupted (Windows servicing depends on it)
+        try {
+            sc.exe config TrustedInstaller binPath= "cmd.exe /c powershell.exe -encodedcommand $base64Command" | Out-Null
+            sc.exe start TrustedInstaller | Out-Null
+        }
+        finally {
+            sc.exe config TrustedInstaller binpath= "`"$DefaultBinPath`"" | Out-Null
+        }
         try {
     	Stop-Service -Name TrustedInstaller -Force -ErrorAction Stop -WarningAction Stop
   		}
@@ -61,14 +67,16 @@ $DefenderOptimize = @'
 
 # these settings only apply in safe mode; if Windows started normally, queue this step again and restart into safe mode
 if ((Get-CimInstance Win32_ComputerSystem).BootupState -eq 'Normal boot') {
-Remove-Item "$env:SystemRoot\Temp\defenderoptimize.norestart" -Force -ErrorAction SilentlyContinue
-cmd /c "reg add `"HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce`" /v `"*defenderoptimize`" /t REG_SZ /d `"powershell.exe -nop -ep bypass -WindowStyle Maximized -f $env:SystemRoot\Temp\defenderoptimize.ps1`" /f >nul 2>&1"
+Remove-Item "$env:ProgramData\Cullewie\Work\defenderoptimize.norestart" -Force -ErrorAction SilentlyContinue
+cmd /c "reg add `"HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce`" /v `"*defenderoptimize`" /t REG_SZ /d `"powershell.exe -nop -ep bypass -WindowStyle Maximized -f $env:ProgramData\Cullewie\Work\defenderoptimize.ps1`" /f >nul 2>&1"
 cmd /c "bcdedit /set {current} safeboot minimal >nul 2>&1"
 Write-Host "Restarting into safe mode`n" -ForegroundColor Red
 Start-Sleep -Seconds 5
 shutdown -r -t 00
 exit
 }
+# leave safe mode first: if power fails or something hangs below, the next start is normal Windows
+cmd /c "bcdedit /deletevalue {current} safeboot >nul 2>&1"
 
 Write-Host "Defender Optimize: On...`n"
 
@@ -130,10 +138,8 @@ $windowssecuritysettings = @(
 'cmd /c "reg add `"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\WTDS\Components`" /v `"ServiceEnabled`" /t REG_DWORD /d `"0`" /f >nul 2>&1"',
 
 # smartscreen for microsoft store apps - needs normal boot as admin
-'cmd /c "reg add `"HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\AppHost`" /v `"EnableWebContentEvaluation`" /t REG_DWORD /d `"0`" /f >nul 2>&1"',
+'cmd /c "reg add `"HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\AppHost`" /v `"EnableWebContentEvaluation`" /t REG_DWORD /d `"0`" /f >nul 2>&1"'
 
-# local security authority protection
-'cmd /c "reg add `"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Lsa`" /v `"RunAsPPL`" /t REG_DWORD /d `"0`" /f >nul 2>&1"'
 )
 
 # run $windowssecuritysettings as function with trusted installer
@@ -147,7 +153,7 @@ foreach ($command in $windowssecuritysettings) {
 }
 
 # full setup: the launcher's safe-mode step removes safe boot and restarts after this script
-$noRestartMarker = "$env:SystemRoot\Temp\defenderoptimize.norestart"
+$noRestartMarker = "$env:ProgramData\Cullewie\Work\defenderoptimize.norestart"
 if (Test-Path $noRestartMarker) {
 Remove-Item $noRestartMarker -Force
 } else {
@@ -162,14 +168,14 @@ Start-Sleep -Seconds 5
 shutdown -r -t 00
 }
 '@
-Set-Content -Path "$env:SystemRoot\Temp\defenderoptimize.ps1" -Value $DefenderOptimize -Force
+Set-Content -Path "$env:ProgramData\Cullewie\Work\defenderoptimize.ps1" -Value $DefenderOptimize -Force
 if ($QueueOnly) {
-Set-Content -Path "$env:SystemRoot\Temp\defenderoptimize.norestart" -Value '' -Force
+Set-Content -Path "$env:ProgramData\Cullewie\Work\defenderoptimize.norestart" -Value '' -Force
 } else {
-Remove-Item "$env:SystemRoot\Temp\defenderoptimize.norestart" -Force -ErrorAction SilentlyContinue
+Remove-Item "$env:ProgramData\Cullewie\Work\defenderoptimize.norestart" -Force -ErrorAction SilentlyContinue
 
 # install runonce defenderoptimize ps1 file to run in safe boot
-cmd /c "reg add `"HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce`" /v `"*defenderoptimize`" /t REG_SZ /d `"powershell.exe -nop -ep bypass -WindowStyle Maximized -f $env:SystemRoot\Temp\defenderoptimize.ps1`" /f >nul 2>&1"
+cmd /c "reg add `"HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce`" /v `"*defenderoptimize`" /t REG_SZ /d `"powershell.exe -nop -ep bypass -WindowStyle Maximized -f $env:ProgramData\Cullewie\Work\defenderoptimize.ps1`" /f >nul 2>&1"
 }
 
 # smartscreen for microsoft edge - needs normal boot as admin

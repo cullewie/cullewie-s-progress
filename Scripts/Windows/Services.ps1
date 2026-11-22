@@ -7,6 +7,7 @@
         $Host.PrivateData.ProgressBackgroundColor = "Black"
         $Host.PrivateData.ProgressForegroundColor = "White"
         Clear-Host
+        New-Item -ItemType Directory -Path "$env:ProgramData\Cullewie\Work" -Force | Out-Null
 <#
         camsvc for mic
         netprofm for mic w11, w10 can disable
@@ -59,9 +60,14 @@ $ServicesOff = @'
   		}
         $bytes = [System.Text.Encoding]::Unicode.GetBytes($command)
         $base64Command = [Convert]::ToBase64String($bytes)
-        sc.exe config TrustedInstaller binPath= "cmd.exe /c powershell.exe -encodedcommand $base64Command" | Out-Null
-        sc.exe start TrustedInstaller | Out-Null
-        sc.exe config TrustedInstaller binpath= "`"$DefaultBinPath`"" | Out-Null
+        # the original path always comes back, even if this is interrupted (Windows servicing depends on it)
+        try {
+            sc.exe config TrustedInstaller binPath= "cmd.exe /c powershell.exe -encodedcommand $base64Command" | Out-Null
+            sc.exe start TrustedInstaller | Out-Null
+        }
+        finally {
+            sc.exe config TrustedInstaller binpath= "`"$DefaultBinPath`"" | Out-Null
+        }
         try {
     	Stop-Service -Name TrustedInstaller -Force -ErrorAction Stop -WarningAction Stop
   		}
@@ -919,13 +925,15 @@ Windows Registry Editor Version 5.00
 [HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\ZTHELPER]
 "Start"=dword:00000004
 `'@
-Set-Content -Path "$env:SystemRoot\Temp\servicesoff.reg" -Value $ServicesOff -Force
+# leave safe mode first: if power fails or something hangs below, the next start is normal Windows
+cmd /c "bcdedit /deletevalue {current} safeboot >nul 2>&1"
+Set-Content -Path "$env:ProgramData\Cullewie\Work\servicesoff.reg" -Value $ServicesOff -Force
 
 # import reg file as trusted
-Run-Trusted "Regedit.exe /S `"$env:SystemRoot\Temp\servicesoff.reg`""
+Run-Trusted "Regedit.exe /S `"$env:ProgramData\Cullewie\Work\servicesoff.reg`""
 
 # import reg file as admin
-Regedit.exe /S "$env:SystemRoot\Temp\servicesoff.reg"
+Regedit.exe /S "$env:ProgramData\Cullewie\Work\servicesoff.reg"
 
 # remove safe mode boot
 cmd /c "bcdedit /deletevalue {current} safeboot >nul 2>&1"
@@ -936,14 +944,14 @@ Write-Host "Restarting`n" -ForegroundColor Red
 Start-Sleep -Seconds 5
 shutdown -r -t 00
 '@
-Set-Content -Path "$env:SystemRoot\Temp\servicesoff.ps1" -Value $ServicesOff -Force
+Set-Content -Path "$env:ProgramData\Cullewie\Work\servicesoff.ps1" -Value $ServicesOff -Force
 
 # edit servicesoff.ps1
-$ServicesOffPs1 = "$env:SystemRoot\Temp\servicesoff.ps1"
+$ServicesOffPs1 = "$env:ProgramData\Cullewie\Work\servicesoff.ps1"
 (Get-Content $ServicesOffPs1 -Raw) -replace "``'@","'@" | Set-Content $ServicesOffPs1 -NoNewline
 
 # install runonce servicesoff ps1 file to run in safe boot
-cmd /c "reg add `"HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce`" /v `"*servicesoff`" /t REG_SZ /d `"powershell.exe -nop -ep bypass -WindowStyle Maximized -f $env:SystemRoot\Temp\servicesoff.ps1`" /f >nul 2>&1"
+cmd /c "reg add `"HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce`" /v `"*servicesoff`" /t REG_SZ /d `"powershell.exe -nop -ep bypass -WindowStyle Maximized -f $env:ProgramData\Cullewie\Work\servicesoff.ps1`" /f >nul 2>&1"
 
 # turn on safe boot
 cmd /c "bcdedit /set {current} safeboot minimal >nul 2>&1"

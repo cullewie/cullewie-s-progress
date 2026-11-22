@@ -188,7 +188,7 @@ function Invoke-RequiredTool {
 }
 function Start-FullSetup {
     $statePath = Join-Path $script:RepoRoot 'nvidia-setup-state.json'
-    $dduFlag = Join-Path $env:SystemRoot 'Temp\cullewie-ddu.flag'
+    $dduFlag = Join-Path $env:ProgramData 'Cullewie\Work\cullewie-ddu.flag'
     Remove-Item -LiteralPath $statePath, $dduFlag -Force -ErrorAction SilentlyContinue
 
     $nvidiaDriver = Get-CimInstance -ClassName Win32_PnPSignedDriver -ErrorAction Stop |
@@ -204,13 +204,19 @@ function Start-FullSetup {
         [IO.File]::WriteAllText($dduFlag, 'nvidia')
     }
     else {
-        # a discrete Radeon with its driver installed (integrated Radeon graphics are left alone)
-        $amdDriver = Get-CimInstance Win32_VideoController |
-            Where-Object { $_.PNPDeviceID -like 'PCI\VEN_1002&*' -and $_.Name -match 'Radeon.*\bRX\b' } | Select-Object -First 1
+        # remove an AMD driver only when the updater already knows the replacement:
+        # a supported discrete RX 5000-9000 card, no NVIDIA card, and a live download link (saved for stage 3)
+        $amdDriver = Get-CimInstance Win32_PnPSignedDriver |
+            Where-Object { $_.DeviceClass -eq 'DISPLAY' -and $_.DeviceID -like 'PCI\VEN_1002&*' -and $_.DriverProviderName -match 'Advanced Micro Devices' } | Select-Object -First 1
         if ($amdDriver) {
-            Write-Host "AMD driver found for $($amdDriver.Name). DDU will remove it in safe mode." -ForegroundColor Yellow
-            Invoke-RequiredTool -Id 'ddu' -Arguments '-PrepareOnly'
-            [IO.File]::WriteAllText($dduFlag, 'amd')
+            $amd = $script:Tools | Where-Object { $_.Id -eq 'amd-updater' } | Select-Object -First 1
+            Invoke-ChildScript -Tool $amd -Arguments @('-Resolve')
+            if ($script:LastChildExitCode -eq 0) {
+                Write-Host "AMD driver found for $($amdDriver.DeviceName). DDU will remove it in safe mode." -ForegroundColor Yellow
+                Invoke-RequiredTool -Id 'ddu' -Arguments '-PrepareOnly'
+                [IO.File]::WriteAllText($dduFlag, 'amd')
+            }
+            else { Write-Host 'The installed AMD driver is kept.' -ForegroundColor Cyan }
         }
     }
     Invoke-RequiredTool -Id 'defender' -Arguments '-QueueOnly'
@@ -233,24 +239,28 @@ function Start-FullSetup {
     Set-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\PasswordLess\Device' -Name 'DevicePasswordLessBuildVersion' -Value 0 -Type DWord
 
     # stage 2: one safe-mode script runs DDU and Defender in order, then always leaves safe mode
-    $safeScript = Join-Path $env:SystemRoot 'Temp\cullewie-safe.ps1'
+    $safeScript = Join-Path $env:ProgramData 'Cullewie\Work\cullewie-safe.ps1'
     [IO.File]::WriteAllText($safeScript, @'
 try {
-    $flag = "$env:SystemRoot\Temp\cullewie-ddu.flag"
+    # leave safe mode first: if power fails or something hangs below, the next start is normal Windows
+    cmd /c "bcdedit /deletevalue {current} safeboot >nul 2>&1"
+    $flag = "$env:ProgramData\Cullewie\Work\cullewie-ddu.flag"
     if (Test-Path $flag) {
-        $ddu = "$env:SystemRoot\Temp\ddu\Display Driver Uninstaller.exe"
+        $ddu = "$env:ProgramData\Cullewie\Work\ddu\Display Driver Uninstaller.exe"
         if ((Get-Content $flag -Raw) -match 'amd') {
             Write-Host 'DDU: removing the AMD driver' -ForegroundColor Yellow
-            Start-Process -FilePath $ddu -ArgumentList '-Silent -NoSafeModeMsg -NoRestorePoint -CleanAmd -RemoveAMDDirs -RemoveCrimsonCache -RemoveAMDCP -RemoveAMDKMPFD -RemoveVulkan' -Wait
+            $arguments = '-Silent -NoSafeModeMsg -NoRestorePoint -CleanAmd -RemoveAMDDirs -RemoveCrimsonCache -RemoveAMDCP -RemoveVulkan'
         }
         else {
             Write-Host 'DDU: removing the NVIDIA driver' -ForegroundColor Yellow
-            Start-Process -FilePath $ddu -ArgumentList '-Silent -NoSafeModeMsg -NoRestorePoint -CleanNvidia -RemovePhysx -RemoveGFE -RemoveNVBROADCAST -RemoveNVCP -RemoveVulkan -RemoveNvidiaDirs -Remove3DTVPlay' -Wait
+            $arguments = '-Silent -NoSafeModeMsg -NoRestorePoint -CleanNvidia -RemovePhysx -RemoveGFE -RemoveNVBROADCAST -RemoveNVCP -RemoveVulkan -RemoveNvidiaDirs -Remove3DTVPlay'
         }
+        $p = Start-Process -FilePath $ddu -ArgumentList $arguments -PassThru
+        if (-not $p.WaitForExit(900000)) { Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue; Write-Host 'DDU did not finish in 15 minutes; stopped.' -ForegroundColor Red }
         Remove-Item $flag -Force
     }
-    if (Test-Path "$env:SystemRoot\Temp\defenderoptimize.ps1") {
-        & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -ExecutionPolicy Bypass -File "$env:SystemRoot\Temp\defenderoptimize.ps1"
+    if (Test-Path "$env:ProgramData\Cullewie\Work\defenderoptimize.ps1") {
+        & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -ExecutionPolicy Bypass -File "$env:ProgramData\Cullewie\Work\defenderoptimize.ps1"
     }
 }
 finally {
@@ -312,13 +322,16 @@ function Resume-FullSetup {
         # the updater itself skips integrated Radeon graphics and cards older than RX 5000
         try {
             Invoke-RequiredTool -Id 'amd-updater'
-            Invoke-RequiredTool -Id 'amd-settings'
+            # settings only on the card this toolkit just installed a driver for
+            if (Test-Path (Join-Path $env:ProgramData 'Cullewie\Work\amd-installed.flag')) { Invoke-RequiredTool -Id 'amd-settings' }
         }
         catch { $failed.Add($_.Exception.Message) }
     }
     else {
         Write-Host 'No NVIDIA or AMD GPU found. Skipping the GPU steps.' -ForegroundColor Cyan
     }
+    # the GPU driver is in: Windows Update may deliver drivers again (chipset, audio, Wi-Fi, Bluetooth)
+    Remove-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate' -Name 'ExcludeWUDriversInQualityUpdate' -ErrorAction SilentlyContinue
     # refresh-rate after the driver: a fresh driver often starts the display at 60 Hz
     # display-options asks two questions (scaling, vibrance), so it runs last, right before Services
     foreach ($id in 'refresh-rate', 'widgets', 'copilot-off', 'power-plan', 'timer-resolution', 'tweaks', 'display-options') {

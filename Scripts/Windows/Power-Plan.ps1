@@ -424,6 +424,8 @@ powercfg /setdcvalueindex scheme_current sub_none consolelock 0 2>$null
 powercfg /setacvalueindex scheme_current sub_none consolelock 0 2>$null
 
 # open settings
+# activate again so every value set above is in effect now, not only after the next restart
+cmd /c "powercfg /SETACTIVE 99999999-9999-9999-9999-999999999999 >nul 2>&1"
 Start-Process powercfg.cpl
 
 exit

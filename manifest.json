@@ -8,8 +8,8 @@
     "files":  [
                   {
                       "path":  "Launcher.ps1",
-                      "size":  21229,
-                      "sha256":  "f6165e90952f3710e0399badd26cedf0c586748b16fa8a0a177dd13d9e7ef88e",
+                      "size":  22544,
+                      "sha256":  "daf5a680c0bc47e003cd98c77bf8d8b5cca57c23533322d948bdfd1d9450676a",
                       "role":  "launcher",
                       "origin":  "project",
                       "derivedFrom":  null
@@ -24,24 +24,24 @@
                   },
                   {
                       "path":  "Scripts/Drivers/DDU/DDU.ps1",
-                      "size":  12511,
-                      "sha256":  "8a8b993ca8d049c5bff8e0117167195a570d8bf165adeecb6cabb0dcdfb357f5",
+                      "size":  12856,
+                      "sha256":  "e600f5d64a343e0b24f34beac08a85e994ac44c9f6cb379953f2339d0dfb9998",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null
                   },
                   {
                       "path":  "Scripts/Drivers/NVIDIA/NVIDIA-Driver-Updater.ps1",
-                      "size":  9211,
-                      "sha256":  "8b44173f608e9e7475df04c3c91ea07ebde5369e7759f8a1411ed592291237c1",
+                      "size":  9221,
+                      "sha256":  "71e2e07f85a16a6121bfa5fb5d2edd9b8ec3c6cb3083694ab52567c235157e7a",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null
                   },
                   {
                       "path":  "Scripts/NVIDIA/Settings-GitHub.ps1",
-                      "size":  12982,
-                      "sha256":  "498f5a7a0c7b9b33224483531e34c2e3a1882610bead991c52e87a4fa85f4035",
+                      "size":  13124,
+                      "sha256":  "6ad08a6f5984da47d09685ead3f5b15ff591a43128a1c56ec4fee777e9e3a428",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null
@@ -56,16 +56,16 @@
                   },
                   {
                       "path":  "Scripts/Windows/Power-Plan.ps1",
-                      "size":  31677,
-                      "sha256":  "be139f8ad199040ebe20e3f4baef72374930122a52d4a4cea2d1c6015efed65a",
+                      "size":  31845,
+                      "sha256":  "84cfb359b24ec57645a3935e2d75727e4c58082c04bb8b1a352278cf83ede803",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null
                   },
                   {
                       "path":  "Scripts/Windows/Services.ps1",
-                      "size":  29012,
-                      "sha256":  "c4bdc144c0473822cbe0d93608257e2f0e5d8e718c7fa5ec74cd3a5469e971e1",
+                      "size":  29496,
+                      "sha256":  "10ea7de950cbe00d6bc9dd3d86d495662b56a59134e94c9aa79c03308baf564f",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null
@@ -96,16 +96,16 @@
                   },
                   {
                       "path":  "Scripts/NVIDIA/P0-State.ps1",
-                      "size":  1356,
-                      "sha256":  "613c9aba2ad32f0db0609cc6046fac946919cddd66a26919e74677a2403266dc",
+                      "size":  1340,
+                      "sha256":  "77d3129e9d1b193ba0ad7c541545df0a9a61875a25855294e55adbaeadbc0627",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null
                   },
                   {
                       "path":  "Scripts/Windows/Defender.ps1",
-                      "size":  12609,
-                      "sha256":  "087b05e45d27644187ecb17459d9487296fc398ea84dab3ed4ffdfe48aa9e5ca",
+                      "size":  12935,
+                      "sha256":  "35d7d1f10f76cfdbe95db34b79577522ed986bb729f9c536f05791180e4731bb",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null
@@ -120,8 +120,8 @@
                   },
                   {
                       "path":  "Scripts/Drivers/AMD/AMD-Driver-Updater.ps1",
-                      "size":  6156,
-                      "sha256":  "c5168002e89e6ddabe4891fba566fd9c2ac33dbad3fa9634960b3712973d0a84",
+                      "size":  9016,
+                      "sha256":  "6355d27e50cd631b76bcab3e1de6a14f34e58113e26dfbcddb0c2d6f33f7f4b8",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null
@@ -136,8 +136,8 @@
                   },
                   {
                       "path":  "Scripts/Windows/Display-Options.ps1",
-                      "size":  16590,
-                      "sha256":  "aef44a896359cff56e29cd0460d9d9aaee00f3cb68074247184a099438d5eac0",
+                      "size":  16644,
+                      "sha256":  "dc8f18cb2591c254db7197252c7c556e6c182563a768c320b12da01a3b6f5d6b",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null

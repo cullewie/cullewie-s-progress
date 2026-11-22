@@ -191,7 +191,7 @@ if (-not $Scaling) {
 }
 if (-not $PSBoundParameters.ContainsKey('Level')) {
     if ($hasNvidia) { $Level = Read-Host 'Dijital canlilik yuzde kac olsun? 50 = varsayilan, 100 = en yuksek (bos = dokunma)' }
-    elseif ($hasAmd) { $Level = Read-Host 'Doygunluk yuzde kac olsun? 100 = varsayilan, 200 = en yuksek (bos = dokunma)' }
+    elseif ($hasAmd) { $Level = Read-Host 'Doygunluk yuzde kac olsun? 100 = varsayilan, 200 = en yuksek, en az 100 (bos = dokunma)' }
     else { $Level = '' }
 }
 $percent = -1
@@ -200,7 +200,7 @@ if ("$Level".Trim()) {
     else {
         $percent = [int]"$Level".Trim()
         if ($hasNvidia) { $percent = [Math]::Max(50, [Math]::Min(100, $percent)) }
-        else { $percent = [Math]::Max(0, [Math]::Min(200, $percent)) }
+        else { $percent = [Math]::Max(100, [Math]::Min(200, $percent)) }   # below 100 would wash the colours out
     }
 }
 

@@ -109,7 +109,7 @@
         }
 
         # Download
-        $TargetPath = Join-Path "$env:SystemRoot\Temp" "nvidia-driver-$($Driver.Version).exe"
+        $TargetPath = Join-Path "$env:ProgramData\Cullewie\Work" "nvidia-driver-$($Driver.Version).exe"
 
         Write-Host "`nDRIVER FOUND" -ForegroundColor Green
         Write-Host "GPU: $($GPU.Name)"

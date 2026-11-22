@@ -7,16 +7,17 @@
         $Host.PrivateData.ProgressBackgroundColor = "Black"
         $Host.PrivateData.ProgressForegroundColor = "White"
         Clear-Host
+        New-Item -ItemType Directory -Path "$env:ProgramData\Cullewie\Work" -Force | Out-Null
 
         # SCRIPT SILENT
         $progresspreference = 'silentlycontinue'
 
 # download nvidia control panel
-IWR "https://github.com/cullewie/cullewie-s-progress/releases/download/files/nvp.appx" -OutFile "$env:SystemRoot\Temp\nvp.appx"
-if ((Get-FileHash "$env:SystemRoot\Temp\nvp.appx" -Algorithm SHA256).Hash -ne 'dd9ca6be34a6f9d90d8eb85ff39c4292f14df32dd7f6e032fec0c8de76b98eeb') { throw 'nvp.appx SHA-256 mismatch; download stopped.' }
+IWR "https://github.com/cullewie/cullewie-s-progress/releases/download/files/nvp.appx" -OutFile "$env:ProgramData\Cullewie\Work\nvp.appx"
+if ((Get-FileHash "$env:ProgramData\Cullewie\Work\nvp.appx" -Algorithm SHA256).Hash -ne 'dd9ca6be34a6f9d90d8eb85ff39c4292f14df32dd7f6e032fec0c8de76b98eeb') { throw 'nvp.appx SHA-256 mismatch; download stopped.' }
 
 # install nvidia control panel
-Add-AppxPackage -Path "$env:SystemRoot\Temp\nvp.appx" -ErrorAction SilentlyContinue | Out-Null
+Add-AppxPackage -Path "$env:ProgramData\Cullewie\Work\nvp.appx" -ErrorAction SilentlyContinue | Out-Null
 
 # create desktop shortcut
 $WshShell = New-Object -comObject WScript.Shell
@@ -49,7 +50,7 @@ cmd /c "reg add `"HKLM\System\ControlSet001\Services\nvlddmkm\Parameters\Global\
 # allow access to the gpu performance counters to all users
 $subkeys = Get-ChildItem -Path "Registry::HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}" -Force -ErrorAction SilentlyContinue
 foreach($key in $subkeys){
-if ($key -notlike '*Configuration'){
+if ($key.Name -match '\\\d{4}$'){
 reg add "$key" /v "RmProfilingAdminOnly" /t REG_DWORD /d "0" /f | Out-Null
 }
 }
@@ -277,10 +278,10 @@ $nipfile = @'
   </Profile>
 </ArrayOfProfile>
 '@
-Set-Content -Path "$env:SystemRoot\Temp\inspector.nip" -Value $nipfile -Force
+Set-Content -Path "$env:ProgramData\Cullewie\Work\inspector.nip" -Value $nipfile -Force
 
 # import nip
-Start-Process -Wait "$env:SystemDrive\Program Files (x86)\Nvidia Profile Inspector\Nvidia Profile Inspector.exe" -ArgumentList "-silentImport -silent $env:SystemRoot\Temp\inspector.nip"
+Start-Process -Wait "$env:SystemDrive\Program Files (x86)\Nvidia Profile Inspector\Nvidia Profile Inspector.exe" -ArgumentList "-silentImport -silent $env:ProgramData\Cullewie\Work\inspector.nip"
 
 # open nvidiacontrolpanel
 Start-Process "shell:appsFolder\NVIDIACorp.NVIDIAControlPanel_56jybvy8sckqj!NVIDIACorp.NVIDIAControlPanel"

@@ -56,7 +56,15 @@ try {
     $programDataRoot = Join-Path $env:ProgramData 'Cullewie'
     $releasesRoot = Join-Path $programDataRoot 'Releases'
     $stagingRoot = Join-Path $programDataRoot 'Staging'
-    New-Item -ItemType Directory -Force -Path $releasesRoot,$stagingRoot | Out-Null
+    # a non-admin account may have created this folder first: take ownership of everything in it,
+    # drop every existing permission, then allow only SYSTEM and Administrators
+    New-Item -ItemType Directory -Force -Path $programDataRoot | Out-Null
+    $icacls = Join-Path $env:SystemRoot 'System32\icacls.exe'
+    & $icacls $programDataRoot '/setowner' '*S-1-5-32-544' '/T' '/C' '/Q' | Out-Null
+    & $icacls $programDataRoot '/reset' '/T' '/C' '/Q' | Out-Null
+    Set-PrivateDirectoryAcl -Path $programDataRoot
+    # Work holds the files that later run elevated or in safe mode (DDU, safe-mode scripts)
+    New-Item -ItemType Directory -Force -Path $releasesRoot,$stagingRoot,(Join-Path $programDataRoot 'Work') | Out-Null
     Set-PrivateDirectoryAcl -Path $releasesRoot
     Set-PrivateDirectoryAcl -Path $stagingRoot
 
