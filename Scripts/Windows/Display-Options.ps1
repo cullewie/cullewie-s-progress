@@ -110,7 +110,7 @@ public static class DisplayOptions {
     [DllImport("atiadlxx.dll")] static extern int ADL2_Display_Color_Set(IntPtr context, int adapter, int display, int type, int value);
     [DllImport("atiadlxx.dll")] static extern int ADL2_DFP_GPUScalingEnable_Set(IntPtr context, int adapter, int display, int enable);
 
-    const int ADL_DISPLAY_COLOR_SATURATION = 8;
+    const int ADL_DISPLAY_COLOR_SATURATION = 4;   // adl_defines.h: 1 << 2 (8 would be hue)
     const int ADAPTERINFO_SIZE = 1572, INDEX_OFFSET = 4, VENDOR_OFFSET = 4 + 4 + 256 + 12, PRESENT_OFFSET = VENDOR_OFFSET + 4 + 512;
     const int DISPLAYINFO_SIZE = 552, INFOVALUE_OFFSET = 548;
 

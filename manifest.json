@@ -136,8 +136,8 @@
                   },
                   {
                       "path":  "Scripts/Windows/Display-Options.ps1",
-                      "size":  16546,
-                      "sha256":  "90dd56f95fb9299c5e89877098e0d574b45db2f2916dc329690a99a438006866",
+                      "size":  16590,
+                      "sha256":  "aef44a896359cff56e29cd0460d9d9aaee00f3cb68074247184a099438d5eac0",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null
