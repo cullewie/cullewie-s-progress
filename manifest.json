@@ -55,6 +55,14 @@
                       "derivedFrom":  null
                   },
                   {
+                      "path":  "Scripts/Windows/Cleanup.ps1",
+                      "size":  2499,
+                      "sha256":  "3521d9207ccedcd41c6b99d622fb8e4c78292248c7d2003e5d598378345dad07",
+                      "role":  "source",
+                      "origin":  "project",
+                      "derivedFrom":  null
+                  },
+                  {
                       "path":  "Scripts/Windows/Services.ps1",
                       "size":  36688,
                       "sha256":  "c3bbf342dbef650b23b5349f331534352dea4cb0e58a68dc02cb6faa59b732e4",
@@ -144,8 +152,8 @@
                   },
                   {
                       "path":  "UI.ps1",
-                      "size":  38865,
-                      "sha256":  "45c7d577a7c5425fac476fa224a1f93477b5d0cef95594b882e0631d026fc5be",
+                      "size":  40480,
+                      "sha256":  "8dfc9cece55e9b9da2e09678b35c8013780c23a7410922a08f57f12c0f97056e",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null

@@ -561,9 +561,33 @@ $ui.RestartBtn.Add_Click({ shutdown -r -t 5 })
 $ui.Vibrance.Add_ValueChanged({ $ui.VibranceValue.Text = '%' + [int]$ui.Vibrance.Value })
 $ui.VibMinus.Add_Click({ $ui.Vibrance.Value = [math]::Max($ui.Vibrance.Minimum, $ui.Vibrance.Value - 1) })
 $ui.VibPlus.Add_Click({ $ui.Vibrance.Value = [math]::Min($ui.Vibrance.Maximum, $ui.Vibrance.Value + 1) })
-$ui.SkipBtn.Add_Click({ $ui.DoneNote.Foreground = $brush.Dim; $ui.DoneNote.Text = 'Renk ayarına dokunulmadı. Pencereyi kapatabilirsin.'; $ui.ApplyBtn.IsEnabled = $false; $ui.SkipBtn.IsEnabled = $false })
+# the end: disk cleanup once, then Cleanup.ps1 restarts Windows itself (closing this window does not stop it)
+function Start-Cleanup([string]$Before = '') {
+    if ($script:CleanupStarted) { return }
+    $script:CleanupStarted = $true
+    $ui.ApplyBtn.IsEnabled = $false; $ui.SkipBtn.IsEnabled = $false
+    $ui.DoneNote.Foreground = $brush.Dim; $ui.DoneNote.Text = ($Before + 'Disk temizleniyor… Birkaç dakika sürebilir, bitince bilgisayar yeniden başlar.').Trim()
+    $script:CleanupResult = Join-Path $env:TEMP ('cullewie-cleanup-' + [guid]::NewGuid().ToString('N') + '.txt')
+    $cleanup = Join-Path $PSScriptRoot 'Scripts\Windows\Cleanup.ps1'
+    $script:Cleaner = Start-Process -FilePath $ps -ArgumentList @('-NoLogo', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', "`"$cleanup`"", '-ResultPath', "`"$($script:CleanupResult)`"", '-Restart') -WindowStyle Hidden -PassThru
+    $script:CleanupBefore = $Before
+    $script:CleanupTimer.Start()
+}
+$script:CleanupTimer = New-Object Windows.Threading.DispatcherTimer
+$script:CleanupTimer.Interval = [TimeSpan]::FromMilliseconds(500)
+$script:CleanupTimer.Add_Tick({
+    if (-not $script:Cleaner.HasExited) { return }
+    $script:CleanupTimer.Stop()
+    $freed = 0L
+    try { $freed = [int64](((Get-Content -LiteralPath $script:CleanupResult -Raw) -replace '^freed=', '').Trim()) } catch { }
+    $text = if ($freed -ge 1GB) { ([double]$freed / 1GB).ToString('0.0', [Globalization.CultureInfo]'tr-TR') + ' GB' } else { [string][int][math]::Round([math]::Max(0, $freed) / 1MB) + ' MB' }
+    $ui.DoneNote.Foreground = $brush.Pass
+    $ui.DoneNote.Text = ($script:CleanupBefore + "Disk temizlendi: $text yer açıldı. Bilgisayar 10 saniye içinde yeniden başlıyor.").Trim()
+})
+$win.Add_Closing({ if ($ui.DoneScreen.Visibility -eq 'Visible') { Start-Cleanup } })
+$ui.SkipBtn.Add_Click({ Start-Cleanup 'Renk ayarına dokunulmadı. ' })
 $ui.ApplyBtn.Add_Click({
-    if ($ui.VibrancePanel.Visibility -ne 'Visible') { $win.Close(); return }
+    if ($ui.VibrancePanel.Visibility -ne 'Visible') { Start-Cleanup; return }
     $ui.ApplyBtn.IsEnabled = $false; $ui.SkipBtn.IsEnabled = $false
     $ui.DoneNote.Foreground = $brush.Dim; $ui.DoneNote.Text = 'Uygulanıyor…'
     $display = Join-Path $PSScriptRoot 'Scripts\GPU\Display-Options.ps1'
@@ -575,7 +599,7 @@ $script:ApplyTimer.Interval = [TimeSpan]::FromMilliseconds(500)
 $script:ApplyTimer.Add_Tick({
     if (-not $script:Applier.HasExited) { return }
     $script:ApplyTimer.Stop()
-    if ($script:Applier.ExitCode -eq 0) { $ui.DoneNote.Foreground = $brush.Pass; $ui.DoneNote.Text = "$($ui.VibranceLabel.Text) $($ui.VibranceValue.Text) olarak ayarlandı. Pencereyi kapatabilirsin." }
+    if ($script:Applier.ExitCode -eq 0) { Start-Cleanup "$($ui.VibranceLabel.Text) $($ui.VibranceValue.Text) olarak ayarlandı. " }
     else { $ui.DoneNote.Foreground = $brush.Fail; $ui.DoneNote.Text = "Ayarlanamadı (çıkış kodu $($script:Applier.ExitCode)). Ekran kartı panelinden elle ayarlayabilirsin."; $ui.ApplyBtn.IsEnabled = $true }
 })
 $ui.CloseBtn.Add_Click({ $win.Close() })
