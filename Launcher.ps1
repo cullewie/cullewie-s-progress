@@ -17,6 +17,8 @@ $script:RepoRoot = $PSScriptRoot
 $script:PowerShellExe = "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe"
 $script:CaptureChildOutput = $false
 $script:SuspendedBitLocker = $false
+try { . (Join-Path $PSScriptRoot 'Scripts\TestLog.ps1') } catch { }   # TESTLOG
+$script:TestLogOn = [bool](Get-Command Start-TestRun -ErrorAction SilentlyContinue)   # TESTLOG
 # the Store/Xbox choice; a file, so it survives the safe-mode restarts of the full setup
 $script:AppsFlag = Join-Path $env:ProgramData 'Cullewie\Work\apps.flag'
 $script:Tools = @(
@@ -70,9 +72,18 @@ function Invoke-ChildScript {
         $childArguments = @('-NoLogo', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $launchPath) + $Arguments
         # live mode asks nothing, so the child's lines can go through Out-Host and into the live-setup log.
         # Not otherwise: a piped child may show its questions late.
-        if ($script:CaptureChildOutput) { & $script:PowerShellExe @childArguments | Out-Host }
+        $stepLog = if ($script:TestLogOn) { Get-TestStepLog $Tool.Name } else { $null }   # TESTLOG
+        $stepWatch = [Diagnostics.Stopwatch]::StartNew()   # TESTLOG
+        if ($stepLog -and $script:CaptureChildOutput) { & $script:PowerShellExe @childArguments | Tee-Object -FilePath $stepLog | Out-Host }   # TESTLOG
+        elseif ($stepLog) {   # TESTLOG: an outer process holds the transcript and runs the child with -File as before (same exit codes, prompts still show)
+            $quoted = (@($script:PowerShellExe) + $childArguments | ForEach-Object { "'" + ([string]$_ -replace "'", "''") + "'" }) -join ' '   # TESTLOG
+            $wrapper = "Start-Transcript -LiteralPath '$($stepLog -replace "'", "''")' -Force | Out-Null; & $quoted; `$c = `$LASTEXITCODE; Stop-Transcript | Out-Null; exit `$c"   # TESTLOG
+            & $script:PowerShellExe -NoLogo -NoProfile -ExecutionPolicy Bypass -EncodedCommand ([Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($wrapper)))   # TESTLOG
+        }   # TESTLOG
+        elseif ($script:CaptureChildOutput) { & $script:PowerShellExe @childArguments | Out-Host }
         else { & $script:PowerShellExe @childArguments }
         $childExitCode = $LASTEXITCODE
+        if ($script:TestLogOn) { Write-TestStep $Tool.Name $(if ($childExitCode -eq 0) { 'PASS' } else { 'FAIL' }) $childExitCode $stepWatch.Elapsed }   # TESTLOG
         $script:LastChildExitCode = [int]$childExitCode
         if ($childExitCode -ne 0) {
             Write-Host "Child process exit code: $childExitCode" -ForegroundColor Red
@@ -236,7 +247,9 @@ function Start-FullSetup {
     }
     # ask once, now: the rest of the setup runs by itself (an earlier run's answer is dropped first)
     Remove-Item -LiteralPath $script:AppsFlag -Force -ErrorAction SilentlyContinue
-    Save-AppsChoice (Read-AppsChoice)
+    $level = Read-AppsChoice
+    Save-AppsChoice $level
+    if ($script:TestLogOn) { [void](Start-TestRun "full-$level") }   # TESTLOG
     $statePath = Join-Path $script:RepoRoot 'nvidia-setup-state.json'
     $dduFlag = Join-Path $env:ProgramData 'Cullewie\Work\cullewie-ddu.flag'
     # also the AMD state an aborted run may have left (its saved link could install an older driver)
@@ -295,7 +308,10 @@ function Start-FullSetup {
 
     # stage 2: one safe-mode script runs DDU and Defender in order, then always leaves safe mode
     $safeScript = Join-Path $env:ProgramData 'Cullewie\Work\cullewie-safe.ps1'
-    [IO.File]::WriteAllText($safeScript, @'
+    [IO.File]::WriteAllText($safeScript, (@'
+try { . '__TESTLOG__' } catch { }   # TESTLOG
+$tlOn = [bool](Get-Command Write-TestStep -ErrorAction SilentlyContinue)   # TESTLOG
+if ($tlOn) { Save-BootEvents; $tl = Get-TestStepLog 'safe-mode'; if ($tl) { Start-Transcript -LiteralPath $tl -Force | Out-Null } }   # TESTLOG
 try {
     # leave safe mode first: if power fails or something hangs below, the next start is normal Windows
     cmd /c "bcdedit /deletevalue {current} safeboot >nul 2>&1"
@@ -310,20 +326,25 @@ try {
             Write-Host 'DDU: removing the NVIDIA driver' -ForegroundColor Yellow
             $arguments = '-Silent -NoSafeModeMsg -NoRestorePoint -CleanNvidia -RemovePhysx -RemoveGFE -RemoveNVBROADCAST -RemoveNVCP -RemoveVulkan -RemoveNvidiaDirs -Remove3DTVPlay'
         }
+        $dduWatch = [Diagnostics.Stopwatch]::StartNew()   # TESTLOG
         $p = Start-Process -FilePath $ddu -ArgumentList $arguments -PassThru
-        if (-not $p.WaitForExit(900000)) { Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue; Write-Host 'DDU did not finish in 15 minutes; stopped.' -ForegroundColor Red }
+        if (-not $p.WaitForExit(900000)) { Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue; Write-Host 'DDU did not finish in 15 minutes; stopped.' -ForegroundColor Red; if ($tlOn) { Write-TestStep 'DDU' 'FAIL' -1 $dduWatch.Elapsed } }   # TESTLOG: Write-TestStep
+        elseif ($tlOn) { Write-TestStep 'DDU' 'PASS' $p.ExitCode $dduWatch.Elapsed }   # TESTLOG
         Remove-Item $flag -Force
     }
     if (Test-Path "$env:ProgramData\Cullewie\Work\defenderoptimize.ps1") {
+        $defWatch = [Diagnostics.Stopwatch]::StartNew()   # TESTLOG
         & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -ExecutionPolicy Bypass -File "$env:ProgramData\Cullewie\Work\defenderoptimize.ps1"
+        if ($tlOn) { Write-TestStep 'Defender (safe mode)' $(if ($LASTEXITCODE -eq 0) { 'PASS' } else { 'FAIL' }) $LASTEXITCODE $defWatch.Elapsed }   # TESTLOG
     }
 }
 finally {
     cmd /c "bcdedit /deletevalue {current} safeboot >nul 2>&1"
+    if ($tlOn) { Write-TestStep 'Restart' 'INFO'; Stop-Transcript -ErrorAction SilentlyContinue | Out-Null }   # TESTLOG
     Write-Host 'Restarting' -ForegroundColor Red
     shutdown -r -t 5
 }
-'@, [Text.UTF8Encoding]::new($false))
+'@).Replace('__TESTLOG__', (Join-Path $script:RepoRoot 'Scripts\TestLog.ps1')), [Text.UTF8Encoding]::new($false))   # TESTLOG: Replace
     $runOnce = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce'
     Set-ItemProperty -Path $runOnce -Name '*cullewiesafe' -Value "powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Maximized -File `"$safeScript`""
 
@@ -351,12 +372,14 @@ finally {
         throw
     }
     Write-Host 'Restarting into safe mode. Sign in after each restart; setup continues by itself.' -ForegroundColor Cyan
+    if ($script:TestLogOn) { Write-TestStep 'Restart (safe mode)' 'INFO' }   # TESTLOG
     shutdown -r -t 5
     exit
 }
 function Resume-FullSetup {
     # remove the task first so a failed step never loops on every logon
     Unregister-ScheduledTask -TaskName $script:FullSetupTask -Confirm:$false -ErrorAction SilentlyContinue
+    if ($script:TestLogOn) { Save-BootEvents; Write-TestStep 'resume' 'INFO' }   # TESTLOG
     $statePath = Join-Path $script:RepoRoot 'nvidia-setup-state.json'
     $failed = New-Object System.Collections.Generic.List[string]
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
@@ -425,6 +448,7 @@ function Resume-FullSetup {
         Start-Sleep -Seconds 15
     }
     Write-Host 'Setup finished. Restarting normally.' -ForegroundColor Green
+    if ($script:TestLogOn) { Write-TestStep 'Restart' 'INFO' }   # TESTLOG
     shutdown -r -t 10
 }
 function Test-PendingReboot {
@@ -441,6 +465,7 @@ function Start-LiveSetup {
     $script:CaptureChildOutput = $true
     # no question in live mode: the Store/Xbox level comes from -Apps (IWR: CULLEWIE_APPS); empty or unknown = off
     Save-AppsChoice (ConvertTo-AppsLevel $Apps)
+    if ($script:TestLogOn) { [void](Start-TestRun "live-$(ConvertTo-AppsLevel $Apps)") }   # TESTLOG
     # (the flag file $script:AppsFlag now holds the level for Get-AppsArguments)
     $steps = New-Object System.Collections.Generic.List[string]
     $hasNvidia = @(Get-PciGpu '10DE').Count -gt 0
@@ -492,12 +517,14 @@ Write-Host 'cullewie-s-progress - Windows setup toolkit' -ForegroundColor Cyan
 try {
     if ($ResumeFullSetup) { Resume-FullSetup }
     elseif ($Mode -eq 'guided') {
+        if ($script:TestLogOn) { [void](Start-TestRun 'guided') }   # TESTLOG
         Start-GuidedNvidiaSetup
         Write-Host 'Guided NVIDIA setup finished. Nothing was restarted.' -ForegroundColor Green
     }
     elseif ($Mode -eq 'live') { Start-LiveSetup }
     elseif ($Mode -eq 'vanilla') {
         # no question and no restart here: the script lists what it could not undo, the user restarts
+        if ($script:TestLogOn) { [void](Start-TestRun 'vanilla') }   # TESTLOG
         Invoke-RequiredTool -Id 'vanilla'
         Write-Host 'Back to Windows defaults. Restart Windows now to finish.' -ForegroundColor Green
     }
