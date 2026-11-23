@@ -40,13 +40,28 @@ if ($Apps -eq 'xbox') {
     netsh interface teredo set state type=enterpriseclient | Out-Null
 }
 
+# one winget run with a time limit: a Store install can wait forever (2026-11-23: the Game Bar, 8+ minutes, twice).
+# Its lines are printed when it ends; returns its exit code, -1 when it was stopped.
+function Invoke-Winget([string]$Exe, [string[]]$Arguments, [int]$TimeoutSeconds = 900) {
+    $out = [IO.Path]::GetTempFileName()
+    $p = Start-Process -FilePath $Exe -ArgumentList $Arguments -NoNewWindow -PassThru -RedirectStandardOutput $out
+    $null = $p.Handle
+    $finished = $p.WaitForExit($TimeoutSeconds * 1000)
+    if (-not $finished) { Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue }
+    # winget's spinner and progress bar lines are left out
+    Get-Content -LiteralPath $out -ErrorAction SilentlyContinue | Where-Object { $_ -match '[A-Za-z]{2}' } | ForEach-Object { Write-Host $_ }
+    Remove-Item -LiteralPath $out -Force -ErrorAction SilentlyContinue
+    if (-not $finished) { Write-Host "  winget did not finish in $([int]($TimeoutSeconds / 60)) minutes; stopped" -ForegroundColor Yellow; return -1 }
+    $p.ExitCode
+}
+
 $winget = Get-Command winget.exe -ErrorAction SilentlyContinue
 foreach ($id in $packages.Keys) {
     $name = $packages[$id]
     if (Test-Package $name) { Write-Host "  $name already installed"; continue }
     Write-Host "  installing $name ..."
     if ($winget) {
-        & $winget.Source install --id $id --source msstore --accept-package-agreements --accept-source-agreements --silent --disable-interactivity | Out-Host
+        [void](Invoke-Winget $winget.Source @('install', '--id', $id, '--source', 'msstore', '--accept-package-agreements', '--accept-source-agreements', '--silent', '--disable-interactivity'))
     }
     # the Store itself has a built-in reinstall when winget could not do it
     if ($name -eq 'Microsoft.WindowsStore' -and -not (Test-Package $name)) {
@@ -63,7 +78,7 @@ if ($Apps -eq 'xbox') {
     $hasGameInput = { [bool](Get-ItemProperty $uninstall -ErrorAction SilentlyContinue | Where-Object { $_.PSObject.Properties.Name -contains 'DisplayName' -and $_.DisplayName -like '*Microsoft GameInput*' }) }
     if (-not (& $hasGameInput) -and $winget) {
         Write-Host '  installing Microsoft GameInput ...'
-        & $winget.Source install --id Microsoft.GameInput --exact --source winget --accept-package-agreements --accept-source-agreements --silent --disable-interactivity | Out-Host
+        [void](Invoke-Winget $winget.Source @('install', '--id', 'Microsoft.GameInput', '--exact', '--source', 'winget', '--accept-package-agreements', '--accept-source-agreements', '--silent', '--disable-interactivity'))
     }
     $gameInputMissing = -not (& $hasGameInput)
 }

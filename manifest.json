@@ -88,16 +88,16 @@
                   },
                   {
                       "path":  "Scripts/Windows/Store-Xbox.ps1",
-                      "size":  4872,
-                      "sha256":  "172525da9fab47d7edb64cfc30b521a3895e6c73f23c40430a70be906ac6b667",
+                      "size":  6001,
+                      "sha256":  "c42b90dcbcd5cb7655735c04d24a5cfb32f9de83c1da6710e52ea8ce11a57486",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null
                   },
                   {
                       "path":  "Scripts/Windows/Vanilla.ps1",
-                      "size":  33833,
-                      "sha256":  "bb21aa14d88aeae0846f57119a0e37c4c5c752c7c8d062206737d6db08174773",
+                      "size":  35247,
+                      "sha256":  "c7ef67f792b889a8ee832c345c1ef9605ee4cb7856d705bad05b173c464e4545",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null

@@ -211,6 +211,20 @@ function Get-RestorePlan($Inventory) {
     }
 }
 # installs each item (the runner returns $true when it worked); returns what did not come back, with the reason
+# one winget run with a time limit: a Store install can wait forever (2026-11-23: the Game Bar, 8+ minutes, twice).
+# Its lines are printed when it ends; returns its exit code, -1 when it was stopped.
+function Invoke-Winget([string]$Exe, [string[]]$Arguments, [int]$TimeoutSeconds = 900) {
+    $out = [IO.Path]::GetTempFileName()
+    $p = Start-Process -FilePath $Exe -ArgumentList $Arguments -NoNewWindow -PassThru -RedirectStandardOutput $out
+    $null = $p.Handle
+    $finished = $p.WaitForExit($TimeoutSeconds * 1000)
+    if (-not $finished) { Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue }
+    # winget's spinner and progress bar lines are left out
+    Get-Content -LiteralPath $out -ErrorAction SilentlyContinue | Where-Object { $_ -match '[A-Za-z]{2}' } | ForEach-Object { Write-Host $_ }
+    Remove-Item -LiteralPath $out -Force -ErrorAction SilentlyContinue
+    if (-not $finished) { Write-Host "  winget did not finish in $([int]($TimeoutSeconds / 60)) minutes; stopped" -ForegroundColor Yellow; return -1 }
+    $p.ExitCode
+}
 # keeps only the items whose install failed (for the next run); removes the file when nothing is left to retry
 function Save-RemainingInventory([object[]]$Plan, [object[]]$NotBack, [string]$Path) {
     $failed = @($NotBack | Where-Object { $_.Reason -eq 'install failed' } | ForEach-Object { $_.Name })
@@ -229,9 +243,9 @@ function Invoke-RestorePlan([object[]]$Plan, [scriptblock]$Runner) {
             if ($item.How -eq 'feature') { Enable-WindowsOptionalFeature -Online -FeatureName $item.Id -All -NoRestart -WarningAction SilentlyContinue -ErrorAction Stop | Out-Null; return $true }
             if (-not $winget) { return $false }
             $source = if ($item.How -eq 'msstore') { 'msstore' } else { 'winget' }
-            & $winget.Source install --id $item.Id --exact --source $source --accept-package-agreements --accept-source-agreements --silent --disable-interactivity | Out-Host
+            $code = Invoke-Winget $winget.Source @('install', '--id', $item.Id, '--exact', '--source', $source, '--accept-package-agreements', '--accept-source-agreements', '--silent', '--disable-interactivity')
             # -1978335189 (0x8A15002B): already installed and nothing newer, which counts as back
-            return ($LASTEXITCODE -eq 0 -or $LASTEXITCODE -eq -1978335189)
+            return ($code -eq 0 -or $code -eq -1978335189)
         }
     }
     $notBack = @()
@@ -437,5 +451,8 @@ if ($inventory) {
 else { Write-Log 'Removed apps and features: no saved list (All-in ran before this version saved one), nothing is reinstalled' 'Yellow' }
 
 Write-Log "Vanilla done. Not undone: BitLocker, and apps that are no longer offered (listed above). Restart Windows now (the look, scaling and features apply after it). Log: $log" 'Green'
-if ($notApplied -or $global:CullewieTrustedBroken -or $global:CullewieTrustedFailed -or $appsExit -ne 0) { exit 1 }
+# Store / Xbox apps or removed apps that did not install are listed above (and kept for the next run); they do not make
+# the run a failure: Windows itself is back to its defaults. A setting that did not apply does.
+if ($appsExit -ne 0) { Write-Log 'Store / Xbox: some apps did not install (listed above); run Vanilla Mode again later to retry them.' 'Yellow' }
+if ($notApplied -or $global:CullewieTrustedBroken -or $global:CullewieTrustedFailed) { exit 1 }
 exit 0
