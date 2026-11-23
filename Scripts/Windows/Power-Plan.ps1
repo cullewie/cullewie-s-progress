@@ -27,7 +27,7 @@ cmd /c "powercfg /delete 99999999-9999-9999-9999-999999999999 >nul 2>&1"
 cmd /c "powercfg /duplicatescheme 8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c 99999999-9999-9999-9999-999999999999 >nul 2>&1"
 # Modern Standby laptops have no High Performance plan: start from Balanced (the settings below set the values anyway)
 if ($LASTEXITCODE -ne 0) { cmd /c "powercfg /duplicatescheme 381b4222-f694-41f0-9685-ff5bb260df2e 99999999-9999-9999-9999-999999999999 >nul 2>&1" }
-if ($LASTEXITCODE -ne 0) { Write-Host 'Power plan: could not create the cullewie plan (Windows default plans were restored).' -ForegroundColor Red; exit 1 }
+if ($LASTEXITCODE -ne 0) { Write-Host 'Power plan: could not create the cullewie plan.' -ForegroundColor Red; exit 1 }
 cmd /c "powercfg /changename 99999999-9999-9999-9999-999999999999 `"cullewie powerplan`" `"En yuksek islemci performansi.`" >nul 2>&1"
 # every AC (plugged in) and DC (battery) value of the plan, hidden settings included:
 # subgroup, setting, AC, DC. Settings this PC does not have are skipped by powercfg.

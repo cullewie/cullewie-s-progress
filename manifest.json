@@ -48,16 +48,16 @@
                   },
                   {
                       "path":  "Scripts/Windows/Power-Plan.ps1",
-                      "size":  32586,
-                      "sha256":  "b2794ec553d113cb0dfa46fbc0252c54aef0ac1efa3438653ceb807fc5523460",
+                      "size":  32548,
+                      "sha256":  "a9fbfad32f6c94bc389a51fc4e530be31649f5f3525b0a4d0abfa08793583023",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null
                   },
                   {
                       "path":  "Scripts/Windows/Services.ps1",
-                      "size":  33209,
-                      "sha256":  "085cca19357cf6672cf6da612e9f695c64c1527841a2169aca84729af43427d7",
+                      "size":  33812,
+                      "sha256":  "babc7164f77858ef7848982295f7fe59ccd9059b954a6a00ca2dbe84b275dbef",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null

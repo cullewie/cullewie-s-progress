@@ -862,7 +862,14 @@ Set-Content -Path "$env:ProgramData\Cullewie\Work\servicesoff.reg" -Value $Servi
 # so the "done" marker and the restart below would come before the import had finished.
 Run-Trusted "cmd /c `"reg import $env:ProgramData\Cullewie\Work\servicesoff.reg >nul 2>&1`""
 cmd /c "reg import `"$env:ProgramData\Cullewie\Work\servicesoff.reg`" >nul 2>&1"
-if ($LASTEXITCODE -ne 0) { Write-Host "Services: importing the list failed (reg exit code $LASTEXITCODE)." -ForegroundColor Red; $global:CullewieTrustedFailed = $true }
+# check the result by reading it back (reg's exit code is useless here: admins can't write some keys such as RpcSs,
+# so the admin pass always "fails" and only the TrustedInstaller pass writes those)
+$notApplied = @()
+foreach ($m in [regex]::Matches((Get-Content "$env:ProgramData\Cullewie\Work\servicesoff.reg" -Raw), '(?m)^\[HKEY_LOCAL_MACHINE\\SYSTEM\\ControlSet001\\Services\\([^\]]+)\]\r?\n"Start"=dword:0*(\d)')) {
+    $now = (Get-ItemProperty "HKLM:\SYSTEM\ControlSet001\Services\$($m.Groups[1].Value)" -ErrorAction SilentlyContinue).Start
+    if ($now -ne [int]$m.Groups[2].Value) { $notApplied += $m.Groups[1].Value }
+}
+if ($notApplied) { Write-Host "Services: not applied: $($notApplied -join ', ')" -ForegroundColor Red; $global:CullewieTrustedFailed = $true }
 
 # remove safe mode boot
 cmd /c "bcdedit /deletevalue {current} safeboot >nul 2>&1"
