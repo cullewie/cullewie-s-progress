@@ -6,8 +6,8 @@ $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 $previousSecurityProtocol = [Net.ServicePointManager]::SecurityProtocol
 $Repository = 'cullewie/cullewie-s-progress'
-$PayloadCommit = '13421b7ae1313fd6a97f596eb49c2247f3e648a3'
-$ExpectedManifestSha256 = 'cbdb33cc6e5aa7959adf3925af9defafac06feba9a591ac59751d87f9d685a66'
+$PayloadCommit = '4d40f2671e09c182fb27e2f90e581f93c0515143'
+$ExpectedManifestSha256 = '818f1bf2016ac173f18a11539f37cec289a718d215319c9c5e34104e9a646b9f'
 $RawRoot = 'https://raw.githubusercontent.com/' + $Repository + '/' + $PayloadCommit
 
 function Test-Administrator {
@@ -165,8 +165,12 @@ try {
     # the plain command opens the window (UI.ps1): mode choice, progress, the last question; the commands with
     # CULLEWIE_MODE or CULLEWIE_APPS keep the console
     $uiScript = Join-Path $activePath 'UI.ps1'
+    # CULLEWIE_AUTO=all-in (set by another tool, for example one that left an extra setup script): the window starts
+    # All-in by itself, without the mode screen
     if (-not $env:CULLEWIE_MODE -and -not $env:CULLEWIE_APPS -and (Test-Path -LiteralPath $uiScript -PathType Leaf)) {
-        Start-Process -FilePath $windowsPowerShell -ArgumentList @('-NoLogo', '-NoProfile', '-STA', '-ExecutionPolicy', 'Bypass', '-WindowStyle', 'Hidden', '-File', "`"$uiScript`"") -WindowStyle Hidden
+        $uiArgs = @('-NoLogo', '-NoProfile', '-STA', '-ExecutionPolicy', 'Bypass', '-WindowStyle', 'Hidden', '-File', "`"$uiScript`"")
+        if ($env:CULLEWIE_AUTO -eq 'all-in') { $uiArgs += '-Auto' }
+        Start-Process -FilePath $windowsPowerShell -ArgumentList $uiArgs -WindowStyle Hidden
         Write-Host 'The setup window is open. You can close this PowerShell window.' -ForegroundColor Green
     }
     else {
