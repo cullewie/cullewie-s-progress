@@ -212,10 +212,16 @@
             $DownloadedBytes = [int64]0
             $ProgressTimer = [System.Diagnostics.Stopwatch]::StartNew()
             $NextProgressUpdate = [int64]0
+            # a plain line every 10 %: Write-Progress shows only in the console, never in the log or the setup window
+            $NextReportPercent = 10
 
             while (($BytesRead = $DownloadInput.Read($DownloadBuffer, 0, $DownloadBuffer.Length)) -gt 0) {
                 $DownloadOutput.Write($DownloadBuffer, 0, $BytesRead)
                 $DownloadedBytes += $BytesRead
+                if ($DownloadLength -gt 0 -and ($DownloadedBytes * 100 / $DownloadLength) -ge $NextReportPercent) {
+                    Write-Host ('  indiriliyor: %{0} - {1:N0} / {2:N0} MB - {3:mm\:ss}' -f $NextReportPercent, ($DownloadedBytes / 1MB), ($DownloadLength / 1MB), $ProgressTimer.Elapsed)
+                    $NextReportPercent += 10
+                }
                 if ($ProgressTimer.ElapsedMilliseconds -ge $NextProgressUpdate) {
                     if ($DownloadLength -gt 0) {
                         $DownloadPercent = [int][Math]::Min(99, [Math]::Floor(($DownloadedBytes * 100.0) / $DownloadLength))
@@ -287,9 +293,14 @@
         $Installer = Start-Process -FilePath $TargetPath -ArgumentList @('-s', '-n', 'Display.Driver') -PassThru
         $null = $Installer.Handle   # keeps ExitCode readable after a non -Wait start
         $InstallTimer = [System.Diagnostics.Stopwatch]::StartNew()
+        $NextInstallReport = 15
         while (-not $Installer.WaitForExit(1000)) {
             $InstallStatus = '{0:mm\:ss} elapsed - the screen may flicker while the driver installs' -f $InstallTimer.Elapsed
             Write-Progress -Activity 'Installing NVIDIA display driver' -Status $InstallStatus
+            if ($InstallTimer.Elapsed.TotalSeconds -ge $NextInstallReport) {
+                Write-Host ('  kuruluyor: {0:mm\:ss} (ekran birkac kez kararabilir)' -f $InstallTimer.Elapsed)
+                $NextInstallReport += 15
+            }
         }
         Write-Progress -Activity 'Installing NVIDIA display driver' -Completed
         [void](Write-DriverData -Kind 'install' -Version $Driver.Version -Elapsed $InstallTimer.Elapsed -ExitCode $Installer.ExitCode)

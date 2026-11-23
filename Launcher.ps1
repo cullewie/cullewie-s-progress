@@ -19,6 +19,9 @@ $script:RepoRoot = $PSScriptRoot
 $script:PowerShellExe = "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe"
 $script:CaptureChildOutput = $false
 $script:SuspendedBitLocker = $false
+# under the window nothing asks a question, so each child's lines can go through the pipe: the step log then grows line
+# by line and the window's details box follows it (a transcript writes its lines only when the step ends)
+if ($Ui) { $script:CaptureChildOutput = $true }
 try { . (Join-Path $PSScriptRoot 'Scripts\TestLog.ps1') } catch { }   # TESTLOG
 $script:TestLogOn = [bool](Get-Command Start-TestRun -ErrorAction SilentlyContinue)   # TESTLOG
 # the Store/Xbox choice; a file, so it survives the safe-mode restarts of the full setup
