@@ -72,8 +72,8 @@
                   },
                   {
                       "path":  "Scripts/Windows/Tweaks.ps1",
-                      "size":  81720,
-                      "sha256":  "9e3dcde6bebd06b8985ddc8299d9f30681568c978c03fa29a8d206ad381a831e",
+                      "size":  81855,
+                      "sha256":  "8e97aa60273173f855e5f6ff3c0e57a801b55509baf43b8ee550a3be7069317d",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null

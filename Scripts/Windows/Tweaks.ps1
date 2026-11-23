@@ -123,7 +123,8 @@ if (-not $DryRun) {
     # braille driver
     cmd /c "sc stop `"brlapi`" >nul 2>&1"
     cmd /c "sc delete `"brlapi`" >nul 2>&1"
-    cmd /c "takeown /f `"$env:SystemRoot\brltty`" /r /d y >nul 2>&1"
+    # owner by SID through icacls: takeown asks a yes/no whose answer letter depends on the Windows display language
+    cmd /c "icacls `"$env:SystemRoot\brltty`" /setowner *S-1-5-32-544 /T /C >nul 2>&1"
     cmd /c "icacls `"$env:SystemRoot\brltty`" /grant *S-1-5-32-544:F /t >nul 2>&1"
     Remove-Item "$env:SystemRoot\brltty" -Recurse -Force -ErrorAction SilentlyContinue
     cmd /c "reg delete `"HKLM\SYSTEM\ControlSet001\Services\uhssvc`" /f >nul 2>&1"
