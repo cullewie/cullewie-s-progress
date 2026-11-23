@@ -24,10 +24,11 @@ function Write-Log([string]$Text, [string]$Color = 'Gray') { Write-Host $Text -F
 $autoStart = @('AppXSvc', 'AudioEndpointBuilder', 'Audiosrv', 'BITS', 'BrokerInfrastructure', 'camsvc', 'cbdhsvc', 'CDPSvc',
     'CDPUserSvc', 'CoreMessagingRegistrar', 'CryptSvc', 'DcomLaunch', 'Dhcp', 'DiagTrack', 'DispBrokerDesktopSvc', 'Dnscache',
     'DPS', 'DusmSvc', 'edgeupdate', 'EventLog', 'gpsvc', 'InventorySvc', 'iphlpsvc', 'LanmanServer', 'LSM', 'MapsBroker', 'nsi',
-    'Power', 'ProfSvc', 'RpcEptMapper', 'RpcSs', 'Schedule', 'SENS', 'ShellHWDetection', 'Spooler', 'sppsvc', 'StateRepository',
+    'PcaSvc', 'Power', 'ProfSvc', 'RpcEptMapper', 'RpcSs', 'Schedule', 'SENS', 'ShellHWDetection', 'Spooler', 'sppsvc', 'StateRepository',
     'SysMain', 'SystemEventsBroker', 'TextInputManagementService', 'TrkWks', 'UserManager', 'UsoSvc', 'whesvc', 'Winmgmt',
     'WlanSvc', 'WpnService', 'WpnUserService', 'WSAIFabricSvc', 'WSearch')
-$delayedStart = @('BITS', 'cbdhsvc', 'CDPSvc', 'edgeupdate', 'InventorySvc', 'MapsBroker', 'sppsvc', 'UsoSvc', 'whesvc', 'WSearch')
+# PcaSvc: right after the reinstall it was manual, minutes later Windows itself set it to delayed automatic (its state before too)
+$delayedStart = @('BITS', 'cbdhsvc', 'CDPSvc', 'edgeupdate', 'InventorySvc', 'MapsBroker', 'PcaSvc', 'sppsvc', 'UsoSvc', 'whesvc', 'WSearch')
 $disabledByDefault = @('AppVClient', 'DialogBlockingService', 'MsKeyboardFilter', 'NetTcpPortSharing', 'RemoteAccess',
     'RemoteRegistry', 'shpamsvc', 'ssh-agent', 'tzautoupdate', 'UevAgentService')
 function Get-DefaultStart([string]$Name) {
@@ -206,7 +207,7 @@ if ($needTrusted.Count) {
 $notApplied = @($plan | Where-Object { (Get-ItemProperty "$serviceRoot\$($_.Name)" -ErrorAction SilentlyContinue).Start -ne $_.To } | ForEach-Object Name)
 if ($notApplied) { Write-Log "  not applied: $($notApplied -join ', ')" 'Red' }
 
-Write-Log 'Network: IPv6, file sharing, QoS and discovery back on; Teredo default'
+Write-Log 'Network: IPv6, file sharing, QoS and discovery back on (Teredo: set by the Xbox step below)'
 # only the bindings that are off: re-binding restarts the adapter, and the connection drops for a few seconds
 $offBindings = @(Get-NetAdapterBinding -ComponentID 'ms_tcpip6', 'ms_server', 'ms_msclient', 'ms_pacer', 'ms_lldp', 'ms_lltdio', 'ms_rspndr' -ErrorAction SilentlyContinue | Where-Object { -not $_.Enabled })
 if ($offBindings) {
@@ -214,7 +215,6 @@ if ($offBindings) {
     $offBindings | ForEach-Object { Enable-NetAdapterBinding -Name $_.Name -ComponentID $_.ComponentID -ErrorAction SilentlyContinue }
 }
 Remove-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip6\Parameters' -Name 'DisabledComponents' -ErrorAction SilentlyContinue
-netsh interface teredo set state type=default | Out-Null
 
 Write-Log "Policies: $($presentPolicies.Count) values removed"
 foreach ($p in $presentPolicies) { Remove-ItemProperty -Path "Registry::$($p.Key)" -Name $p.Value -ErrorAction SilentlyContinue }

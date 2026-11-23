@@ -327,7 +327,7 @@ Soru sormaz, güvenli moda geçmez. IPv6 ve dosya paylaşımı yeniden açılır
 
 **Geri gelenler:**
 - **Hizmetler:** Aracın dokunduğu her hizmet Windows 11'deki varsayılan başlatma türüne döner (otomatik, gecikmeli otomatik, manuel ya da kapalı). Bu varsayılanlar tahmin değildir. Windows 11 build 26300, "Windows Update ile sorunları düzelt" ile yeniden kurulduktan hemen sonra ölçülmüştür. Önceki kurulumların, bilgisayarda olmayan hizmetler için bıraktığı boş kayıtlar silinir.
-- **Ağ:** IPv6, dosya ve yazıcı paylaşımı, QoS ve ağ keşfi yeniden açılır. Teredo ve IPv4 tercihi Windows varsayılanına döner.
+- **Ağ:** IPv6, dosya ve yazıcı paylaşımı, QoS ve ağ keşfi yeniden açılır, IPv4 tercihi kalkar. Xbox uygulamaları da kurulduğu için Teredo, Xbox seçeneğindeki gibi "enterprise client" moduna alınır.
 - **Politikalar:** Aracın yazdığı politika değerleri silinir. Bunlar telemetri, Copilot, Widgets, Game DVR, Windows Update kısıtları, Sistem Geri Yükleme kapatma gibi ayarlardır. Silinecek değerler betiklerin kendisinden okunur. UAC ve oturum açma ile ilgili Windows değerlerine dokunulmaz.
 - **Windows Defender:** SmartScreen, bulut koruması, örnek gönderme, PUA ve kimlik avı koruması, Defender ve güvenlik duvarı bildirimleri Windows varsayılanına döner. Zamanlanmış Defender taramaları yeniden açılır.
 - **Güç:** Windows'un varsayılan güç planları geri gelir. Hazırda bekletme ve hızlı başlatma açılır, güç menüsünde Kilitle ve Uyku yeniden görünür. Zamanlanmış disk optimizasyonu (SSD'lerde TRIM) yeniden açılır.
