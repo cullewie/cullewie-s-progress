@@ -4,8 +4,6 @@ Windows 11'i formatladıktan sonra bilgisayarı oyun için hazırlayan, tek komu
 
 Başlat menüsünde **PowerShell**'e sağ tıkla, **Yönetici olarak çalıştır**'ı seç ve aşağıdaki seçeneklerden birinin komutunu yapıştır: **All-in**, **Xbox & Store**, **Only Store Mode** ya da hepsini geri almak için **Vanilla Mode**.
 
-FPS artışı ya da daha düşük gecikme garanti edilmez; sonuç donanıma ve oyuna göre değişir.
-
 ## All-in
 
 ```powershell
