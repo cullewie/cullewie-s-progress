@@ -326,18 +326,21 @@ $env:CULLEWIE_MODE = 'vanilla'; iwr 'https://github.com/cullewie/cullewie-s-prog
 Soru sormaz, güvenli moda geçmez. IPv6 ve dosya paylaşımı yeniden açılırken ağ kartı yeniden başlar; internet birkaç saniye kesilir. Bitince bilgisayarı **yeniden başlatman** gerekir.
 
 **Geri gelenler:**
-- **Hizmetler:** Aracın dokunduğu her hizmet Windows 11'deki varsayılan başlatma türüne döner. Bazı hizmetler Windows'ta varsayılan olarak otomatik başlar (ses, ağ, yazdırma, arama, Windows Update düzenleyicisi gibi), bazıları varsayılan olarak kapalıdır (örneğin Remote Registry). Diğerleri "manuel" olur; Windows onları gerektiğinde kendisi başlatır. Önceki kurulumların, bilgisayarda olmayan hizmetler için bıraktığı boş kayıtlar silinir.
+- **Hizmetler:** Aracın dokunduğu her hizmet Windows 11'deki varsayılan başlatma türüne döner (otomatik, gecikmeli otomatik, manuel ya da kapalı). Bu varsayılanlar tahmin değildir. Windows 11 build 26300, "Windows Update ile sorunları düzelt" ile yeniden kurulduktan hemen sonra ölçülmüştür. Önceki kurulumların, bilgisayarda olmayan hizmetler için bıraktığı boş kayıtlar silinir.
 - **Ağ:** IPv6, dosya ve yazıcı paylaşımı, QoS ve ağ keşfi yeniden açılır. Teredo ve IPv4 tercihi Windows varsayılanına döner.
 - **Politikalar:** Aracın yazdığı politika değerleri silinir. Bunlar telemetri, Copilot, Widgets, Game DVR, Windows Update kısıtları, Sistem Geri Yükleme kapatma gibi ayarlardır. Silinecek değerler betiklerin kendisinden okunur. UAC ve oturum açma ile ilgili Windows değerlerine dokunulmaz.
-- **Windows Defender:** SmartScreen, bulut koruması, örnek gönderme, PUA ve kimlik avı koruması, Akıllı Uygulama Denetimi durum değerleri ve bildirim ayarları Windows varsayılanına döner. Zamanlanmış Defender taramaları yeniden açılır. (Akıllı Uygulama Denetimi bir kez kapatıldıysa Windows yeniden kurulmadan açılmayabilir.)
-- **Güç:** Windows'un varsayılan güç planları geri gelir. Hazırda bekletme ve hızlı başlatma açılır, güç menüsünde Kilitle ve Uyku yeniden görünür.
+- **Windows Defender:** SmartScreen, bulut koruması, örnek gönderme, PUA ve kimlik avı koruması, Defender ve güvenlik duvarı bildirimleri Windows varsayılanına döner. Zamanlanmış Defender taramaları yeniden açılır.
+- **Güç:** Windows'un varsayılan güç planları geri gelir. Hazırda bekletme ve hızlı başlatma açılır, güç menüsünde Kilitle ve Uyku yeniden görünür. Zamanlanmış disk optimizasyonu (SSD'lerde TRIM) yeniden açılır.
 - **Diğer:** Timer Resolution hizmeti kaldırılır. Sistem Geri Yükleme açılır. Store otomatik güncellemesi ve arka plan uygulamaları açılır. Windows Update yeniden sürücü indirebilir.
 - **Uygulamalar:** Microsoft Store ve Xbox uygulamaları kurulur (3 = Xbox ve Game Pass seçeneğindeki gibi).
 
 **Geri gelmeyenler (bilerek):**
 - **Ekran kartı sürücüsü ve GPU ayarları:** NVIDIA/AMD sürücüsü, NVIDIA profili, P0 ve Digital Vibrance olduğu gibi kalır.
 - **BitLocker:** Şifresi çözülen disk kendiliğinden yeniden şifrelenmez. İstersen Ayarlar'dan aç.
-- **Defender'ın iki ayarı:** Kurcalama Koruması ve Dev Drive için eşzamansız tarama ayarı Defender tarafından korunur ve betikle geri alınamaz. Kurcalama Korumasını Windows Güvenliği > Virüs ve tehdit koruması ayarlarından açabilirsin.
+- **Kurcalama Koruması:** Betikle açılamaz. Windows Güvenliği > Virüs ve tehdit koruması ayarlarından aç.
+- **Akıllı Uygulama Denetimi:** Betikle geri açılmaz (yarım açık bırakmak programları engelleyebilir). Aşağıdaki Windows onarımı onu geri getirir.
+
+**Daha da temiz bir başlangıç için:** Ayarlar > Sistem > Kurtarma > **"Windows Update ile sorunları düzelt"**. Windows'u, dosyalarına ve programlarına dokunmadan yeniden kurar. Yaklaşık bir saat sürer, birkaç kez yeniden başlar. Vanilla modundan sonra çalıştırılarak test edildi: hizmetleri, sürücüleri, zamanlanmış görevleri ve Akıllı Uygulama Denetimi'ni Windows varsayılanına döndürdü. Politika ve ağ ayarları testten önce zaten varsayılandaydı; onarımın bunları da geri alıp almadığı ölçülmedi. Bu yüzden önce vanilla modunu, sonra onarımı çalıştır.
 - **Kaldırılan diğer uygulamalar ve özellikler:** Hava Durumu, Haritalar, Solitaire, Outlook, Teams gibi kaldırılmış uygulamalar ve Windows özellikleri (WordPad, Hello yüz tanıma vb.) geri gelmez. Uygulamalar Store'dan tek tek kurulabilir.
 - **Kişisel ayarlar:** Koyu tema, %100 ölçekleme, Gezgin ve Başlat menüsü ayarları, fare ivmesi, Nagle gibi politika olmayan ayarlar kalır. Bunların "varsayılanı" bilgisayara göre değiştiği için tahminle değiştirilmez.
 

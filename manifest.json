@@ -16,8 +16,8 @@
                   },
                   {
                       "path":  "README.md",
-                      "size":  32644,
-                      "sha256":  "4b8a5d4daeabfba71f430d99e08a64f6dd1602c3320a83876eaa53a0a84d6919",
+                      "size":  33158,
+                      "sha256":  "7da90d28fd59c25293695e7343e985f23c72837b9b669db747d49809a92831a5",
                       "role":  "documentation",
                       "origin":  "project",
                       "derivedFrom":  null
@@ -96,8 +96,8 @@
                   },
                   {
                       "path":  "Scripts/Windows/Vanilla.ps1",
-                      "size":  18895,
-                      "sha256":  "0a37891555f0eac315427e7b8f6df59bedd23e28df8183385cacc15c7df5e7c4",
+                      "size":  21367,
+                      "sha256":  "9ad97f5be522eceeb2d6e1fff34613846b0817348fa94a7d597cb87acbbf2715",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null

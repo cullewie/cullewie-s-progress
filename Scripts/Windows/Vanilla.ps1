@@ -18,12 +18,16 @@ $log = Join-Path $work ('vanilla-' + (Get-Date -Format 'yyyyMMdd-HHmmss') + '.lo
 function Write-Log([string]$Text, [string]$Color = 'Gray') { Write-Host $Text -ForegroundColor $Color; if (-not $PlanOnly) { Add-Content -Path $log -Value $Text -Encoding UTF8 } }
 
 # ---------- Windows 11 default start types ----------
-# 2 = automatic, 4 = disabled by default; every other service the toolkit touches defaults to 3 (manual / on demand)
-$autoStart = @('AudioEndpointBuilder', 'Audiosrv', 'BITS', 'BrokerInfrastructure', 'edgeupdate', 'CDPSvc', 'CDPUserSvc', 'CoreMessagingRegistrar',
-    'CryptSvc', 'DcomLaunch', 'Dhcp', 'DiagTrack', 'DispBrokerDesktopSvc', 'Dnscache', 'DPS', 'DusmSvc', 'EventLog', 'gpsvc',
-    'iphlpsvc', 'LanmanServer', 'LSM', 'MapsBroker', 'nsi', 'OneSyncSvc', 'PcaSvc', 'Power', 'ProfSvc', 'RpcEptMapper', 'RpcSs',
-    'Schedule', 'SENS', 'SgrmBroker', 'ShellHWDetection', 'Spooler', 'sppsvc', 'SysMain', 'SystemEventsBroker',
-    'TextInputManagementService', 'TrkWks', 'UserManager', 'UsoSvc', 'Winmgmt', 'WlanSvc', 'WpnService', 'WpnUserService', 'WSearch')
+# Measured, not guessed: read on Windows 11 build 26300 right after Settings > Recovery > "Fix problems using Windows
+# Update" reinstalled Windows. 2 = automatic (some of them delayed), 4 = disabled by default; every other service the
+# toolkit touches is 3 (manual / on demand) there. Services that no longer exist in this build are skipped.
+$autoStart = @('AppXSvc', 'AudioEndpointBuilder', 'Audiosrv', 'BITS', 'BrokerInfrastructure', 'camsvc', 'cbdhsvc', 'CDPSvc',
+    'CDPUserSvc', 'CoreMessagingRegistrar', 'CryptSvc', 'DcomLaunch', 'Dhcp', 'DiagTrack', 'DispBrokerDesktopSvc', 'Dnscache',
+    'DPS', 'DusmSvc', 'edgeupdate', 'EventLog', 'gpsvc', 'InventorySvc', 'iphlpsvc', 'LanmanServer', 'LSM', 'MapsBroker', 'nsi',
+    'Power', 'ProfSvc', 'RpcEptMapper', 'RpcSs', 'Schedule', 'SENS', 'ShellHWDetection', 'Spooler', 'sppsvc', 'StateRepository',
+    'SysMain', 'SystemEventsBroker', 'TextInputManagementService', 'TrkWks', 'UserManager', 'UsoSvc', 'whesvc', 'Winmgmt',
+    'WlanSvc', 'WpnService', 'WpnUserService', 'WSAIFabricSvc', 'WSearch')
+$delayedStart = @('BITS', 'cbdhsvc', 'CDPSvc', 'edgeupdate', 'InventorySvc', 'MapsBroker', 'sppsvc', 'UsoSvc', 'whesvc', 'WSearch')
 $disabledByDefault = @('AppVClient', 'DialogBlockingService', 'MsKeyboardFilter', 'NetTcpPortSharing', 'RemoteAccess',
     'RemoteRegistry', 'shpamsvc', 'ssh-agent', 'tzautoupdate', 'UevAgentService')
 function Get-DefaultStart([string]$Name) {
@@ -49,7 +53,13 @@ foreach ($name in $names) {
         if ($key.ValueCount -eq 1 -and $key.SubKeyCount -eq 0 -and $key.GetValueNames() -contains 'Start') { $stubs.Add($key.PSChildName); continue }
         $now = $key.GetValue('Start')
         $want = Get-DefaultStart $name
-        if ($now -ne $want) { $plan.Add([pscustomobject]@{ Name = $key.PSChildName; From = $now; To = $want }) }
+        $wantDelayed = [int]($delayedStart -contains $name)
+        $nowDelayed = [int]$key.GetValue('DelayedAutostart')
+        # per-user copies (cbdhsvc_1a2b3) never get the delayed flag from Windows, so only the service itself is checked
+        $checkDelayed = $want -eq 2 -and $key.PSChildName -eq $name
+        if ($now -ne $want -or ($checkDelayed -and $nowDelayed -ne $wantDelayed)) {
+            $plan.Add([pscustomobject]@{ Name = $key.PSChildName; From = $now; To = $want; Delayed = $wantDelayed })
+        }
     }
 }
 
@@ -88,13 +98,22 @@ $policies = @($policies | Where-Object { -not ($_.Key -match '\\CurrentVersion\\
 $presentPolicies = @($policies | Where-Object { $null -ne (Get-ItemProperty -Path "Registry::$($_.Key)" -Name $_.Value -ErrorAction SilentlyContinue) })
 
 # ---------- Defender values (not policies; Defender.ps1 writes them as TrustedInstaller) ----------
+# Measured on the same reinstalled Windows: every value Defender.ps1 writes is absent there (so it is deleted), except
+# these, which exist with a default value (so it is written back). Left alone: Tamper Protection (Windows Security only),
+# real-time protection (Defender.ps1 writes 0 = on), DisableAsyncScanOnOpen (Defender.ps1 writes the default, 1), and
+# Smart App Control's state values: only a Windows reinstall brings Smart App Control back, and writing them by hand
+# could leave it half on.
+$defenderDefaults = @{ 'DisableNotifications' = 0 }
+$defenderSkip = @('TamperProtection', 'DisableRealtimeMonitoring', 'DisableAsyncScanOnOpen', 'SmartLockerMode',
+    'VerifiedAndReputableTrustModeEnabled', 'VerifiedAndReputablePolicyState', 'ENABLED', 'START_PENDING')
 $defenderText = [IO.File]::ReadAllText((Join-Path $PSScriptRoot 'Defender.ps1'))
 $defenderValues = @([regex]::Matches($defenderText, 'reg add `"(HKEY_[^`]+)`" /v `"([^`]+)`"') | ForEach-Object { [pscustomobject]@{ Key = $_.Groups[1].Value; Value = $_.Groups[2].Value } } |
     # not here: Tamper Protection (Windows Security only), cloud protection and samples (Spynet: set below with
     # Set-MpPreference, Defender guards those values), real-time protection (Defender.ps1 writes 0 = on, the default)
-    Where-Object { $_.Key -notmatch '\\Policies\\' -and $_.Key -notmatch '\\Spynet$' -and $_.Value -notin 'TamperProtection', 'DisableRealtimeMonitoring' } | Sort-Object Key, Value -Unique |
-    # only the values still set: a value that is already gone is the Windows default
-    Where-Object { $null -ne (Get-ItemProperty -Path "Registry::$($_.Key)" -Name $_.Value -ErrorAction SilentlyContinue) })
+    Where-Object { $_.Key -notmatch '\\Policies\\' -and $_.Key -notmatch '\\Spynet$' -and $_.Value -notin $defenderSkip } | Sort-Object Key, Value -Unique |
+    ForEach-Object { $_ | Add-Member -NotePropertyName Default -NotePropertyValue $defenderDefaults[$_.Value] -PassThru } |
+    # only what differs from Windows: gone (or at the default value) is the default
+    Where-Object { $now = (Get-ItemProperty -Path "Registry::$($_.Key)" -Name $_.Value -ErrorAction SilentlyContinue).($_.Value); $null -ne $now -and ($null -eq $_.Default -or $now -ne $_.Default) })
 
 if ($PlanOnly) {
     $out = @("Vanilla plan $(Get-Date -Format s)", "SERVICES ($($plan.Count) to change, $($stubs.Count) leftover keys to remove)")
@@ -166,15 +185,22 @@ Write-Log "Backup: $backup-*.reg" 'Cyan'
 Write-Log "Services: $($plan.Count) to their Windows defaults, $($stubs.Count) leftover keys removed"
 $needTrusted = New-Object System.Collections.Generic.List[object]
 foreach ($p in $plan) {
-    try { Set-ItemProperty -Path "$serviceRoot\$($p.Name)" -Name Start -Value $p.To -Type DWord -ErrorAction Stop }
+    try {
+        Set-ItemProperty -Path "$serviceRoot\$($p.Name)" -Name Start -Value $p.To -Type DWord -ErrorAction Stop
+        if ($p.To -eq 2) { Set-ItemProperty -Path "$serviceRoot\$($p.Name)" -Name DelayedAutostart -Value $p.Delayed -Type DWord -ErrorAction Stop }
+    }
     catch {
-        sc.exe config $p.Name start= $(@{ 2 = 'auto'; 3 = 'demand'; 4 = 'disabled' }[$p.To]) | Out-Null
+        $mode = if ($p.To -eq 2 -and $p.Delayed) { 'delayed-auto' } else { @{ 2 = 'auto'; 3 = 'demand'; 4 = 'disabled' }[$p.To] }
+        sc.exe config $p.Name start= $mode | Out-Null
         if ((Get-ItemProperty "$serviceRoot\$($p.Name)").Start -ne $p.To) { $needTrusted.Add($p) }
     }
 }
 foreach ($s in $stubs) { Remove-Item -Path "$serviceRoot\$s" -Force -ErrorAction SilentlyContinue }
 if ($needTrusted.Count) {
-    $cmds = $needTrusted | ForEach-Object { "reg add `"HKLM\SYSTEM\CurrentControlSet\Services\$($_.Name)`" /v Start /t REG_DWORD /d $($_.To) /f" }
+    $cmds = $needTrusted | ForEach-Object {
+        "reg add `"HKLM\SYSTEM\CurrentControlSet\Services\$($_.Name)`" /v Start /t REG_DWORD /d $($_.To) /f"
+        if ($_.To -eq 2) { "reg add `"HKLM\SYSTEM\CurrentControlSet\Services\$($_.Name)`" /v DelayedAutostart /t REG_DWORD /d $($_.Delayed) /f" }
+    }
     Run-Trusted ($cmds -join "`n")
 }
 $notApplied = @($plan | Where-Object { (Get-ItemProperty "$serviceRoot\$($_.Name)" -ErrorAction SilentlyContinue).Start -ne $_.To } | ForEach-Object Name)
@@ -203,7 +229,12 @@ Write-Log "Defender: $($defenderValues.Count) values back to Windows defaults, s
 $userValues = @($defenderValues | Where-Object { $_.Key -like 'HKEY_CURRENT_USER\*' })
 foreach ($v in $userValues) { Remove-ItemProperty -Path "Registry::$($v.Key)" -Name $v.Value -ErrorAction SilentlyContinue }
 $machineValues = @($defenderValues | Where-Object { $_.Key -notlike 'HKEY_CURRENT_USER\*' })
-if ($machineValues) { Run-Trusted (($machineValues | ForEach-Object { "reg delete `"$($_.Key)`" /v `"$($_.Value)`" /f" }) -join "`n") }
+if ($machineValues) {
+    Run-Trusted (($machineValues | ForEach-Object {
+        if ($null -ne $_.Default) { "reg add `"$($_.Key)`" /v `"$($_.Value)`" /t REG_DWORD /d $($_.Default) /f" }
+        else { "reg delete `"$($_.Key)`" /v `"$($_.Value)`" /f" }
+    }) -join "`n")
+}
 # Defender keeps cloud protection and sample submission in values it guards itself; its own cmdlet sets the defaults
 Set-MpPreference -MAPSReporting Advanced -SubmitSamplesConsent SendSafeSamples -ErrorAction SilentlyContinue
 foreach ($task in 'Microsoft\Windows\ExploitGuard\ExploitGuard MDM policy Refresh', 'Microsoft\Windows\Windows Defender\Windows Defender Cache Maintenance',
@@ -226,6 +257,9 @@ if (Get-Service -Name 'Set Timer Resolution Service' -ErrorAction SilentlyContin
 }
 Remove-Item "$env:SystemDrive\Windows\SetTimerResolutionService.exe" -Force -ErrorAction SilentlyContinue
 Remove-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\kernel' -Name 'GlobalTimerResolutionRequests' -ErrorAction SilentlyContinue
+
+Write-Log 'Scheduled disk optimization (TRIM on SSDs) on'
+Get-ScheduledTask -TaskName 'ScheduledDefrag' -ErrorAction SilentlyContinue | Enable-ScheduledTask | Out-Null
 
 Write-Log 'System Restore on, Store auto-update and background apps on, Windows Update drivers back'
 Enable-ComputerRestore -Drive "$env:SystemDrive\" -ErrorAction SilentlyContinue
