@@ -32,8 +32,8 @@
                   },
                   {
                       "path":  "Scripts/GPU/NVIDIA/Driver.ps1",
-                      "size":  13441,
-                      "sha256":  "2f9bcae0f2dfc143111355e36b0d043932a03d3d8bbb0522fc017eb28f50049c",
+                      "size":  15239,
+                      "sha256":  "e50fdaadb3e89021f49787e4016710269deda61d1a90f5f4eac4ae91d5d590d5",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null

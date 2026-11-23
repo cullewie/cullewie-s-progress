@@ -11,6 +11,27 @@
         "User-Agent" = "Mozilla/5.0"
     }
 
+    # download / install data: printed, and (when the run log is there) one INFO line in steps.log, so the setup
+    # window and the log show size, time and speed. Never stops the driver step.
+    function Write-DriverData([string]$Kind, [string]$Version, [int64]$Bytes = 0, [timespan]$Elapsed = [timespan]::Zero, [int]$ExitCode = 0) {
+        $time = '{0:00}:{1:00}' -f [math]::Floor($Elapsed.TotalMinutes), $Elapsed.Seconds
+        if ($Kind -eq 'download') {
+            $speed = if ($Elapsed.TotalSeconds -gt 0) { ($Bytes / 1MB) / $Elapsed.TotalSeconds } else { 0 }
+            $line = 'NVIDIA indirme: {0} - {1:N0} MB - {2} - {3} MB/s' -f $Version, ($Bytes / 1MB), $time, ([math]::Round($speed, 1)).ToString([Globalization.CultureInfo]::InvariantCulture)
+        }
+        else {
+            $note = if ($ExitCode -eq 1) { ' (yeniden baslatma gerekiyor)' } else { '' }
+            $line = 'NVIDIA kurulum: {0} - {1} - cikis kodu {2}{3}' -f $Version, $time, $ExitCode, $note
+        }
+        Write-Host $line -ForegroundColor Cyan
+        try { if (Get-Command Write-TestStep -ErrorAction SilentlyContinue) { Write-TestStep $line 'INFO' $ExitCode $Elapsed } } catch { }
+        $line
+    }
+    # the run log helpers: next to Launcher.ps1 when the Launcher runs this wrapped, else two folders up
+    foreach ($TestLogPath in (Join-Path $PSScriptRoot 'Scripts\TestLog.ps1'), (Join-Path $PSScriptRoot '..\..\TestLog.ps1')) {
+        if (Test-Path -LiteralPath $TestLogPath) { try { . $TestLogPath } catch { }; break }
+    }
+
     try {
         Write-Host "DETECTING NVIDIA GPU..." -ForegroundColor Yellow
 
@@ -210,6 +231,7 @@
             }
             $DownloadOutput.Flush()
             Write-Progress -Activity 'Downloading NVIDIA driver' -Completed
+            [void](Write-DriverData -Kind 'download' -Version $Driver.Version -Bytes $DownloadedBytes -Elapsed $ProgressTimer.Elapsed)
         }
         finally {
             if ($DownloadOutput) { $DownloadOutput.Dispose() }
@@ -270,6 +292,7 @@
             Write-Progress -Activity 'Installing NVIDIA display driver' -Status $InstallStatus
         }
         Write-Progress -Activity 'Installing NVIDIA display driver' -Completed
+        [void](Write-DriverData -Kind 'install' -Version $Driver.Version -Elapsed $InstallTimer.Elapsed -ExitCode $Installer.ExitCode)
         if ($Installer.ExitCode -notin @(0, 1)) {
             throw "NVIDIA driver installer failed with exit code $($Installer.ExitCode)."
         }
