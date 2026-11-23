@@ -160,7 +160,10 @@ try {
     # CULLEWIE_MODE=live runs every step in normal Windows without safe mode or restarting.
     $mode = if ($env:CULLEWIE_MODE -in 'guided', 'live') { $env:CULLEWIE_MODE } else { 'full' }
     Write-Host "Starting: $mode" -ForegroundColor Cyan
-    & $windowsPowerShell -NoLogo -NoProfile -ExecutionPolicy Bypass -File $launcher -Mode $mode
+    # CULLEWIE_APPS=store or xbox keeps Microsoft Store (and Xbox, Game Pass) working; unset: full mode asks, live mode = off
+    $launchArgs = @('-NoLogo', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $launcher, '-Mode', $mode)
+    if ($env:CULLEWIE_APPS) { $launchArgs += @('-Apps', $env:CULLEWIE_APPS) }
+    & $windowsPowerShell @launchArgs
     if ($LASTEXITCODE -ne 0) {
         Write-Host "Launcher exit code: $LASTEXITCODE" -ForegroundColor Yellow
     }

@@ -116,4 +116,43 @@ Assert (-not $relaunchT -or $relaunchT.Line -match '\$Apps') 'Tweaks-RelaunchFor
 $tParams = @($t.Ast.ParamBlock.Parameters | ForEach-Object { $_.Name.VariablePath.UserPath })
 Assert ($t.Errors.Count -eq 0 -and $tParams -contains 'Apps' -and $tParams -contains 'DryRun') 'Tweaks-Parses' "errors=$($t.Errors.Count) params=$($tParams -join ',')"
 
+# ---------------- Launcher.ps1 and IWR.ps1 (static only) ----------------
+$launcher = Join-Path $repo 'Launcher.ps1'
+$l = Get-Ast $launcher
+$full = Get-FunctionText $l.Ast 'Start-FullSetup'; $resume = Get-FunctionText $l.Ast 'Resume-FullSetup'; $live = Get-FunctionText $l.Ast 'Start-LiveSetup'
+if ($full -and $resume -and $live) {
+    $iRemove = $full.IndexOf('Remove-Item -LiteralPath $script:AppsFlag'); $iAsk = $full.IndexOf('Read-AppsChoice'); $iTool = $full.IndexOf('Invoke-RequiredTool')
+    $count = { param($text) ([regex]::Matches($text, 'Get-AppsArguments')).Count }
+    Assert ($iRemove -ge 0 -and $iRemove -lt $iAsk -and $iAsk -lt $iTool -and $resume -notmatch 'Read-AppsChoice' -and (& $count $resume) -ge 2 -and (& $count $live) -ge 2) 'Launcher-FlagLifecycle' "remove=$iRemove ask=$iAsk tool=$iTool resumeArgs=$(& $count $resume) liveArgs=$(& $count $live)"
+    Assert ($live -notmatch 'Read-Host|Read-AppsChoice' -and $live -match 'ConvertTo-AppsLevel \$Apps' -and $live -match '\$script:AppsFlag') 'Launcher-LiveNoPrompt'
+} else { Assert $false 'Launcher-FlagLifecycle' 'functions missing'; Assert $false 'Launcher-LiveNoPrompt' 'functions missing' }
+$convert = Get-FunctionText $l.Ast 'ConvertTo-AppsLevel'
+if ($convert) {
+    $results = & { Set-StrictMode -Version Latest; Invoke-Expression $convert; @((ConvertTo-AppsLevel 'store'), (ConvertTo-AppsLevel 'XBOX '), (ConvertTo-AppsLevel ''), (ConvertTo-AppsLevel $null), (ConvertTo-AppsLevel 'abc')) }
+    Assert (($results -join ',') -eq 'store,xbox,off,off,off') 'Launcher-AppsValue' "got $($results -join ',')"
+} else { Assert $false 'Launcher-AppsValue' 'ConvertTo-AppsLevel missing' }
+$getArgs = Get-FunctionText $l.Ast 'Get-AppsArguments'
+if ($convert -and $getArgs) {
+    $flag = [IO.Path]::GetTempFileName()
+    $r = & {
+        Set-StrictMode -Version Latest
+        $script:AppsFlag = $flag
+        Invoke-Expression $convert; Invoke-Expression $getArgs
+        Set-Content $flag 'xbox'; $a = (@('-Live') + @(Get-AppsArguments)) -join ' '
+        Set-Content $flag 'junk'; $b = @(Get-AppsArguments).Count
+        Remove-Item $flag; $c = @(Get-AppsArguments).Count
+        "$a|$b|$c"
+    }
+    Remove-Item $flag -ErrorAction SilentlyContinue
+    Assert ($r -eq '-Live -Apps xbox|0|0') 'Launcher-AppsArguments' "got $r"
+} else { Assert $false 'Launcher-AppsArguments' 'functions missing' }
+$question = 'Microsoft Store / Xbox kullaniyor musunuz? 1 = Hayir, 2 = Sadece Microsoft Store, 3 = Xbox ve Game Pass (Store dahil)'
+Assert ([IO.File]::ReadAllText($launcher).Contains($question)) 'Launcher-Question'
+$lParams = @($l.Ast.ParamBlock.Parameters | ForEach-Object { $_.Name.VariablePath.UserPath })
+Assert ($l.Errors.Count -eq 0 -and $lParams -contains 'Apps') 'Launcher-Parses' "errors=$($l.Errors.Count)"
+$iwr = Join-Path $repo 'IWR.ps1'
+$iwrText = [IO.File]::ReadAllText($iwr)
+$bareLf = [regex]::Matches($iwrText, '(?<!\r)\n').Count
+Assert ($iwrText -match 'CULLEWIE_APPS' -and $iwrText -match "'-Apps'" -and $bareLf -eq 0 -and (Get-Ast $iwr).Errors.Count -eq 0) 'IWR-ForwardsApps' "bareLF=$bareLf"
+
 exit $script:failures

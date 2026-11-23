@@ -4,7 +4,9 @@ param(
     # live: every step in normal Windows, no safe mode and no restart (no DDU, no Defender, no questions); restart later.
     [ValidateSet('full', 'guided', 'live')][string]$Mode = 'full',
     # Set by the full setup logon task after the first safe-mode restart.
-    [switch]$ResumeFullSetup
+    [switch]$ResumeFullSetup,
+    # store / xbox: keep Microsoft Store (and Xbox, Game Pass) working; full mode asks when this is empty, live mode never asks
+    [string]$Apps = ''
 )
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
@@ -14,6 +16,8 @@ $script:RepoRoot = $PSScriptRoot
 $script:PowerShellExe = "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe"
 $script:CaptureChildOutput = $false
 $script:SuspendedBitLocker = $false
+# the Store/Xbox choice; a file, so it survives the safe-mode restarts of the full setup
+$script:AppsFlag = Join-Path $env:ProgramData 'Cullewie\Work\apps.flag'
 $script:Tools = @(
     [pscustomobject]@{ Id='nvidia-updater'; Name='NVIDIA Driver'; Category='NVIDIA'; Path='Scripts/NVIDIA/Driver.ps1'; Wrapper='NvidiaCase' }
     [pscustomobject]@{ Id='ddu'; Name='DDU (driver cleanup)'; Category='GPU'; Path='Scripts/GPU/DDU.ps1'; Wrapper='' }
@@ -187,6 +191,32 @@ function Wait-Internet {
     }
     throw 'No internet connection after 5 minutes.'
 }
+function ConvertTo-AppsLevel([string]$Value) {
+    # anything but store / xbox (any case, spaces around) means off
+    $v = ([string]$Value).Trim().ToLowerInvariant()
+    if ($v -in 'store', 'xbox') { return $v }
+    'off'
+}
+function Read-AppsChoice {
+    if ($Apps) { return (ConvertTo-AppsLevel $Apps) }
+    Write-Host ''
+    $answer = Read-Host 'Microsoft Store / Xbox kullaniyor musunuz? 1 = Hayir, 2 = Sadece Microsoft Store, 3 = Xbox ve Game Pass (Store dahil)'
+    switch (([string]$answer).Trim()) { '2' { 'store' } '3' { 'xbox' } default { 'off' } }
+}
+function Save-AppsChoice([string]$Level) {
+    Remove-Item -LiteralPath $script:AppsFlag -Force -ErrorAction SilentlyContinue
+    if ($Level -ne 'off') {
+        New-Item -ItemType Directory -Force -Path (Split-Path $script:AppsFlag) | Out-Null
+        Set-Content -LiteralPath $script:AppsFlag -Value $Level
+    }
+    Write-Host "Microsoft Store / Xbox: $Level" -ForegroundColor Cyan
+}
+# arguments for Services and Tweaks, from the saved choice (none when off)
+function Get-AppsArguments {
+    if (-not (Test-Path -LiteralPath $script:AppsFlag)) { return }
+    $level = ConvertTo-AppsLevel (Get-Content -LiteralPath $script:AppsFlag -Raw)
+    if ($level -ne 'off') { '-Apps'; $level }
+}
 function Invoke-RequiredTool {
     param([Parameter(Mandatory=$true)][string]$Id, [string[]]$Arguments = @())
     $tool = $script:Tools | Where-Object { $_.Id -eq $Id } | Select-Object -First 1
@@ -201,6 +231,9 @@ function Start-FullSetup {
     if (Test-PendingReboot) {
         throw 'Windows is waiting for a restart to finish updates. Restart Windows normally once, then run the setup again.'
     }
+    # ask once, now: the rest of the setup runs by itself (an earlier run's answer is dropped first)
+    Remove-Item -LiteralPath $script:AppsFlag -Force -ErrorAction SilentlyContinue
+    Save-AppsChoice (Read-AppsChoice)
     $statePath = Join-Path $script:RepoRoot 'nvidia-setup-state.json'
     $dduFlag = Join-Path $env:ProgramData 'Cullewie\Work\cullewie-ddu.flag'
     # also the AMD state an aborted run may have left (its saved link could install an older driver)
@@ -366,7 +399,9 @@ function Resume-FullSetup {
     $amdSettingsRan = Test-Path (Join-Path $env:ProgramData 'Cullewie\Work\amd-installed.flag')
     if (-not $hasNvidia -and -not $amdSettingsRan) { $windowsIds = @('refresh-rate') + $windowsIds }
     foreach ($id in $windowsIds) {
-        try { Invoke-RequiredTool -Id $id } catch { $failed.Add($_.Exception.Message) }
+        $toolArguments = @()
+        if ($id -eq 'tweaks') { $toolArguments = @(Get-AppsArguments) }
+        try { Invoke-RequiredTool -Id $id -Arguments $toolArguments } catch { $failed.Add($_.Exception.Message) }
     }
     if ($failed.Count) {
         Write-Host ([Environment]::NewLine + 'These steps did not complete:') -ForegroundColor Red
@@ -378,7 +413,7 @@ function Resume-FullSetup {
     # ("undoing changes"), with extra restarts.
     # a Services problem (e.g. a TrustedInstaller step skipped because Windows was busy) must not cancel the restart:
     # the list itself is already imported as admin, and the restart is what applies it
-    try { Invoke-RequiredTool -Id 'services' -Arguments '-Live' }
+    try { Invoke-RequiredTool -Id 'services' -Arguments (@('-Live') + @(Get-AppsArguments)) }
     catch {
         Write-Host $_.Exception.Message -ForegroundColor Red
         Write-Host 'Services reported a problem (see above); restarting anyway.' -ForegroundColor Yellow
@@ -399,6 +434,9 @@ function Start-LiveSetup {
     $log = Join-Path $env:ProgramData ('Cullewie\Work\live-setup-' + (Get-Date -Format 'yyyyMMdd-HHmmss') + '.log')
     Start-Transcript -Path $log -Force | Out-Null
     $script:CaptureChildOutput = $true
+    # no question in live mode: the Store/Xbox level comes from -Apps (IWR: CULLEWIE_APPS); empty or unknown = off
+    Save-AppsChoice (ConvertTo-AppsLevel $Apps)
+    # (the flag file $script:AppsFlag now holds the level for Get-AppsArguments)
     $steps = New-Object System.Collections.Generic.List[string]
     $hasNvidia = @(Get-PciGpu '10DE').Count -gt 0
     $ids = @()
@@ -410,6 +448,7 @@ function Start-LiveSetup {
         $sw = [Diagnostics.Stopwatch]::StartNew()
         # no questions in live mode: NVIDIA Settings leaves scaling and vibrance as they are
         if ($id -eq 'settings-github') { Invoke-ChildScript -Tool $tool -Arguments @('-SkipDisplay') }
+        elseif ($id -eq 'tweaks') { Invoke-ChildScript -Tool $tool -Arguments @(Get-AppsArguments) }
         else { Invoke-ChildScript -Tool $tool }
         $steps.Add(('{0,-50} exit {1,3}  {2:mm\:ss}' -f $tool.Name, $script:LastChildExitCode, $sw.Elapsed))
     }
@@ -422,7 +461,7 @@ function Start-LiveSetup {
         $steps.Add(('{0,-50} exit {1,3}' -f $tool.Name, $script:LastChildExitCode))
     }
     $tool = $script:Tools | Where-Object { $_.Id -eq 'services' } | Select-Object -First 1
-    Invoke-ChildScript -Tool $tool -Arguments @('-Live')
+    Invoke-ChildScript -Tool $tool -Arguments (@('-Live') + @(Get-AppsArguments))
     $steps.Add(('{0,-50} exit {1,3}' -f $tool.Name, $script:LastChildExitCode))
     Write-Host ([Environment]::NewLine + 'Live setup summary (exit 0 = done):') -ForegroundColor Cyan
     $steps | ForEach-Object { Write-Host "  $_" }

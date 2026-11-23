@@ -104,6 +104,18 @@ $env:CULLEWIE_MODE = 'live'; iwr 'https://github.com/cullewie/cullewie-s-progres
 
 Bu modda sürücü temizliği (DDU), Defender ayarları ve ekran soruları atlanır. Hizmet ayarları yazılır ama bir sonraki yeniden başlatmada devreye girer. Her adımın sonucu ekranda özetlenir ve `C:\ProgramData\Cullewie\Work\live-setup-*.log` dosyasına kaydedilir.
 
+## Microsoft Store ve Xbox (Game Pass)
+
+Kurulum varsayılan olarak Store ve Xbox'ın kullandığı hizmetleri kapatır. Kurulumun başında bir soru sorulur:
+
+- **1 = Hayır:** her şey yukarıda anlatıldığı gibi.
+- **2 = Sadece Microsoft Store:** Store'dan indirme, kurma ve güncelleme çalışır. Store'un otomatik güncellemesi ve arka plan uygulamaları açık kalır.
+- **3 = Xbox ve Game Pass:** Store'a ek olarak Xbox uygulaması, Gaming Services, kumanda, Xbox ağ hizmetleri (Teredo, IPv6), GameInput ve Game Bar da çalışır.
+
+2 ve 3'te Windows Update açık kalır ama **yalnızca aylık güncellemeyi** alır: yeni Windows sürümü, sürücü güncellemesi ve önizleme güncellemeleri gelmez. (Windows 11'de "yalnızca güvenlik" diye ayrı bir güncelleme yoktur; güvenlik düzeltmeleri bu aylık pakette gelir.) Daha önce kurulum yapılmış bir bilgisayarda da bu hizmetler Windows varsayılanlarına geri döner.
+
+Yeniden başlatmadan çalıştırırken soru sorulmaz; seçimi komutun başına ekle: `$env:CULLEWIE_APPS = 'xbox'` (ya da `'store'`).
+
 ## Bir şey bozulursa
 
 Eski bir sürüm Wi-Fi'yi, Microsoft Store'u ya da uygulamalarda oturum açmayı bozduysa, Yönetici PowerShell'de `Scripts\Windows\Services-Restore.ps1` dosyasını çalıştırıp bilgisayarı yeniden başlat. Betik değiştirmeden önce mevcut ayarları yedekler.
