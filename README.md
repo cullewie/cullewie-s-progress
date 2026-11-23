@@ -315,6 +315,34 @@ Bu modda:
 C:\ProgramData\User\Work\live-setup-*.log
 ```
 
+## Windows varsayılanlarına dönüş (vanilla)
+
+Bu aracın Windows'ta yaptığı değişiklikleri geri almak için:
+
+```powershell
+$env:CULLEWIE_MODE = 'vanilla'; iwr 'https://github.com/cullewie/cullewie-s-progress/raw/refs/heads/main/IWR.ps1' -useb | iex
+```
+
+Soru sormaz, güvenli moda geçmez. IPv6 ve dosya paylaşımı yeniden açılırken ağ kartı yeniden başlar; internet birkaç saniye kesilir. Bitince bilgisayarı **yeniden başlatman** gerekir.
+
+**Geri gelenler:**
+- **Hizmetler:** Aracın dokunduğu her hizmet Windows 11'deki varsayılan başlatma türüne döner. Bazı hizmetler Windows'ta varsayılan olarak otomatik başlar (ses, ağ, yazdırma, arama, Windows Update düzenleyicisi gibi), bazıları varsayılan olarak kapalıdır (örneğin Remote Registry). Diğerleri "manuel" olur; Windows onları gerektiğinde kendisi başlatır. Önceki kurulumların, bilgisayarda olmayan hizmetler için bıraktığı boş kayıtlar silinir.
+- **Ağ:** IPv6, dosya ve yazıcı paylaşımı, QoS ve ağ keşfi yeniden açılır. Teredo ve IPv4 tercihi Windows varsayılanına döner.
+- **Politikalar:** Aracın yazdığı politika değerleri silinir. Bunlar telemetri, Copilot, Widgets, Game DVR, Windows Update kısıtları, Sistem Geri Yükleme kapatma gibi ayarlardır. Silinecek değerler betiklerin kendisinden okunur. UAC ve oturum açma ile ilgili Windows değerlerine dokunulmaz.
+- **Windows Defender:** SmartScreen, bulut koruması, örnek gönderme, PUA ve kimlik avı koruması, Akıllı Uygulama Denetimi durum değerleri ve bildirim ayarları Windows varsayılanına döner. Zamanlanmış Defender taramaları yeniden açılır. (Akıllı Uygulama Denetimi bir kez kapatıldıysa Windows yeniden kurulmadan açılmayabilir.)
+- **Güç:** Windows'un varsayılan güç planları geri gelir. Hazırda bekletme ve hızlı başlatma açılır, güç menüsünde Kilitle ve Uyku yeniden görünür.
+- **Diğer:** Timer Resolution hizmeti kaldırılır. Sistem Geri Yükleme açılır. Store otomatik güncellemesi ve arka plan uygulamaları açılır. Windows Update yeniden sürücü indirebilir.
+- **Uygulamalar:** Microsoft Store ve Xbox uygulamaları kurulur (3 = Xbox ve Game Pass seçeneğindeki gibi).
+
+**Geri gelmeyenler (bilerek):**
+- **Ekran kartı sürücüsü ve GPU ayarları:** NVIDIA/AMD sürücüsü, NVIDIA profili, P0 ve Digital Vibrance olduğu gibi kalır.
+- **BitLocker:** Şifresi çözülen disk kendiliğinden yeniden şifrelenmez. İstersen Ayarlar'dan aç.
+- **Defender'ın iki ayarı:** Kurcalama Koruması ve Dev Drive için eşzamansız tarama ayarı Defender tarafından korunur ve betikle geri alınamaz. Kurcalama Korumasını Windows Güvenliği > Virüs ve tehdit koruması ayarlarından açabilirsin.
+- **Kaldırılan diğer uygulamalar ve özellikler:** Hava Durumu, Haritalar, Solitaire, Outlook, Teams gibi kaldırılmış uygulamalar ve Windows özellikleri (WordPad, Hello yüz tanıma vb.) geri gelmez. Uygulamalar Store'dan tek tek kurulabilir.
+- **Kişisel ayarlar:** Koyu tema, %100 ölçekleme, Gezgin ve Başlat menüsü ayarları, fare ivmesi, Nagle gibi politika olmayan ayarlar kalır. Bunların "varsayılanı" bilgisayara göre değiştiği için tahminle değiştirilmez.
+
+Değiştirmeden önce mevcut hizmet değerleri ve politikalar `C:\ProgramData\Cullewie\Work\vanilla-*-backup*.reg` dosyalarına yedeklenir. Ne yapıldığı `C:\ProgramData\Cullewie\Work\vanilla-*.log` dosyasına yazılır.
+
 ## Bir şey bozulursa
 
 - **Eski bir sürümün bozduğu hizmetler.** Bu aracın eski bir sürümü Wi-Fi'yi, güvenlik duvarını, Microsoft Store'u ya da uygulamalarda oturum açmayı bozduysa, Yönetici PowerShell'de şunu çalıştırıp bilgisayarı yeniden başlat:
@@ -325,6 +353,7 @@ C:\ProgramData\User\Work\live-setup-*.log
 
   Bu betik ağ, güvenlik duvarı, aygıt, Microsoft Store kurulumu, hesap ve masaüstü hizmetlerini Windows 11 varsayılanlarına döndürür. Değiştirmeden önce mevcut ayarları `C:\ProgramData\Cullewie\Work\services-restore-*-backup.reg` dosyasına yedekler.
 - **Hizmet kontrolü durdurduysa.** Kurulum "Services: stopped, nothing was changed" der ve durursa, hiçbir hizmet değiştirilmemiştir. Ekranda hangi hizmetin hangisine bağlı olduğu yazar. Önce `Services-Restore.ps1`'i çalıştırıp yeniden başlat, sonra kurulumu tekrar dene.
+- **Her şeyi geri almak için** ["Windows varsayılanlarına dönüş"](#windows-varsayılanlarına-dönüş-vanilla) bölümündeki vanilla modunu kullan.
 - **Sistem Geri Yükleme kapalı olduğu için** geri yükleme noktası yoktur. Kurmadan önce önemli dosyalarını yedekle.
 
 ## Dosya yapısı
@@ -353,6 +382,7 @@ Scripts/
     ├── Defender.ps1     Windows Defender ayarları (güvenli modda)
     ├── Store-Xbox.ps1   Store / Xbox seçilince eksik uygulamaları kurar
     ├── Services.ps1     hizmetleri kapatır (bağımlılık kontrolüyle)
+    ├── Vanilla.ps1      Windows değişikliklerini geri alır (vanilla modu)
     └── Services-Restore.ps1  eski bir sürümün bozduğu hizmetleri onarır
 ```
 

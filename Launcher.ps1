@@ -2,7 +2,8 @@
 param(
     # full: the full automatic setup. guided: DDU and NVIDIA driver only, no restart (for testing on a running PC).
     # live: every step in normal Windows, no safe mode and no restart (no DDU, no Defender, no questions); restart later.
-    [ValidateSet('full', 'guided', 'live')][string]$Mode = 'full',
+    # vanilla: undo this toolkit's Windows changes (GPU drivers and GPU settings stay); restart afterwards.
+    [ValidateSet('full', 'guided', 'live', 'vanilla')][string]$Mode = 'full',
     # Set by the full setup logon task after the first safe-mode restart.
     [switch]$ResumeFullSetup,
     # store / xbox: keep Microsoft Store (and Xbox, Game Pass) working; full mode asks when this is empty, live mode never asks
@@ -30,6 +31,7 @@ $script:Tools = @(
     [pscustomobject]@{ Id='tweaks'; Name='Windows Tweaks (apps, widgets, Copilot, settings)'; Category='Windows'; Path='Scripts/Windows/Tweaks.ps1'; Wrapper='' }
     [pscustomobject]@{ Id='defender'; Name='Defender Optimize'; Category='Windows'; Path='Scripts/Windows/Defender.ps1'; Wrapper='' }
     [pscustomobject]@{ Id='store-xbox'; Name='Microsoft Store / Xbox apps'; Category='Windows'; Path='Scripts/Windows/Store-Xbox.ps1'; Wrapper='' }
+    [pscustomobject]@{ Id='vanilla'; Name='Back to Windows defaults (vanilla)'; Category='Windows'; Path='Scripts/Windows/Vanilla.ps1'; Wrapper='' }
     [pscustomobject]@{ Id='refresh-rate'; Name='Highest Refresh Rate'; Category='GPU'; Path='Scripts/GPU/Refresh-Rate.ps1'; Wrapper='' }
     [pscustomobject]@{ Id='display-options'; Name='Display: full-screen scaling and vibrance'; Category='GPU'; Path='Scripts/GPU/Display-Options.ps1'; Wrapper='' }
 )
@@ -494,6 +496,11 @@ try {
         Write-Host 'Guided NVIDIA setup finished. Nothing was restarted.' -ForegroundColor Green
     }
     elseif ($Mode -eq 'live') { Start-LiveSetup }
+    elseif ($Mode -eq 'vanilla') {
+        # no question and no restart here: the script lists what it could not undo, the user restarts
+        Invoke-RequiredTool -Id 'vanilla'
+        Write-Host 'Back to Windows defaults. Restart Windows now to finish.' -ForegroundColor Green
+    }
     else { Start-FullSetup }
 }
 catch { Write-Host "Setup stopped: $($_.Exception.Message)" -ForegroundColor Red }

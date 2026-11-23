@@ -8,16 +8,16 @@
     "files":  [
                   {
                       "path":  "Launcher.ps1",
-                      "size":  31096,
-                      "sha256":  "4bedc956aaf31d89c615f480a8fe4cfc664758d4c609c03e742eca50f461481d",
+                      "size":  31650,
+                      "sha256":  "d74b02b1710009631fc15ee5a154f6910351e5fc6bc672ec139ab79100abf47d",
                       "role":  "launcher",
                       "origin":  "project",
                       "derivedFrom":  null
                   },
                   {
                       "path":  "README.md",
-                      "size":  28931,
-                      "sha256":  "9b8589c52d133803c461c55ad0aed6fefe6bc5391f831557f21d80bfeb9faf29",
+                      "size":  32644,
+                      "sha256":  "4b8a5d4daeabfba71f430d99e08a64f6dd1602c3320a83876eaa53a0a84d6919",
                       "role":  "documentation",
                       "origin":  "project",
                       "derivedFrom":  null
@@ -90,6 +90,14 @@
                       "path":  "Scripts/Windows/Store-Xbox.ps1",
                       "size":  4872,
                       "sha256":  "172525da9fab47d7edb64cfc30b521a3895e6c73f23c40430a70be906ac6b667",
+                      "role":  "source",
+                      "origin":  "project",
+                      "derivedFrom":  null
+                  },
+                  {
+                      "path":  "Scripts/Windows/Vanilla.ps1",
+                      "size":  18895,
+                      "sha256":  "0a37891555f0eac315427e7b8f6df59bedd23e28df8183385cacc15c7df5e7c4",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null
@@ -216,6 +224,12 @@
                         "entry":  "Scripts/Windows/Store-Xbox.ps1",
                         "adminRequired":  true,
                         "requiresReboot":  false
+                    },
+                    {
+                        "id":  "vanilla",
+                        "entry":  "Scripts/Windows/Vanilla.ps1",
+                        "adminRequired":  true,
+                        "requiresReboot":  true
                     }
                 ]
 }

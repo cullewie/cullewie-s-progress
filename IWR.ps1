@@ -158,7 +158,8 @@ try {
     Write-Host "Verified release: $releaseId" -ForegroundColor Green
     # Full automatic setup; CULLEWIE_MODE=guided runs only DDU and the NVIDIA driver, without restarting;
     # CULLEWIE_MODE=live runs every step in normal Windows without safe mode or restarting.
-    $mode = if ($env:CULLEWIE_MODE -in 'guided', 'live') { $env:CULLEWIE_MODE } else { 'full' }
+    # CULLEWIE_MODE=vanilla undoes the Windows changes (GPU drivers stay).
+    $mode = if ($env:CULLEWIE_MODE -in 'guided', 'live', 'vanilla') { $env:CULLEWIE_MODE } else { 'full' }
     Write-Host "Starting: $mode" -ForegroundColor Cyan
     # CULLEWIE_APPS=store or xbox keeps Microsoft Store (and Xbox, Game Pass) working; unset: full mode asks, live mode = off
     $launchArgs = @('-NoLogo', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $launcher, '-Mode', $mode)
