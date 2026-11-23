@@ -27,14 +27,23 @@ New-Item -ItemType Directory -Path (Split-Path $log) -Force | Out-Null
 if ($DryRun) { Set-Content -Path $log -Value "Dry run $(Get-Date -Format s)" -Encoding UTF8 }
 function Write-Plan([string]$Kind, [string]$Name) { if ($DryRun) { Add-Content -Path $log -Value "$Kind`t$Name" -Encoding UTF8 } }
 
-# what this run finds and removes, for Vanilla Mode to bring back: each item is listed before it is removed, the file is
-# written once in step 1 and never overwritten (a second All-in run must not replace the list of what the PC had at first)
+# what this run finds and removes, for Vanilla Mode to bring back: each item is listed before it is removed. A list an
+# earlier run left is kept and this run's items are added to it (an earlier run, e.g. Xbox & Store, may have listed
+# nothing; a later All-in must still be able to list what it removes), each name once.
 $inventoryPath = Join-Path $env:ProgramData 'Cullewie\Work\removed-inventory.json'
 $removedInventory = [ordered]@{ apps = @(); capabilities = @(); features = @(); programs = @() }
 function Save-RemovedInventory([System.Collections.IDictionary]$Inventory, [string]$Path) {
-    if (Test-Path -LiteralPath $Path) { return $false }
+    $merged = [ordered]@{ apps = @(); capabilities = @(); features = @(); programs = @() }
+    if (Test-Path -LiteralPath $Path) {
+        try {
+            $old = Get-Content -LiteralPath $Path -Raw | ConvertFrom-Json
+            foreach ($k in @($merged.Keys)) { $merged[$k] = @($old.$k | ForEach-Object { [string]$_ } | Where-Object { $_ }) }
+        }
+        catch { }
+    }
+    foreach ($k in @($merged.Keys)) { $merged[$k] = @(@($merged[$k]) + @($Inventory[$k]) | Where-Object { $_ } | Select-Object -Unique) }
     New-Item -ItemType Directory -Force -Path (Split-Path $Path) | Out-Null
-    [IO.File]::WriteAllText($Path, ($Inventory | ConvertTo-Json -Depth 3), [Text.UTF8Encoding]::new($false))
+    [IO.File]::WriteAllText($Path, ($merged | ConvertTo-Json -Depth 3), [Text.UTF8Encoding]::new($false))
     $true
 }
 # removed further down (Widgets section, Game Bar section), recorded here
@@ -56,6 +65,10 @@ $removeApps = @(
     'Microsoft.3DBuilder', 'Microsoft.Office.OneNote', 'Microsoft.Wallet',
     'Microsoft.Windows.Ai.Copilot.Provider', 'MicrosoftWindows.CrossDevice'
 )
+# All-in also removes the Xbox app, Gaming Services and the Xbox Identity Provider: with the Xbox services off they cannot
+# work, and Gaming Services kept running in the background. Store and Xbox & Store keep them (Store-Xbox installs what is
+# missing). Listed below like every other app, so Vanilla Mode brings them back.
+if ($Apps -eq 'off') { $removeApps += 'Microsoft.GamingApp', 'Microsoft.GamingServices', 'Microsoft.XboxIdentityProvider' }
 # one line per listed app: already gone is a pass, not an error. A package left only "staged" for the
 # system account is not installed for anyone, so it counts as removed too.
 $installed = @(Get-AppxPackage -AllUsers | Where-Object { $removeApps -contains $_.Name -and @($_.PackageUserInformation | Where-Object { $_.InstallState -eq 'Installed' }).Count })

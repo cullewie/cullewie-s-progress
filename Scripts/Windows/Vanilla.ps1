@@ -188,6 +188,7 @@ $storeIds = [ordered]@{
     'Microsoft.OutlookForWindows' = '9NRX63209R7B'; 'MSTeams' = 'XP8BT8DW290MPQ'; 'Clipchamp.Clipchamp' = '9P1J8S7CCWWT'
     'Microsoft.Copilot' = '9NHT9RB2F4HD'; 'MicrosoftCorporationII.QuickAssist' = '9P7BP5VNWKX5'; 'MicrosoftCorporationII.MicrosoftFamily' = '9PDJDJS743XF'
     'Microsoft.BingSearch' = '9NZBF4GT040C'; 'MicrosoftWindows.Client.WebExperience' = '9MSSGKG348SP'; 'Microsoft.XboxGamingOverlay' = '9NZKPSTSNW4P'
+    'Microsoft.GamingApp' = '9MV0B5HZVK9Z'; 'Microsoft.GamingServices' = '9MWPM2CQNLHN'; 'Microsoft.XboxIdentityProvider' = '9WZDNCRD1HKW'
 }
 # programs from winget; Remote Desktop Connection has no package to reinstall it from
 $wingetIds = @{ 'OneDrive' = 'Microsoft.OneDrive'; 'GameInput' = 'Microsoft.GameInput' }
