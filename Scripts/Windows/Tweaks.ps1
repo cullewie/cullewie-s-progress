@@ -150,6 +150,13 @@ if (-not $DryRun) {
         ForEach-Object { Start-Process -Wait $_.FullName -ArgumentList '/uninstall /allusers' -WindowStyle Hidden -ErrorAction SilentlyContinue }
     cmd /c "$env:SystemRoot\SysWOW64\OneDriveSetup.exe -uninstall >nul 2>&1"
     Get-ScheduledTask | Where-Object { $_.TaskName -match 'OneDrive' } | Unregister-ScheduledTask -Confirm:$false -ErrorAction SilentlyContinue
+    # Windows' "OneDriveSetup.exe /thfirstsetup" startup entry reinstalls OneDrive at the next sign-in: remove it for this
+    # user and in the default profile that new users are copied from
+    Remove-ItemProperty -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run' -Name 'OneDriveSetup' -ErrorAction SilentlyContinue
+    cmd /c "reg load HKU\CullewieDefault `"$env:SystemDrive\Users\Default\NTUSER.DAT`" >nul 2>&1"
+    cmd /c "reg delete `"HKU\CullewieDefault\Software\Microsoft\Windows\CurrentVersion\Run`" /v OneDriveSetup /f >nul 2>&1"
+    [gc]::Collect()
+    cmd /c "reg unload HKU\CullewieDefault >nul 2>&1"
 
     # Remote Desktop Connection: the uninstaller opens a window, close it as soon as it appears
     # already removed on a second run: nothing to start
