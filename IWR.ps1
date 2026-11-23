@@ -6,8 +6,8 @@ $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 $previousSecurityProtocol = [Net.ServicePointManager]::SecurityProtocol
 $Repository = 'cullewie/cullewie-s-progress'
-$PayloadCommit = '5126114d28bd48ac2f63acd8e6805a696e5028b0'
-$ExpectedManifestSha256 = '12baf9dfa90e5e1479ea11fcb4ba714e909c6121cf55974c12d7657e28fb0932'
+$PayloadCommit = 'a7af4c1a4a696bec0539577281e9e9af93135b19'
+$ExpectedManifestSha256 = 'b4058d78ec92bbf1c9361a89cd150827e965bbc4bd22ced87bd21a3a79fa0602'
 $RawRoot = 'https://raw.githubusercontent.com/' + $Repository + '/' + $PayloadCommit
 
 function Test-Administrator {
