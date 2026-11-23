@@ -47,7 +47,19 @@ Microsoft Store'dan uygulama indiriyorsan ama Xbox ve Game Pass kullanmıyorsan 
 
 Store'dan indirme, kurma ve güncelleme çalışır. Xbox hizmetleri, Game Bar ve IPv6 All-in'deki gibi kapalı kalır.
 
-Soruyu atlamak için komutun başına `$env:CULLEWIE_APPS = 'xbox';` (Xbox & Store) ya da `$env:CULLEWIE_APPS = 'store';` (Only Store Mode) ekle.
+Soruyu atlamak için:
+
+Xbox & Store
+
+```powershell
+$env:CULLEWIE_APPS = 'xbox'; iwr 'https://github.com/cullewie/cullewie-s-progress/raw/refs/heads/main/IWR.ps1' -useb | iex
+```
+
+Only Store Mode
+
+```powershell
+$env:CULLEWIE_APPS = 'store'; iwr 'https://github.com/cullewie/cullewie-s-progress/raw/refs/heads/main/IWR.ps1' -useb | iex
+```
 
 ## Vanilla Mode
 
