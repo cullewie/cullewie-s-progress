@@ -1,9 +1,28 @@
 # -Live: apply in normal Windows without safe mode or a restart (Launcher -Mode live)
-param([switch]$Live)
-        # SCRIPT RUN AS ADMIN (keep -Live, or the elevated copy would take the safe-mode path and restart)
+# -Apps store: Windows Update (monthly only, see Tweaks), BITS and Store installs keep working.
+#       xbox:  also the Xbox app, Gaming Services, controllers and Xbox networking (Teredo). Those services are
+#              written at their Windows defaults, so a PC an earlier run stripped gets them back.
+# -PlanOnly: write the final list to -PlanPath, run the dependency check and stop; nothing is changed.
+param([switch]$Live, [ValidateSet('off', 'store', 'xbox')][string]$Apps = 'off', [switch]$PlanOnly,
+      [string]$PlanPath = "$env:ProgramData\Cullewie\Work\services-plan.txt")
+        # SCRIPT RUN AS ADMIN (keep every parameter: without -Live or -PlanOnly the elevated copy would restart into safe mode)
         If (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]"Administrator"))
-        {Start-Process PowerShell.exe -ArgumentList ("-NoProfile -ExecutionPolicy Bypass -File `"{0}`"{1}" -f $PSCommandPath, $(if ($Live) { ' -Live' } else { '' })) -Verb RunAs
+        {Start-Process PowerShell.exe -ArgumentList ("-NoProfile -ExecutionPolicy Bypass -File `"{0}`"{1}{2} -Apps {3} -PlanPath `"{4}`"" -f $PSCommandPath, $(if ($Live) { ' -Live' } else { '' }), $(if ($PlanOnly) { ' -PlanOnly' } else { '' }), $Apps, $PlanPath) -Verb RunAs
         Exit}
+# Start values that -Apps store / xbox write instead of the list's own (Windows 11 defaults)
+function Get-AppsServiceStart([string]$Apps) {
+    $start = @{}
+    if ($Apps -in 'store', 'xbox') { $start += @{ wuauserv = 3; BITS = 3; UsoSvc = 2; WaaSMedicSvc = 3; PushToInstall = 3 } }
+    if ($Apps -eq 'xbox') { $start += @{ XblAuthManager = 3; XblGameSave = 3; XboxGipSvc = 3; XboxNetApiSvc = 3; iphlpsvc = 2; GameInputSvc = 3; WpnService = 2; WpnUserService = 2 } }
+    $start
+}
+function Set-ServiceStartInText([string]$Text, [hashtable]$Start) {
+    foreach ($name in $Start.Keys) {
+        $pattern = '(?im)(^\[HKEY_LOCAL_MACHINE\\SYSTEM\\ControlSet001\\Services\\' + [regex]::Escape($name) + '\]\r?\n"Start"=dword:)[0-9a-f]{8}'
+        $Text = [regex]::Replace($Text, $pattern, ('${1}' + ('{0:x8}' -f [int]$Start[$name])))
+    }
+    $Text
+}
         $Host.UI.RawUI.WindowTitle = $myInvocation.MyCommand.Definition + " (Administrator)"
         $Host.UI.RawUI.BackgroundColor = "Black"
         $Host.PrivateData.ProgressBackgroundColor = "Black"
@@ -15,6 +34,7 @@ param([switch]$Live)
         camsvc and netprofm (microphone), schedule (Task Scheduler), dnscache and dhcp (internet),
         sppsvc (activation), dispbrokerdesktopsvc (resolution), appxsvc and textinputmanagementservice,
         sens and gpsvc, termservice keyiso ngcctnrsvc ngcsvc (sign-in). Graphics driver and Defender services untouched.
+        cbdhsvc (Clipboard User Service) stays manual: disabled, copy and paste stops working in many apps.
         TrustedInstaller is not in the list: Windows switches it to automatic when updates or feature changes wait for a
         restart, and writing Manual over that left them unapplied (pending.xml stuck, setup blocked).
         Never disable BFE, mpssvc, EventSystem, Wcmsvc, WinHttpAutoProxySvc, NlaSvc, SamSs or PlugPlay:
@@ -165,7 +185,7 @@ Windows Registry Editor Version 5.00
 "Start"=dword:00000003
 
 [HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\cbdhsvc]
-"Start"=dword:00000004
+"Start"=dword:00000003
 
 [HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\CDPSvc]
 "Start"=dword:00000004
@@ -869,7 +889,11 @@ foreach ($m in [regex]::Matches((Get-Content "$env:ProgramData\Cullewie\Work\ser
     $now = (Get-ItemProperty "HKLM:\SYSTEM\ControlSet001\Services\$($m.Groups[1].Value)" -ErrorAction SilentlyContinue).Start
     if ($now -ne [int]$m.Groups[2].Value) { $notApplied += $m.Groups[1].Value }
 }
-if ($notApplied) { Write-Host "Services: not applied: $($notApplied -join ', ')" -ForegroundColor Red; $global:CullewieTrustedFailed = $true }
+if ($notApplied) {
+    Write-Host "Services: not applied: $($notApplied -join ', ')" -ForegroundColor Red; $global:CullewieTrustedFailed = $true
+    # kept for later: in safe mode the message is on screen only seconds before the restart
+    Set-Content -Path "$env:ProgramData\Cullewie\Work\services-not-applied.txt" -Value $notApplied
+}
 
 # remove safe mode boot
 cmd /c "bcdedit /deletevalue {current} safeboot >nul 2>&1"
@@ -882,6 +906,8 @@ shutdown -r -t 00
 # -Live (no restart): report a TrustedInstaller step that was skipped, timed out or left the service path wrong
 if ($global:CullewieTrustedFailed -or $global:CullewieTrustedBroken) { exit 1 }
 '@
+# -Apps store / xbox: their services at Windows defaults (no change for off)
+$ServicesOff = Set-ServiceStartInText $ServicesOff (Get-AppsServiceStart $Apps)
 Set-Content -Path "$env:ProgramData\Cullewie\Work\servicesoff.ps1" -Value $ServicesOff -Force
 
 # dependency check: a service left on must not depend on one this list turns off (e.g. SENS needs EventSystem).
@@ -923,6 +949,13 @@ if ($conflicts) {
     $conflicts | ForEach-Object { Write-Host "  $_" -ForegroundColor Red }
     Write-Host "  If an older run disabled these, run Scripts\Windows\Services-Restore.ps1 first, restart, then try again." -ForegroundColor Yellow
     exit 1
+}
+
+# -PlanOnly: hand back the final list and stop before anything is changed
+if ($PlanOnly) {
+    Set-Content -Path $PlanPath -Value $ServicesOff -Force
+    Write-Host "Services: plan written to $PlanPath; nothing was changed." -ForegroundColor Green
+    exit 0
 }
 
 # edit servicesoff.ps1

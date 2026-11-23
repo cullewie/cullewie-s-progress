@@ -5,6 +5,18 @@ Date: 2026-11-23. Approved by the repo owner in conversation.
 ## Intent
 People who play through Game Pass Ultimate (the owner's friend, for example) need the Xbox app, Gaming Services and Microsoft Store downloads to work. Today the setup breaks those, even though the Tweaks.ps1 header says they are kept. Services.ps1 disables wuauserv, UsoSvc, WaaSMedicSvc, BITS, XblAuthManager, XblGameSave, XboxGipSvc, XboxNetApiSvc and iphlpsvc. Tweaks.ps1 unbinds IPv6, removes the Game Bar, and turns off Store auto-update and background apps.
 
+## Update (same day): three levels instead of one switch
+The owner asked for a "Store only" choice next to Xbox. The choice is now `-Apps off|store|xbox`; the default is off, which is today's behaviour.
+- **store:** Store downloads, installs and updates work.
+  - Services set to Windows defaults: wuauserv, BITS, UsoSvc, WaaSMedicSvc, PushToInstall.
+  - Tweaks keeps Store auto-update and background apps.
+  - The monthly-only Windows Update policy is applied.
+- **xbox:** everything in store, plus the Xbox services (XblAuthManager, XblGameSave, XboxGipSvc, XboxNetApiSvc), iphlpsvc (Teredo), GameInputSvc, WpnService and WpnUserService.
+  - Tweaks also keeps GameInput, the Game Bar and IPv6.
+- The Launcher question: "Microsoft Store / Xbox kullaniyor musunuz? 1 = Hayir, 2 = Sadece Microsoft Store, 3 = Xbox ve Game Pass (Store dahil)". Live mode uses `CULLEWIE_APPS=store|xbox`.
+- Services are written at their Windows default values rather than left out of the list, so a PC that was already stripped gets them back.
+The goals below describe the xbox level.
+
 ## Goals
 - One Launcher option, off by default, labelled: "Xbox hizmetlerini ve Microsoft Store'u kullaniyorsaniz bunu secin (Game Pass)".
 - When it is on:
