@@ -43,7 +43,7 @@ Microsoft Store, Xbox uygulaması, Gaming Services, Xbox oturumu ve bulut kayıt
 
 Microsoft Store'dan uygulama indiriyorsan ama Xbox ve Game Pass kullanmıyorsan bunu seç.
 
-Store'dan indirme, kurma ve güncelleme çalışır. Xbox hizmetleri, Game Bar ve IPv6 All-in'deki gibi kapalı kalır.
+Store'dan indirme, kurma ve güncelleme çalışır. Xbox uygulaması, Gaming Services ve Game Bar All-in'deki gibi kaldırılır; Xbox hizmetleri ve IPv6 kapalı kalır.
 
 Pencere açmadan, terminalde çalıştırmak için:
 

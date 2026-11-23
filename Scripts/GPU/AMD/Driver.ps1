@@ -113,9 +113,11 @@ try {
     $sig = Get-AuthenticodeSignature $pkg
     if ($sig.Status -ne 'Valid' -or $sig.SignerCertificate.Subject -notmatch 'Advanced Micro Devices') { throw "AMD driver signature check failed: $($sig.Status) $($sig.SignerCertificate.Subject)" }
 
-    # the package is a 7z archive; 7-Zip comes from this project's own release when it is not installed yet
+    # the package is a 7z archive; 7-Zip comes from this project's own release when it is not installed yet, and is
+    # removed again right after the extraction (a 7-Zip the user had stays)
     $7z = "$env:ProgramFiles\7-Zip\7z.exe"
-    if (-not (Test-Path $7z)) {
+    $had7z = Test-Path $7z
+    if (-not $had7z) {
         $setup7z = Join-Path $work '7zip.exe'
         Invoke-WebRequest 'https://github.com/cullewie/cullewie-s-progress/releases/download/files/7zip.exe' -UseBasicParsing -OutFile $setup7z
         if ((Get-FileHash $setup7z -Algorithm SHA256).Hash -ne '0859c524b8a63551848f0c246abddcb1d0b7b656b0fbfe879f8d85e61a9e6edd') { throw '7zip.exe SHA-256 mismatch; download stopped.' }
@@ -124,7 +126,9 @@ try {
     Write-Host 'Extracting the AMD driver...'
     $files = Join-Path $work 'files'
     & $7z x $pkg "-o$files" -y | Out-Null
-    if ($LASTEXITCODE -ne 0) { throw "Extracting the AMD driver failed (7-Zip exit code $LASTEXITCODE)." }
+    $extractCode = $LASTEXITCODE
+    if (-not $had7z) { Start-Process -Wait "$env:ProgramFiles\7-Zip\Uninstall.exe" -ArgumentList '/S' -ErrorAction SilentlyContinue; Remove-Item (Join-Path $work '7zip.exe') -Force -ErrorAction SilentlyContinue }
+    if ($extractCode -ne 0) { throw "Extracting the AMD driver failed (7-Zip exit code $extractCode)." }
     Remove-Item $pkg -Force
 
     Write-Host 'INSTALLING AMD DISPLAY DRIVER...' -ForegroundColor Cyan

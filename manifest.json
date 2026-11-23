@@ -16,16 +16,16 @@
                   },
                   {
                       "path":  "README.md",
-                      "size":  5010,
-                      "sha256":  "44d2388a932b3fe2b930a0f1ad158ae2dc9f4d018a6592cbafa61e2625e16fb4",
+                      "size":  5061,
+                      "sha256":  "f180d6181399e6ab28c83a488768450870a95acd2f7ccea4b74e90dbea24412a",
                       "role":  "documentation",
                       "origin":  "project",
                       "derivedFrom":  null
                   },
                   {
                       "path":  "Scripts/GPU/DDU.ps1",
-                      "size":  13754,
-                      "sha256":  "5a4fd72bf563b951a9bc54be6ccc9e03839ae1f948951165f96b01ab011d59c9",
+                      "size":  13458,
+                      "sha256":  "00afd2c10cbdecc2411a3d5f867d8d6689aac438fce3f7935bd5c50245776b07",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null
@@ -72,8 +72,8 @@
                   },
                   {
                       "path":  "Scripts/Windows/Tweaks.ps1",
-                      "size":  82842,
-                      "sha256":  "573035ec7aae1eb9afd354d4587571d0e034e5b8231d374e93d399dbd486a0c0",
+                      "size":  82853,
+                      "sha256":  "62a7302fdc517c32df079acdb7ba838d50c6ef69bec9d0946df04df7070bfdf1",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null
@@ -112,8 +112,8 @@
                   },
                   {
                       "path":  "Scripts/GPU/AMD/Driver.ps1",
-                      "size":  9218,
-                      "sha256":  "7f023e9374508c29a714a594c0d3a4798a4d39c3e222f50e2cf6fa5229306131",
+                      "size":  9564,
+                      "sha256":  "cf95c8b614b4c79d76b0e982c08e17e4f919e43865bd532bd1f439056cee6a35",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null

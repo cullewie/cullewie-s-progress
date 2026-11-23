@@ -65,10 +65,10 @@ $removeApps = @(
     'Microsoft.3DBuilder', 'Microsoft.Office.OneNote', 'Microsoft.Wallet',
     'Microsoft.Windows.Ai.Copilot.Provider', 'MicrosoftWindows.CrossDevice'
 )
-# All-in also removes the Xbox app, Gaming Services and the Xbox Identity Provider: with the Xbox services off they cannot
-# work, and Gaming Services kept running in the background. Store and Xbox & Store keep them (Store-Xbox installs what is
-# missing). Listed below like every other app, so Vanilla Mode brings them back.
-if ($Apps -eq 'off') { $removeApps += 'Microsoft.GamingApp', 'Microsoft.GamingServices', 'Microsoft.XboxIdentityProvider' }
+# All-in and Only Store Mode also remove the Xbox app, Gaming Services and the Xbox Identity Provider: with the Xbox
+# services off they cannot work, and Gaming Services kept running in the background. Xbox & Store keeps them (Store-Xbox
+# installs what is missing). Listed below like every other app, so Vanilla Mode brings them back.
+if ($Apps -ne 'xbox') { $removeApps += 'Microsoft.GamingApp', 'Microsoft.GamingServices', 'Microsoft.XboxIdentityProvider' }
 # one line per listed app: already gone is a pass, not an error. A package left only "staged" for the
 # system account is not installed for anyone, so it counts as removed too.
 $installed = @(Get-AppxPackage -AllUsers | Where-Object { $removeApps -contains $_.Name -and @($_.PackageUserInformation | Where-Object { $_.InstallState -eq 'Installed' }).Count })

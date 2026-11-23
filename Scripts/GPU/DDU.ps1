@@ -29,21 +29,14 @@ param(
 
         Clear-Host
 
-# download 7zip
-IWR "https://github.com/cullewie/cullewie-s-progress/releases/download/files/7zip.exe" -OutFile "$env:ProgramData\Cullewie\Work\7zip.exe"
-if ((Get-FileHash "$env:ProgramData\Cullewie\Work\7zip.exe" -Algorithm SHA256).Hash -ne '0859c524b8a63551848f0c246abddcb1d0b7b656b0fbfe879f8d85e61a9e6edd') { throw '7zip.exe SHA-256 mismatch; download stopped.' }
-
-# install 7zip
-Start-Process -Wait "$env:ProgramData\Cullewie\Work\7zip.exe" -ArgumentList "/S"
-if (-not (Test-Path "$env:SystemDrive\Program Files\7-Zip\7z.exe")) { throw '7-Zip did not install; DDU cannot be extracted.' }
-
-# set config for 7zip
-cmd /c "reg add `"HKEY_CURRENT_USER\Software\7-Zip\Options`" /v `"ContextMenu`" /t REG_DWORD /d `"259`" /f >nul 2>&1"
-cmd /c "reg add `"HKEY_CURRENT_USER\Software\7-Zip\Options`" /v `"CascadedMenu`" /t REG_DWORD /d `"0`" /f >nul 2>&1"
-
-# cleaner start menu shortcut path
-Move-Item -Path "$env:ProgramData\Microsoft\Windows\Start Menu\Programs\7-Zip\7-Zip File Manager.lnk" -Destination "$env:ProgramData\Microsoft\Windows\Start Menu\Programs" -Force -ErrorAction SilentlyContinue | Out-Null
-Remove-Item "$env:ProgramData\Microsoft\Windows\Start Menu\Programs\7-Zip" -Recurse -Force -ErrorAction SilentlyContinue | Out-Null
+# 7-Zip only to extract DDU: installed when missing and removed again right after; a 7-Zip the user had stays as it is
+$had7z = Test-Path "$env:SystemDrive\Program Files\7-Zip\7z.exe"
+if (-not $had7z) {
+    IWR "https://github.com/cullewie/cullewie-s-progress/releases/download/files/7zip.exe" -OutFile "$env:ProgramData\Cullewie\Work\7zip.exe"
+    if ((Get-FileHash "$env:ProgramData\Cullewie\Work\7zip.exe" -Algorithm SHA256).Hash -ne '0859c524b8a63551848f0c246abddcb1d0b7b656b0fbfe879f8d85e61a9e6edd') { throw '7zip.exe SHA-256 mismatch; download stopped.' }
+    Start-Process -Wait "$env:ProgramData\Cullewie\Work\7zip.exe" -ArgumentList "/S"
+    if (-not (Test-Path "$env:SystemDrive\Program Files\7-Zip\7z.exe")) { throw '7-Zip did not install; DDU cannot be extracted.' }
+}
 
 # download ddu
 IWR "https://github.com/cullewie/cullewie-s-progress/releases/download/files/ddu.exe" -OutFile "$env:ProgramData\Cullewie\Work\ddu.exe"
@@ -53,7 +46,10 @@ if ((Get-FileHash "$env:ProgramData\Cullewie\Work\ddu.exe" -Algorithm SHA256).Ha
 # fresh folder: a DDU left from an earlier run must not pass the checks below, and 7z cannot overwrite the read-only Settings.xml
 Remove-Item "$env:ProgramData\Cullewie\Work\ddu" -Recurse -Force -ErrorAction SilentlyContinue
 & "$env:SystemDrive\Program Files\7-Zip\7z.exe" x "$env:ProgramData\Cullewie\Work\ddu.exe" -o"$env:ProgramData\Cullewie\Work\ddu" -y | Out-Null
-if ($LASTEXITCODE -ne 0) { throw "Extracting DDU failed (7-Zip exit code $LASTEXITCODE)." }
+$extractCode = $LASTEXITCODE
+# the 7-Zip installed above is not needed any more
+if (-not $had7z) { Start-Process -Wait "$env:SystemDrive\Program Files\7-Zip\Uninstall.exe" -ArgumentList '/S' -ErrorAction SilentlyContinue; Remove-Item "$env:ProgramData\Cullewie\Work\7zip.exe" -Force -ErrorAction SilentlyContinue }
+if ($extractCode -ne 0) { throw "Extracting DDU failed (7-Zip exit code $extractCode)." }
 
 # set config for ddu
 $DduConfig = @'
@@ -165,21 +161,14 @@ exit
 
         Clear-Host
 
-# download 7zip
-IWR "https://github.com/cullewie/cullewie-s-progress/releases/download/files/7zip.exe" -OutFile "$env:ProgramData\Cullewie\Work\7zip.exe"
-if ((Get-FileHash "$env:ProgramData\Cullewie\Work\7zip.exe" -Algorithm SHA256).Hash -ne '0859c524b8a63551848f0c246abddcb1d0b7b656b0fbfe879f8d85e61a9e6edd') { throw '7zip.exe SHA-256 mismatch; download stopped.' }
-
-# install 7zip
-Start-Process -Wait "$env:ProgramData\Cullewie\Work\7zip.exe" -ArgumentList "/S"
-if (-not (Test-Path "$env:SystemDrive\Program Files\7-Zip\7z.exe")) { throw '7-Zip did not install; DDU cannot be extracted.' }
-
-# set config for 7zip
-cmd /c "reg add `"HKEY_CURRENT_USER\Software\7-Zip\Options`" /v `"ContextMenu`" /t REG_DWORD /d `"259`" /f >nul 2>&1"
-cmd /c "reg add `"HKEY_CURRENT_USER\Software\7-Zip\Options`" /v `"CascadedMenu`" /t REG_DWORD /d `"0`" /f >nul 2>&1"
-
-# cleaner start menu shortcut path
-Move-Item -Path "$env:ProgramData\Microsoft\Windows\Start Menu\Programs\7-Zip\7-Zip File Manager.lnk" -Destination "$env:ProgramData\Microsoft\Windows\Start Menu\Programs" -Force -ErrorAction SilentlyContinue | Out-Null
-Remove-Item "$env:ProgramData\Microsoft\Windows\Start Menu\Programs\7-Zip" -Recurse -Force -ErrorAction SilentlyContinue | Out-Null
+# 7-Zip only to extract DDU: installed when missing and removed again right after; a 7-Zip the user had stays as it is
+$had7z = Test-Path "$env:SystemDrive\Program Files\7-Zip\7z.exe"
+if (-not $had7z) {
+    IWR "https://github.com/cullewie/cullewie-s-progress/releases/download/files/7zip.exe" -OutFile "$env:ProgramData\Cullewie\Work\7zip.exe"
+    if ((Get-FileHash "$env:ProgramData\Cullewie\Work\7zip.exe" -Algorithm SHA256).Hash -ne '0859c524b8a63551848f0c246abddcb1d0b7b656b0fbfe879f8d85e61a9e6edd') { throw '7zip.exe SHA-256 mismatch; download stopped.' }
+    Start-Process -Wait "$env:ProgramData\Cullewie\Work\7zip.exe" -ArgumentList "/S"
+    if (-not (Test-Path "$env:SystemDrive\Program Files\7-Zip\7z.exe")) { throw '7-Zip did not install; DDU cannot be extracted.' }
+}
 
 # download ddu
 IWR "https://github.com/cullewie/cullewie-s-progress/releases/download/files/ddu.exe" -OutFile "$env:ProgramData\Cullewie\Work\ddu.exe"
@@ -189,7 +178,10 @@ if ((Get-FileHash "$env:ProgramData\Cullewie\Work\ddu.exe" -Algorithm SHA256).Ha
 # fresh folder: a DDU left from an earlier run must not pass the checks below, and 7z cannot overwrite the read-only Settings.xml
 Remove-Item "$env:ProgramData\Cullewie\Work\ddu" -Recurse -Force -ErrorAction SilentlyContinue
 & "$env:SystemDrive\Program Files\7-Zip\7z.exe" x "$env:ProgramData\Cullewie\Work\ddu.exe" -o"$env:ProgramData\Cullewie\Work\ddu" -y | Out-Null
-if ($LASTEXITCODE -ne 0) { throw "Extracting DDU failed (7-Zip exit code $LASTEXITCODE)." }
+$extractCode = $LASTEXITCODE
+# the 7-Zip installed above is not needed any more
+if (-not $had7z) { Start-Process -Wait "$env:SystemDrive\Program Files\7-Zip\Uninstall.exe" -ArgumentList '/S' -ErrorAction SilentlyContinue; Remove-Item "$env:ProgramData\Cullewie\Work\7zip.exe" -Force -ErrorAction SilentlyContinue }
+if ($extractCode -ne 0) { throw "Extracting DDU failed (7-Zip exit code $extractCode)." }
 
 # set config for ddu
 $DduConfig = @'
