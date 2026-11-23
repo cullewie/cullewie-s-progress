@@ -173,6 +173,71 @@ function Set-AppsUpdatePolicy([string]$PolicyKey = 'HKLM:\SOFTWARE\Policies\Micr
     Set-Reg -Path $UxKey -Name 'IsContinuousInnovationOptedIn' -Value 0
 }
 
+# ---- appearance backup, for Vanilla Mode ----
+# Before anything below changes the look of Windows, the user's current values are saved; Vanilla.ps1 writes exactly
+# these back. Which values: every one this script writes (Set-Reg calls and .reg blocks, read from this file) under the
+# theme, colour, visual effect, scaling, taskbar, Start menu, Explorer and context menu keys. Saved only when no backup
+# exists yet, so a second run never replaces the user's look with this script's own.
+$appearanceKeys = @(
+    '^HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Themes(\\|$)',
+    '^HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize$',
+    '^HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\(Accent|Advanced|VisualEffects)(\\|$)',
+    '^HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\DWM$',
+    '^HKEY_CURRENT_USER\\Software\\Microsoft\\Lighting$',
+    '^HKEY_CURRENT_USER\\Control Panel\\(Desktop|Colors)(\\|$)',
+    '^HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\(Search|Start)$',
+    '^HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\CloudStore\\',
+    '^HKEY_CURRENT_USER\\Software\\Classes\\CLSID\\\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2\}',
+    '^HKEY_CURRENT_USER\\SOFTWARE\\Microsoft\\CTF\\LangBar$'
+)
+function Get-AppearanceEntries([string]$Text, [string[]]$KeyPatterns) {
+    $found = [ordered]@{}
+    $add = {
+        param($key, $value)
+        $k = $key -replace '^HKCU:?\\', 'HKEY_CURRENT_USER\' -replace '^HKLM:?\\', 'HKEY_LOCAL_MACHINE\' -replace '\?', '$'
+        if (@($KeyPatterns | Where-Object { $k -match $_ }).Count) { $found["$k|$value".ToLowerInvariant()] = [pscustomobject]@{ Key = $k; Value = $value } }
+    }
+    foreach ($m in [regex]::Matches($Text, 'Set-Reg -Path "(HK[^"]+)" -Name "([^"]+)"')) {
+        & $add $m.Groups[1].Value $(if ($m.Groups[2].Value -eq '(Default)') { '' } else { $m.Groups[2].Value })
+    }
+    $current = $null
+    foreach ($line in $Text -split "`r?`n") {
+        if ($line -match '^\[(HKEY_[^\]]+)\]\s*$') { $current = $Matches[1]; continue }
+        if ($line -match '^\[') { $current = $null; continue }
+        if (-not $current) { continue }
+        if ($line -match '^"([^"]+)"=') { & $add $current $Matches[1] }
+        elseif ($line -match '^@=') { & $add $current '' }
+    }
+    @($found.Values)
+}
+function Open-RegKey([string]$Key, [bool]$Create) {
+    $hive = if ($Key -like 'HKEY_LOCAL_MACHINE\*') { [Microsoft.Win32.Registry]::LocalMachine } else { [Microsoft.Win32.Registry]::CurrentUser }
+    $sub = $Key -replace '^HKEY_[A-Z_]+\\', ''
+    if ($Create) { $hive.CreateSubKey($sub) } else { $hive.OpenSubKey($sub) }
+}
+function Save-AppearanceBackup([object[]]$Entries, [string]$Path) {
+    if (Test-Path -LiteralPath $Path) { return $false }
+    $saved = foreach ($e in $Entries) {
+        $key = Open-RegKey $e.Key $false
+        $item = [ordered]@{ Key = $e.Key; Value = $e.Value; KeyExisted = $null -ne $key; Exists = $false; Kind = $null; Data = $null }
+        if ($key -and ($key.GetValueNames() -contains $e.Value)) {
+            $kind = $key.GetValueKind($e.Value)
+            $raw = $key.GetValue($e.Value, $null, 'DoNotExpandEnvironmentNames')
+            $item.Exists = $true; $item.Kind = [string]$kind
+            $item.Data = switch ($kind) { 'Binary' { [Convert]::ToBase64String([byte[]]$raw) } 'MultiString' { ,@($raw) } default { $raw } }
+        }
+        if ($key) { $key.Close() }
+        [pscustomobject]$item
+    }
+    New-Item -ItemType Directory -Force -Path (Split-Path $Path) | Out-Null
+    ConvertTo-Json -InputObject @($saved) -Depth 4 | Set-Content -LiteralPath $Path -Encoding UTF8
+    $true
+}
+$appearanceBackup = Join-Path $env:ProgramData ('Cullewie\Work\appearance-backup-' + [Security.Principal.WindowsIdentity]::GetCurrent().User.Value + '.json')
+$appearanceEntries = Get-AppearanceEntries ([IO.File]::ReadAllText($PSCommandPath)) $appearanceKeys
+if (Save-AppearanceBackup $appearanceEntries $appearanceBackup) { Write-Host "Appearance: current settings saved for Vanilla Mode ($($appearanceEntries.Count) values)" }
+else { Write-Host 'Appearance: a saved copy already exists (kept, so Vanilla Mode restores the original look)' }
+
 Write-Host "System Restore off"
 Disable-ComputerRestore -Drive "$env:SystemDrive\" -ErrorAction SilentlyContinue
 Set-Reg -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\SystemRestore" -Name "DisableSR" -Value 1

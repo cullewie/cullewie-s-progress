@@ -8,16 +8,16 @@
     "files":  [
                   {
                       "path":  "Launcher.ps1",
-                      "size":  31650,
-                      "sha256":  "d74b02b1710009631fc15ee5a154f6910351e5fc6bc672ec139ab79100abf47d",
+                      "size":  31591,
+                      "sha256":  "ba57924d371b0536d1b3c014e4fc31434f67f1b3e1fff2dc3f2a1638a532bed6",
                       "role":  "launcher",
                       "origin":  "project",
                       "derivedFrom":  null
                   },
                   {
                       "path":  "README.md",
-                      "size":  33321,
-                      "sha256":  "f30c213c8fd7a44181563b16a472d52b591bfcaa2a8d4bf0b8c097ca932711e5",
+                      "size":  4986,
+                      "sha256":  "048328b5bb86d85a58d3df623c0b90e3ae7deebd41050dfdda6d16096c863592",
                       "role":  "documentation",
                       "origin":  "project",
                       "derivedFrom":  null
@@ -72,8 +72,8 @@
                   },
                   {
                       "path":  "Scripts/Windows/Tweaks.ps1",
-                      "size":  75493,
-                      "sha256":  "b330e0d55ffa6d73aef6fd78ca20ea1342263f813549d841de174f03f5dfed85",
+                      "size":  79749,
+                      "sha256":  "84710090dea8ee4e5dec6b6e96f40768714d11a1ec93299ee137872813345fa4",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null
@@ -96,8 +96,8 @@
                   },
                   {
                       "path":  "Scripts/Windows/Vanilla.ps1",
-                      "size":  21482,
-                      "sha256":  "0564e440d05158a9f3d28bfab14fc3e9286c015ff65552ff894fe14f8abf5141",
+                      "size":  25826,
+                      "sha256":  "54ed865d430522c5dbde364dd13bc30898ef745395c0a62e45627e460c55a202",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null

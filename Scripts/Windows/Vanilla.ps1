@@ -6,8 +6,9 @@
 #  - Defender: SmartScreen, cloud protection, Smart App Control state values removed (Windows defaults), scheduled scans on
 #  - power plans restored, Timer Resolution service removed, System Restore on, Store auto-update and background apps on
 #  - Microsoft Store and Xbox apps installed (Store-Xbox.ps1 -Apps xbox)
-# Not undone: BitLocker (turn it on yourself), other removed Store apps (install them from the Store), personal settings
-# such as the dark theme, 100% scaling or Explorer options (their "default" differs per PC).
+#  - the user's own look (theme, colours, visual effects, scaling, taskbar, Start menu, Explorer, context menu) from the
+#    copy Tweaks.ps1 saved before it changed them; without that copy the look stays as it is
+# Not undone: BitLocker (turn it on yourself), removed Store apps and Windows features (install them from the Store).
 # -PlanOnly: write what would change to -PlanPath and stop; nothing is changed. Restart Windows afterwards.
 param([switch]$PlanOnly, [string]$PlanPath = "$env:ProgramData\Cullewie\Work\vanilla-plan.txt")
 $ErrorActionPreference = 'Continue'
@@ -116,6 +117,62 @@ $defenderValues = @([regex]::Matches($defenderText, 'reg add `"(HKEY_[^`]+)`" /v
     # only what differs from Windows: gone (or at the default value) is the default
     Where-Object { $now = (Get-ItemProperty -Path "Registry::$($_.Key)" -Name $_.Value -ErrorAction SilentlyContinue).($_.Value); $null -ne $now -and ($null -eq $_.Default -or $now -ne $_.Default) })
 
+# ---------- appearance: the user's own look, saved by Tweaks.ps1 before it changed anything ----------
+function Open-RegKey([string]$Key, [bool]$Create) {
+    $hive = if ($Key -like 'HKEY_LOCAL_MACHINE\*') { [Microsoft.Win32.Registry]::LocalMachine } else { [Microsoft.Win32.Registry]::CurrentUser }
+    $sub = $Key -replace '^HKEY_[A-Z_]+\\', ''
+    if ($Create) { $hive.CreateSubKey($sub) } else { $hive.OpenSubKey($sub, $true) }
+}
+function Get-AppearanceBackup([string]$Path) {
+    if (-not (Test-Path -LiteralPath $Path)) { return @() }
+    # PowerShell 5.1 hands a JSON array over as one object; ForEach-Object splits it into its entries
+    @(Get-Content -LiteralPath $Path -Raw | ConvertFrom-Json | ForEach-Object { $_ })
+}
+# writes every saved value back as it was (same type), removes values and keys that did not exist before;
+# returns how many values differed
+function Restore-AppearanceBackup([object[]]$Saved, [switch]$WhatIf) {
+    $changed = 0
+    foreach ($e in $Saved) {
+        $key = Open-RegKey $e.Key $false
+        $now = if ($key -and ($key.GetValueNames() -contains $e.Value)) { $key.GetValue($e.Value, $null, 'DoNotExpandEnvironmentNames') } else { $null }
+        if ($e.Exists) {
+            # plain assignments (a switch or if used as an expression would unroll a byte[] into object[]);
+            # the cast is on the value, not the variable, so $data takes another type in the next round
+            if ($e.Kind -eq 'Binary') { $data = [byte[]][Convert]::FromBase64String($e.Data) }
+            elseif ($e.Kind -eq 'MultiString') { $data = [string[]]@($e.Data) }
+            elseif ($e.Kind -eq 'DWord') { $data = [int]$e.Data }
+            elseif ($e.Kind -eq 'QWord') { $data = [long]$e.Data }
+            else { $data = [string]$e.Data }
+            $same = if ($null -eq $now) { $false } elseif ($e.Kind -in 'Binary', 'MultiString') { (@($now) -join ',') -eq (@($data) -join ',') } else { "$now" -eq "$data" }
+            if (-not $same) {
+                $changed++
+                if (-not $WhatIf) { if (-not $key) { $key = Open-RegKey $e.Key $true }; $key.SetValue($e.Value, $data, [Microsoft.Win32.RegistryValueKind]$e.Kind) }
+            }
+        }
+        elseif ($null -ne $now) {
+            $changed++
+            if (-not $WhatIf) { $key.DeleteValue($e.Value, $false) }
+        }
+        if ($key) { $key.Close() }
+    }
+    if (-not $WhatIf) {
+        # keys this toolkit created (e.g. the classic context menu key): gone again once empty
+        foreach ($e in @($Saved | Where-Object { -not $_.KeyExisted } | Sort-Object { $_.Key.Length } -Descending)) {
+            $key = Open-RegKey $e.Key $false
+            if ($key -and $key.ValueCount -eq 0 -and $key.SubKeyCount -eq 0) {
+                $key.Close()
+                $hive = if ($e.Key -like 'HKEY_LOCAL_MACHINE\*') { [Microsoft.Win32.Registry]::LocalMachine } else { [Microsoft.Win32.Registry]::CurrentUser }
+                $hive.DeleteSubKey(($e.Key -replace '^HKEY_[A-Z_]+\\', ''), $false)
+            }
+            elseif ($key) { $key.Close() }
+        }
+    }
+    $changed
+}
+$appearanceBackup = Join-Path $env:ProgramData ('Cullewie\Work\appearance-backup-' + [Security.Principal.WindowsIdentity]::GetCurrent().User.Value + '.json')
+$appearanceSaved = Get-AppearanceBackup $appearanceBackup
+$appearanceChanges = if ($appearanceSaved.Count) { Restore-AppearanceBackup $appearanceSaved -WhatIf } else { 0 }
+
 if ($PlanOnly) {
     $out = @("Vanilla plan $(Get-Date -Format s)", "SERVICES ($($plan.Count) to change, $($stubs.Count) leftover keys to remove)")
     $out += $plan | ForEach-Object { "service`t$($_.Name)`t$($_.From)`t$($_.To)" }
@@ -124,6 +181,7 @@ if ($PlanOnly) {
     $out += $presentPolicies | ForEach-Object { "policy`t$($_.Key)`t$($_.Value)" }
     $out += "DEFENDER ($($defenderValues.Count) values)"
     $out += $defenderValues | ForEach-Object { "defender`t$($_.Key)`t$($_.Value)" }
+    $out += if ($appearanceSaved.Count) { "APPEARANCE ($appearanceChanges of $($appearanceSaved.Count) saved values differ)" } else { 'APPEARANCE (no saved copy: Tweaks.ps1 has not run since this version, the look stays as it is)' }
     Set-Content -Path $PlanPath -Value $out -Encoding UTF8
     Write-Host "Vanilla: plan written to $PlanPath; nothing was changed." -ForegroundColor Green
     exit 0
@@ -267,10 +325,18 @@ Remove-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Windo
 Set-ItemProperty -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications' -Name 'GlobalUserDisabled' -Value 0 -Type DWord -ErrorAction SilentlyContinue
 Set-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\DriverSearching' -Name 'SearchOrderConfig' -Value 1 -Type DWord -ErrorAction SilentlyContinue
 
+if ($appearanceSaved.Count) {
+    $restored = Restore-AppearanceBackup $appearanceSaved
+    Write-Log "Appearance: your own theme, colours, effects, scaling, taskbar, Start menu and Explorer settings back ($restored values; saved by All-in before it changed them)"
+    # used up: the next All-in run saves the look as it is then
+    Remove-Item -LiteralPath $appearanceBackup -Force -ErrorAction SilentlyContinue
+}
+else { Write-Log 'Appearance: no saved copy of your own settings (All-in ran before this version saved one), so the look stays as it is' 'Yellow' }
+
 Write-Log 'Microsoft Store and Xbox apps'
 & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot 'Store-Xbox.ps1') -Apps xbox
 $appsExit = $LASTEXITCODE
 
-Write-Log "Vanilla done. Not undone: BitLocker, other removed Store apps, personal settings (theme, scaling, Explorer). Restart Windows now. Log: $log" 'Green'
+Write-Log "Vanilla done. Not undone: BitLocker, removed Store apps and Windows features. Restart Windows now (the look and scaling apply after it). Log: $log" 'Green'
 if ($notApplied -or $global:CullewieTrustedBroken -or $global:CullewieTrustedFailed -or $appsExit -ne 0) { exit 1 }
 exit 0

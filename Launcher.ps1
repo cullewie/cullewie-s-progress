@@ -203,7 +203,7 @@ function ConvertTo-AppsLevel([string]$Value) {
 function Read-AppsChoice {
     if ($Apps) { return (ConvertTo-AppsLevel $Apps) }
     Write-Host ''
-    $answer = Read-Host 'Microsoft Store / Xbox kullaniyor musunuz? 1 = Hayir, 2 = Sadece Microsoft Store, 3 = Xbox ve Game Pass (Store dahil)'
+    $answer = Read-Host 'Hangisi? 1 = All-in, 2 = Only Store Mode, 3 = Xbox & Store'
     switch (([string]$answer).Trim()) { '2' { 'store' } '3' { 'xbox' } default { 'off' } }
 }
 function Save-AppsChoice([string]$Level) {
