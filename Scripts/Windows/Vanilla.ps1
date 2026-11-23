@@ -434,8 +434,20 @@ foreach ($task in 'Microsoft\Windows\ExploitGuard\ExploitGuard MDM policy Refres
     schtasks /Change /TN $task /Enable 2>$null | Out-Null
 }
 
-Write-Log 'Power: Windows default plans, hibernation, fast startup, Lock and Sleep in the power menu'
+Write-Log 'Power: Windows default plans (the screen never turns off and the PC never sleeps), hibernation, fast startup, Lock and Sleep in the power menu'
 cmd /c "powercfg -restoredefaultschemes >nul 2>&1"
+# the default plans turn the screen off and put the PC to sleep after a few minutes; the owner wants neither, in any plan,
+# plugged in or on battery. Plans by GUID only (powercfg's text is in the Windows display language).
+$schemes = @(powercfg /L | ForEach-Object { [regex]::Match($_, '[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}').Value } | Where-Object { $_ })
+foreach ($scheme in $schemes) {
+    foreach ($idle in 'SUB_VIDEO VIDEOIDLE', 'SUB_SLEEP STANDBYIDLE', 'SUB_SLEEP HIBERNATEIDLE') {
+        $sub, $setting = $idle -split ' '
+        powercfg /setacvalueindex $scheme $sub $setting 0 2>$null | Out-Null
+        powercfg /setdcvalueindex $scheme $sub $setting 0 2>$null | Out-Null
+    }
+}
+# the plan in use reads its new values only when it is set active again
+cmd /c "powercfg /setactive SCHEME_CURRENT >nul 2>&1"
 cmd /c "powercfg /hibernate on >nul 2>&1"
 Remove-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\FlyoutMenuSettings' -Name 'ShowLockOption', 'ShowSleepOption' -ErrorAction SilentlyContinue
 Set-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Power' -Name 'HiberbootEnabled' -Value 1 -Type DWord -ErrorAction SilentlyContinue
