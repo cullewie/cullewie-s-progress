@@ -56,8 +56,8 @@
                   },
                   {
                       "path":  "Scripts/Windows/Services.ps1",
-                      "size":  36454,
-                      "sha256":  "c93225ce30052ca2de6c4f8780e03e71d2047d6402e8887cb204e67dc8a33ea9",
+                      "size":  36688,
+                      "sha256":  "c3bbf342dbef650b23b5349f331534352dea4cb0e58a68dc02cb6faa59b732e4",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null
@@ -96,8 +96,8 @@
                   },
                   {
                       "path":  "Scripts/Windows/Vanilla.ps1",
-                      "size":  39614,
-                      "sha256":  "bf2e9a9090ad04b1261e5f1fd0826ebcc3e5481c928550f4ba71d0784ef2442d",
+                      "size":  39629,
+                      "sha256":  "08a96a184f8086b272da2e2ea9a83a01f874f4049262630e7580fdb7a8e434f0",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null

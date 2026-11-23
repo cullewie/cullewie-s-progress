@@ -29,7 +29,7 @@ $autoStart = @('AppXSvc', 'AudioEndpointBuilder', 'Audiosrv', 'BITS', 'BrokerInf
     'CDPUserSvc', 'CoreMessagingRegistrar', 'CryptSvc', 'DcomLaunch', 'Dhcp', 'DiagTrack', 'DispBrokerDesktopSvc', 'Dnscache',
     'DPS', 'DusmSvc', 'edgeupdate', 'EventLog', 'gpsvc', 'InventorySvc', 'iphlpsvc', 'LanmanServer', 'LSM', 'MapsBroker', 'nsi',
     'PcaSvc', 'Power', 'ProfSvc', 'RpcEptMapper', 'RpcSs', 'Schedule', 'SENS', 'ShellHWDetection', 'Spooler', 'sppsvc', 'StateRepository',
-    'SysMain', 'SystemEventsBroker', 'TextInputManagementService', 'TrkWks', 'UserManager', 'UsoSvc', 'whesvc', 'Winmgmt',
+    'SysMain', 'SystemEventsBroker', 'TextInputManagementService', 'TrkWks', 'UserManager', 'UsoSvc', 'whesvc', 'Winmgmt', 'XboxService',
     'WlanSvc', 'WpnService', 'WpnUserService', 'WSAIFabricSvc', 'WSearch')
 # PcaSvc: right after the reinstall it was manual, minutes later Windows itself set it to delayed automatic (its state before too)
 $delayedStart = @('BITS', 'cbdhsvc', 'CDPSvc', 'edgeupdate', 'InventorySvc', 'MapsBroker', 'PcaSvc', 'sppsvc', 'UsoSvc', 'whesvc', 'WSearch')

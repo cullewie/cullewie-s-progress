@@ -13,8 +13,9 @@ param([switch]$Live, [ValidateSet('off', 'store', 'xbox')][string]$Apps = 'off',
 function Get-AppsServiceStart([string]$Apps) {
     $start = @{}
     if ($Apps -in 'store', 'xbox') { $start += @{ wuauserv = 3; BITS = 3; UsoSvc = 2; WaaSMedicSvc = 3; PushToInstall = 3 } }
-    # XboxNetApiSvc needs IKEEXT; Bluetooth controllers need bthserv, DeviceAssociationService and DevicesFlowUserSvc
-    if ($Apps -eq 'xbox') { $start += @{ XblAuthManager = 3; XblGameSave = 3; XboxGipSvc = 3; XboxNetApiSvc = 3; IKEEXT = 3; iphlpsvc = 2; GameInputSvc = 3; WpnService = 2; WpnUserService = 2; bthserv = 3; DeviceAssociationService = 3; DevicesFlowUserSvc = 3 } }
+    # XboxNetApiSvc needs IKEEXT; Bluetooth controllers need bthserv, DeviceAssociationService and DevicesFlowUserSvc.
+    # XboxService is GameInput's XBOX Input Service: off in the other modes, where it fails at every boot without the Xbox parts
+    if ($Apps -eq 'xbox') { $start += @{ XboxService = 2; XblAuthManager = 3; XblGameSave = 3; XboxGipSvc = 3; XboxNetApiSvc = 3; IKEEXT = 3; iphlpsvc = 2; GameInputSvc = 3; WpnService = 2; WpnUserService = 2; bthserv = 3; DeviceAssociationService = 3; DevicesFlowUserSvc = 3 } }
     $start
 }
 function Set-ServiceStartInText([string]$Text, [hashtable]$Start) {
@@ -870,6 +871,9 @@ Windows Registry Editor Version 5.00
 "Start"=dword:00000004
 
 [HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\XboxNetApiSvc]
+"Start"=dword:00000004
+
+[HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\XboxService]
 "Start"=dword:00000004
 
 [HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\ZTHELPER]
