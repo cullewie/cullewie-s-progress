@@ -338,7 +338,21 @@ Write-Log 'Network: IPv6, file sharing, QoS and discovery back on (Teredo: set b
 $offBindings = @(Get-NetAdapterBinding -ComponentID 'ms_tcpip6', 'ms_server', 'ms_msclient', 'ms_pacer', 'ms_lldp', 'ms_lltdio', 'ms_rspndr' -ErrorAction SilentlyContinue | Where-Object { -not $_.Enabled })
 if ($offBindings) {
     Write-Log '  (the network connection drops for a few seconds while the adapter restarts)'
-    $offBindings | ForEach-Object { Enable-NetAdapterBinding -Name $_.Name -ComponentID $_.ComponentID -ErrorAction SilentlyContinue }
+    # the services behind file sharing and network discovery were disabled by All-in; their new start types are only in
+    # the registry so far (Windows reads it at boot), and switching a binding on waited for a service the service manager
+    # still saw as disabled (10 minutes, 2026-11-23). Tell the service manager first.
+    $scStart = @{ 2 = 'auto'; 3 = 'demand'; 4 = 'disabled' }
+    foreach ($svc in 'LanmanServer', 'LanmanWorkstation', 'lltdsvc', 'lmhosts') {
+        if (Get-Service -Name $svc -ErrorAction SilentlyContinue) { sc.exe config $svc start= $scStart[(Get-DefaultStart $svc)] | Out-Null }
+    }
+    # in a separate process with a time limit: a binding that still does not answer is applied at the restart anyway
+    $bindingJob = Start-Job -ArgumentList (, @($offBindings | ForEach-Object { "$($_.Name)|$($_.ComponentID)" })) -ScriptBlock {
+        param([string[]]$Items)
+        foreach ($i in $Items) { $n, $c = $i -split '\|', 2; Enable-NetAdapterBinding -Name $n -ComponentID $c -ErrorAction SilentlyContinue }
+    }
+    if (Wait-Job $bindingJob -Timeout 120) { Write-Log "  $($offBindings.Count) bindings back on" }
+    else { Write-Log '  the network adapter did not answer within 2 minutes; the bindings are switched on at the restart' 'Yellow'; Stop-Job $bindingJob }
+    Remove-Job $bindingJob -Force -ErrorAction SilentlyContinue
 }
 Remove-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip6\Parameters' -Name 'DisabledComponents' -ErrorAction SilentlyContinue
 
