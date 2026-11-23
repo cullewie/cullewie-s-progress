@@ -16,8 +16,8 @@
                   },
                   {
                       "path":  "README.md",
-                      "size":  4986,
-                      "sha256":  "048328b5bb86d85a58d3df623c0b90e3ae7deebd41050dfdda6d16096c863592",
+                      "size":  4946,
+                      "sha256":  "e46ea08fe7b2cb8aeb70d94fb68db63f6672ce827aff65dd31432c353225a314",
                       "role":  "documentation",
                       "origin":  "project",
                       "derivedFrom":  null
@@ -128,8 +128,8 @@
                   },
                   {
                       "path":  "Scripts/GPU/Display-Options.ps1",
-                      "size":  17004,
-                      "sha256":  "393ded3dc26d2dfb5328208eea225bbad13620a7f0fd674df39ef6fe1199997f",
+                      "size":  16967,
+                      "sha256":  "fc9ec0e0c346edd3453a4ad0d7bcf38501639149d479368491649ba1bbe0766e",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null

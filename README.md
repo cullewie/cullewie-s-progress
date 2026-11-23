@@ -17,7 +17,7 @@ FPS artışı ya da daha düşük gecikme garanti edilmez; sonuç donanıma ve o
 Bilgisayarı oyun için en sade haline getirir:
 
 - Eski ekran kartı sürücüsünü güvenli modda DDU ile siler, NVIDIA'nın ya da AMD'nin (Radeon RX 5000–9000) sitesinden en yenisini kurar. Sürücünün dijital imzası kontrol edilir.
-- NVIDIA veya AMD ayarlarını yapar, monitörü en yüksek yenileme hızına (Hz) alır. Sonda Digital Vibrance (Dijital Canlılık) ya da AMD'de Color Saturation (Renk Doygunluğu) için bir değer sorar.
+- NVIDIA veya AMD ayarlarını yapar, monitörü en yüksek yenileme hızına (Hz) alır. Sonda Digital Vibrance ya da AMD'de Color Saturation için bir değer sorar.
 - Hazır gelen gereksiz uygulamaları, Widgets'ı ve Copilot'u kaldırır. Telemetriyi kapatır, Windows'u koyu temaya alır, güç planını en yüksek performansa ayarlar, Timer Resolution'ı 0,5 ms'ye ayarlar.
 - Yaklaşık 200 Windows hizmetini kapatır. Kapatmadan önce açık kalacak hizmetlerin bunlara bağlı olup olmadığını kontrol eder.
 

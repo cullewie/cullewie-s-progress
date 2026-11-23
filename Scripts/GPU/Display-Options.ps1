@@ -188,8 +188,8 @@ Write-Host 'Display options' -ForegroundColor Cyan
 # full-screen scaling is always turned on, without a question (-Scaling no skips it)
 if (-not $Scaling) { $Scaling = 'yes' }
 if (-not $PSBoundParameters.ContainsKey('Level')) {
-    if ($hasNvidia) { $Level = Read-Host 'Digital Vibrance (Dijital Canlilik) yuzde kac olsun? 50 = varsayilan, 100 = en yuksek (bos = dokunma)' }
-    elseif ($hasAmd) { $Level = Read-Host 'Color Saturation (Renk Doygunlugu) yuzde kac olsun? 100 = varsayilan, 200 = en yuksek, en az 100 (bos = dokunma)' }
+    if ($hasNvidia) { $Level = Read-Host 'Digital Vibrance yuzde kac olsun? 50 = varsayilan, 100 = en yuksek (bos = dokunma)' }
+    elseif ($hasAmd) { $Level = Read-Host 'Color Saturation yuzde kac olsun? 100 = varsayilan, 200 = en yuksek, en az 100 (bos = dokunma)' }
     else { $Level = '' }
 }
 $percent = -1
