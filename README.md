@@ -2,19 +2,17 @@
 
 Windows 11'i formatladıktan sonra bilgisayarı oyun için hazırlayan, tek komutla çalışan açık kaynak bir kurulum aracı. Yaptığı her şey bu depodaki dosyalarda yazılıdır.
 
-Başlat menüsünde **PowerShell**'e sağ tıkla, **Yönetici olarak çalıştır**'ı seç ve şunu yapıştır:
-
-```powershell
-iwr 'https://github.com/cullewie/cullewie-s-progress/raw/refs/heads/main/IWR.ps1' -useb | iex
-```
-
-Kurulumun başında üç seçenekten biri sorulur: **1 = All-in**, **2 = Only Store Mode**, **3 = Xbox & Store**. Hepsini geri almak için **Vanilla Mode** kullanılır.
+Başlat menüsünde **PowerShell**'e sağ tıkla, **Yönetici olarak çalıştır**'ı seç ve aşağıdaki seçeneklerden birinin komutunu yapıştır: **All-in**, **Xbox & Store**, **Only Store Mode** ya da hepsini geri almak için **Vanilla Mode**.
 
 FPS artışı ya da daha düşük gecikme garanti edilmez; sonuç donanıma ve oyuna göre değişir.
 
 ## All-in
 
-Bilgisayarı oyun için en sade haline getirir:
+```powershell
+iwr 'https://github.com/cullewie/cullewie-s-progress/raw/refs/heads/main/IWR.ps1' -useb | iex
+```
+
+Başta gelen soruda **1 = All-in**'i seç. Bilgisayarı oyun için en sade haline getirir:
 
 - Eski ekran kartı sürücüsünü güvenli modda DDU ile siler, NVIDIA'nın ya da AMD'nin (Radeon RX 5000–9000) sitesinden en yenisini kurar. Sürücünün dijital imzası kontrol edilir.
 - NVIDIA veya AMD ayarlarını yapar, monitörü en yüksek yenileme hızına (Hz) alır. Sonda Digital Vibrance ya da AMD'de Color Saturation için bir değer sorar.
