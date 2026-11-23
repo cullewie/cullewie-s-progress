@@ -316,12 +316,13 @@ function Start-FullSetup {
     # stage 2: one safe-mode script runs DDU and Defender in order, then always leaves safe mode
     $safeScript = Join-Path $env:ProgramData 'Cullewie\Work\cullewie-safe.ps1'
     [IO.File]::WriteAllText($safeScript, (@'
-try { . '__TESTLOG__' } catch { }   # TESTLOG
-$tlOn = [bool](Get-Command Write-TestStep -ErrorAction SilentlyContinue)   # TESTLOG
-if ($tlOn) { Save-BootEvents; $tl = Get-TestStepLog 'safe-mode'; if ($tl) { Start-Transcript -LiteralPath $tl -Force | Out-Null } }   # TESTLOG
 try {
     # leave safe mode first: if power fails or something hangs below, the next start is normal Windows
     cmd /c "bcdedit /deletevalue {current} safeboot >nul 2>&1"
+    # the run log comes after that and inside this try, so nothing it does can keep the PC in safe mode
+    try { . '__TESTLOG__' } catch { }   # TESTLOG
+    $tlOn = [bool](Get-Command Write-TestStep -ErrorAction SilentlyContinue)   # TESTLOG
+    if ($tlOn) { Save-BootEvents; $tl = Get-TestStepLog 'safe-mode'; if ($tl) { Start-Transcript -LiteralPath $tl -Force | Out-Null } }   # TESTLOG
     $flag = "$env:ProgramData\Cullewie\Work\cullewie-ddu.flag"
     if (Test-Path $flag) {
         $ddu = "$env:ProgramData\Cullewie\Work\ddu\Display Driver Uninstaller.exe"
