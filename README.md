@@ -68,8 +68,8 @@ $env:CULLEWIE_MODE = 'vanilla'; iwr 'https://github.com/cullewie/cullewie-s-prog
 - **Hizmetler:** Windows 11'in varsayılan ayarlarına döner.
 - **Ağ ve politikalar:** IPv6 ve dosya paylaşımı yeniden açılır, aracın yazdığı politika ayarları silinir.
 - **Defender ve güç:** Defender ayarları ve Windows'un güç planları geri gelir. Timer Resolution hizmeti kaldırılır, Sistem Geri Yükleme açılır.
-- **Uygulamalar:** Microsoft Store ve Xbox uygulamaları kurulur. All-in'in kaldırdığı uygulamalar, Windows özellikleri, OneDrive ve GameInput yeniden kurulur (bu sürümle yapılan All-in kurulumlarında).
-- **Görünüm:** All-in, görünümü değiştirmeden önce senin o anki tema, renk, görsel efekt, ölçekleme, görev çubuğu, Başlat menüsü ve Gezgin ayarlarını kaydeder. Vanilla Mode bunları geri yükler. Bu kayıt sadece aracın bu sürümüyle yapılan All-in kurulumlarında vardır; kayıt yoksa görünüm olduğu gibi kalır.
+- **Uygulamalar:** Kaldırılan uygulamalar ve Windows özellikleri geri kurulur.
+- **Görünüm:** Kurulumdan önceki görünüm ayarların (tema, renk, görev çubuğu, Başlat menüsü) geri gelir.
 
 **Geri gelmeyenler:**
 - Ekran kartı sürücüsü ve GPU ayarları
