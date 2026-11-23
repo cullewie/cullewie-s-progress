@@ -8,7 +8,9 @@
 #  - Microsoft Store and Xbox apps installed (Store-Xbox.ps1 -Apps xbox)
 #  - the user's own look (theme, colours, visual effects, scaling, taskbar, Start menu, Explorer, context menu) from the
 #    copy Tweaks.ps1 saved before it changed them; without that copy the look stays as it is
-# Not undone: BitLocker (turn it on yourself), removed Store apps and Windows features (install them from the Store).
+#  - removed apps, Windows features and programs (OneDrive, GameInput) reinstalled from the list Tweaks.ps1 saved;
+#    apps no longer offered anywhere are listed, not forced
+# Not undone: BitLocker (turn it on yourself), apps that are no longer offered, Remote Desktop Connection.
 # -PlanOnly: write what would change to -PlanPath and stop; nothing is changed. Restart Windows afterwards.
 param([switch]$PlanOnly, [string]$PlanPath = "$env:ProgramData\Cullewie\Work\vanilla-plan.txt")
 $ErrorActionPreference = 'Continue'
@@ -173,6 +175,70 @@ $appearanceBackup = Join-Path $env:ProgramData ('Cullewie\Work\appearance-backup
 $appearanceSaved = Get-AppearanceBackup $appearanceBackup
 $appearanceChanges = if ($appearanceSaved.Count) { Restore-AppearanceBackup $appearanceSaved -WhatIf } else { 0 }
 
+# ---------- removed apps and features: the list Tweaks.ps1 saved of what it found and removed ----------
+# Store IDs checked with "winget show" (2026-11-23). An app not listed here is no longer offered (Solitaire, Maps, Tips,
+# People, Skype, Mail, Cortana, Dev Home, 3D apps, OneNote, Mixed Reality) or has no Store page (Copilot Provider,
+# Cross Device): it is listed as not restored, never forced.
+$storeIds = [ordered]@{
+    'Microsoft.BingNews' = '9WZDNCRFHVFW'; 'Microsoft.BingWeather' = '9WZDNCRFJ3Q2'; 'Microsoft.GetHelp' = '9PKDZBMV1H3T'
+    'Microsoft.MicrosoftOfficeHub' = '9WZDNCRD29V9'; 'Microsoft.PowerAutomateDesktop' = '9NFTCH6J7FHV'; 'Microsoft.Todos' = '9NBLGGH5R558'
+    'Microsoft.WindowsAlarms' = '9WZDNCRFJ3PR'; 'Microsoft.WindowsFeedbackHub' = '9NBLGGH4R32N'; 'Microsoft.WindowsSoundRecorder' = '9WZDNCRFHWKN'
+    'Microsoft.ZuneMusic' = '9WZDNCRFJ3PT'; 'Microsoft.ZuneVideo' = '9WZDNCRFJ3P2'; 'Microsoft.YourPhone' = '9NMPJ99VJBWV'
+    'Microsoft.OutlookForWindows' = '9NRX63209R7B'; 'MSTeams' = 'XP8BT8DW290MPQ'; 'Clipchamp.Clipchamp' = '9P1J8S7CCWWT'
+    'Microsoft.Copilot' = '9NHT9RB2F4HD'; 'MicrosoftCorporationII.QuickAssist' = '9P7BP5VNWKX5'; 'MicrosoftCorporationII.MicrosoftFamily' = '9PDJDJS743XF'
+    'Microsoft.BingSearch' = '9NZBF4GT040C'; 'MicrosoftWindows.Client.WebExperience' = '9MSSGKG348SP'; 'Microsoft.XboxGamingOverlay' = '9NZKPSTSNW4P'
+}
+# programs from winget; Remote Desktop Connection has no package to reinstall it from
+$wingetIds = @{ 'OneDrive' = 'Microsoft.OneDrive'; 'GameInput' = 'Microsoft.GameInput' }
+function Get-RemovedInventory([string]$Path) {
+    if (-not (Test-Path -LiteralPath $Path)) { return $null }
+    $raw = Get-Content -LiteralPath $Path -Raw | ConvertFrom-Json
+    $out = [ordered]@{}
+    # each list as a real array, also when it holds one item or none
+    foreach ($k in 'apps', 'capabilities', 'features', 'programs') { $out[$k] = @(if ($raw.$k) { $raw.$k | ForEach-Object { [string]$_ } }) }
+    [pscustomobject]$out
+}
+function Get-RestorePlan($Inventory) {
+    foreach ($n in @($Inventory.apps)) {
+        if ($storeIds.Contains($n)) { [pscustomobject]@{ Kind = 'app'; Name = $n; How = 'msstore'; Id = $storeIds[$n] } }
+        else { [pscustomobject]@{ Kind = 'app'; Name = $n; How = 'skip'; Id = '' } }
+    }
+    foreach ($n in @($Inventory.capabilities)) { [pscustomobject]@{ Kind = 'capability'; Name = $n; How = 'capability'; Id = $n } }
+    foreach ($n in @($Inventory.features)) { [pscustomobject]@{ Kind = 'feature'; Name = $n; How = 'feature'; Id = $n } }
+    foreach ($n in @($Inventory.programs)) {
+        if ($wingetIds.ContainsKey($n)) { [pscustomobject]@{ Kind = 'program'; Name = $n; How = 'winget'; Id = $wingetIds[$n] } }
+        else { [pscustomobject]@{ Kind = 'program'; Name = $n; How = 'skip'; Id = '' } }
+    }
+}
+# installs each item (the runner returns $true when it worked); returns what did not come back, with the reason
+function Invoke-RestorePlan([object[]]$Plan, [scriptblock]$Runner) {
+    if (-not $Runner) {
+        $Runner = {
+            param($item)
+            $winget = Get-Command winget.exe -ErrorAction SilentlyContinue
+            if ($item.How -eq 'capability') { Add-WindowsCapability -Online -Name $item.Id -ErrorAction Stop | Out-Null; return $true }
+            if ($item.How -eq 'feature') { Enable-WindowsOptionalFeature -Online -FeatureName $item.Id -All -NoRestart -WarningAction SilentlyContinue -ErrorAction Stop | Out-Null; return $true }
+            if (-not $winget) { return $false }
+            $source = if ($item.How -eq 'msstore') { 'msstore' } else { 'winget' }
+            & $winget.Source install --id $item.Id --exact --source $source --accept-package-agreements --accept-source-agreements --silent --disable-interactivity | Out-Host
+            # -1978335189 (0x8A15002B): already installed and nothing newer, which counts as back
+            return ($LASTEXITCODE -eq 0 -or $LASTEXITCODE -eq -1978335189)
+        }
+    }
+    $notBack = @()
+    foreach ($item in $Plan) {
+        if ($item.How -eq 'skip') { $notBack += [pscustomobject]@{ Name = $item.Name; Reason = 'no longer available to install' }; continue }
+        $ok = $false
+        try { $ok = [bool](& $Runner $item) } catch { }
+        if ($ok) { Write-Log "  ok    $($item.Name)" 'Green' }
+        else { $notBack += [pscustomobject]@{ Name = $item.Name; Reason = 'install failed' } }
+    }
+    $notBack
+}
+$inventoryPath = Join-Path $env:ProgramData 'Cullewie\Work\removed-inventory.json'
+$inventory = Get-RemovedInventory $inventoryPath
+$restorePlan = if ($inventory) { @(Get-RestorePlan $inventory) } else { @() }
+
 if ($PlanOnly) {
     $out = @("Vanilla plan $(Get-Date -Format s)", "SERVICES ($($plan.Count) to change, $($stubs.Count) leftover keys to remove)")
     $out += $plan | ForEach-Object { "service`t$($_.Name)`t$($_.From)`t$($_.To)" }
@@ -182,6 +248,8 @@ if ($PlanOnly) {
     $out += "DEFENDER ($($defenderValues.Count) values)"
     $out += $defenderValues | ForEach-Object { "defender`t$($_.Key)`t$($_.Value)" }
     $out += if ($appearanceSaved.Count) { "APPEARANCE ($appearanceChanges of $($appearanceSaved.Count) saved values differ)" } else { 'APPEARANCE (no saved copy: Tweaks.ps1 has not run since this version, the look stays as it is)' }
+    $out += if ($inventory) { "RESTORE ($(@($restorePlan | Where-Object How -ne 'skip').Count) can come back, $(@($restorePlan | Where-Object How -eq 'skip').Count) cannot)" } else { 'RESTORE (no saved list: All-in ran before this version saved one, nothing is reinstalled)' }
+    $out += $restorePlan | ForEach-Object { "restore`t$($_.Kind)`t$($_.Name)`t$($_.How)`t$($_.Id)" }
     Set-Content -Path $PlanPath -Value $out -Encoding UTF8
     Write-Host "Vanilla: plan written to $PlanPath; nothing was changed." -ForegroundColor Green
     exit 0
@@ -337,6 +405,16 @@ Write-Log 'Microsoft Store and Xbox apps'
 & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot 'Store-Xbox.ps1') -Apps xbox
 $appsExit = $LASTEXITCODE
 
-Write-Log "Vanilla done. Not undone: BitLocker, removed Store apps and Windows features. Restart Windows now (the look and scaling apply after it). Log: $log" 'Green'
+# after Store-Xbox: the Store and its services work again by now
+if ($inventory) {
+    Write-Log "Removed apps and features: bringing back what can come back ($(@($restorePlan | Where-Object How -ne 'skip').Count) items)"
+    $notBack = @(Invoke-RestorePlan $restorePlan)
+    foreach ($n in $notBack) { Write-Log "  not restored  $($n.Name) ($($n.Reason))" 'Yellow' }
+    # used up, like the appearance copy: the next All-in run lists what the PC has then
+    Remove-Item -LiteralPath $inventoryPath -Force -ErrorAction SilentlyContinue
+}
+else { Write-Log 'Removed apps and features: no saved list (All-in ran before this version saved one), nothing is reinstalled' 'Yellow' }
+
+Write-Log "Vanilla done. Not undone: BitLocker, and apps that are no longer offered (listed above). Restart Windows now (the look, scaling and features apply after it). Log: $log" 'Green'
 if ($notApplied -or $global:CullewieTrustedBroken -or $global:CullewieTrustedFailed -or $appsExit -ne 0) { exit 1 }
 exit 0

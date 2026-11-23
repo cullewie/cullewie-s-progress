@@ -27,6 +27,22 @@ New-Item -ItemType Directory -Path (Split-Path $log) -Force | Out-Null
 if ($DryRun) { Set-Content -Path $log -Value "Dry run $(Get-Date -Format s)" -Encoding UTF8 }
 function Write-Plan([string]$Kind, [string]$Name) { if ($DryRun) { Add-Content -Path $log -Value "$Kind`t$Name" -Encoding UTF8 } }
 
+# what this run finds and removes, for Vanilla Mode to bring back: each item is listed before it is removed, the file is
+# written once in step 1 and never overwritten (a second All-in run must not replace the list of what the PC had at first)
+$inventoryPath = Join-Path $env:ProgramData 'Cullewie\Work\removed-inventory.json'
+$removedInventory = [ordered]@{ apps = @(); capabilities = @(); features = @(); programs = @() }
+function Save-RemovedInventory([System.Collections.IDictionary]$Inventory, [string]$Path) {
+    if (Test-Path -LiteralPath $Path) { return $false }
+    New-Item -ItemType Directory -Force -Path (Split-Path $Path) | Out-Null
+    [IO.File]::WriteAllText($Path, ($Inventory | ConvertTo-Json -Depth 3), [Text.UTF8Encoding]::new($false))
+    $true
+}
+# removed further down (Widgets section, Game Bar section), recorded here
+foreach ($pkg in 'MicrosoftWindows.Client.WebExperience', 'Microsoft.XboxGamingOverlay') {
+    if ($pkg -eq 'Microsoft.XboxGamingOverlay' -and $Apps -eq 'xbox') { continue }
+    if (@(Get-AppxPackage -AllUsers $pkg | Where-Object { @($_.PackageUserInformation | Where-Object { $_.InstallState -eq 'Installed' }).Count }).Count) { $removedInventory.apps += $pkg }
+}
+
 Write-Host 'Removing apps...'
 $removeApps = @(
     'Microsoft.BingNews', 'Microsoft.BingWeather', 'Microsoft.BingSearch', 'Microsoft.BingFinance', 'Microsoft.BingSports',
@@ -47,6 +63,7 @@ foreach ($name in $removeApps) {
     $app = $installed | Where-Object { $_.Name -eq $name } | Select-Object -First 1
     if (-not $app) { Write-Host "  ok    $name (already removed)" -ForegroundColor DarkGray; continue }
     Write-Plan 'app' $name
+    $removedInventory.apps += $name
     if ($DryRun) { continue }
     $app | Remove-AppxPackage -AllUsers -ErrorAction SilentlyContinue
     $left = @(Get-AppxPackage -AllUsers $name | Where-Object { @($_.PackageUserInformation | Where-Object { $_.InstallState -eq 'Installed' }).Count })
@@ -67,6 +84,7 @@ foreach ($cap in Get-WindowsCapability -Online | Where-Object { $_.State -eq 'In
     $name = $cap.Name
     if (-not ($removeCapabilities | Where-Object { $name -like $_ })) { continue }
     Write-Plan 'capability' $name
+    $removedInventory.capabilities += $name
     if (-not $DryRun) { try { Remove-WindowsCapability -Online -Name $name -ErrorAction Stop | Out-Null } catch { } }
 }
 
@@ -79,6 +97,7 @@ $removeFeatures = @(
 foreach ($feature in Get-WindowsOptionalFeature -Online | Where-Object { $_.State -eq 'Enabled' -and $removeFeatures -contains $_.FeatureName }) {
     $name = $feature.FeatureName
     Write-Plan 'feature' $name
+    $removedInventory.features += $name
     if (-not $DryRun) { try { Disable-WindowsOptionalFeature -Online -FeatureName $name -NoRestart -WarningAction SilentlyContinue -ErrorAction Stop | Out-Null } catch { } }
 }
 
@@ -90,6 +109,10 @@ function Remove-MsiProduct([string]$Like) {
         if (-not $DryRun) { Start-Process 'msiexec.exe' -ArgumentList "/x $($p.PSChildName) /qn /norestart" -Wait -NoNewWindow }
     }
 }
+if ($Apps -ne 'xbox' -and @(Get-ItemProperty $uninstall -ErrorAction SilentlyContinue | Where-Object { $_.DisplayName -like '*Microsoft GameInput*' }).Count) { $removedInventory.programs += 'GameInput' }
+if ((Test-Path "$env:ProgramFiles\Microsoft OneDrive\OneDrive.exe") -or (Test-Path "$env:LOCALAPPDATA\Microsoft\OneDrive\OneDrive.exe")) { $removedInventory.programs += 'OneDrive' }
+if (Get-Command mstsc -ErrorAction SilentlyContinue) { $removedInventory.programs += 'RemoteDesktop' }
+if (-not $DryRun) { if (Save-RemovedInventory $removedInventory $inventoryPath) { Write-Host "Removed items listed for Vanilla Mode: $inventoryPath" } }
 if ($Apps -ne 'xbox') { Remove-MsiProduct '*Microsoft GameInput*' }   # Game Pass games need it
 Remove-MsiProduct '*Update for x64-based Windows Systems (KB5001716)*'   # exact KB, a bare wildcard could match other servicing updates
 Remove-MsiProduct '*Microsoft Update Health Tools*'
