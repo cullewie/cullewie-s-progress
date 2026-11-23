@@ -73,11 +73,12 @@ function Invoke-ChildScript {
         # live mode asks nothing, so the child's lines can go through Out-Host and into the live-setup log.
         # Not otherwise: a piped child may show its questions late.
         $stepLog = if ($script:TestLogOn) { Get-TestStepLog $Tool.Name } else { $null }   # TESTLOG
+        if ($stepLog) { try { [IO.File]::WriteAllText($stepLog, '') } catch { $stepLog = $null } }   # TESTLOG: a log that cannot be written means no log, never a broken step
         $stepWatch = [Diagnostics.Stopwatch]::StartNew()   # TESTLOG
-        if ($stepLog -and $script:CaptureChildOutput) { & $script:PowerShellExe @childArguments | Tee-Object -FilePath $stepLog | Out-Host }   # TESTLOG
+        if ($stepLog -and $script:CaptureChildOutput) { & $script:PowerShellExe @childArguments | ForEach-Object { try { [IO.File]::AppendAllText($stepLog, "$_`r`n") } catch { }; $_ } | Out-Host }   # TESTLOG
         elseif ($stepLog) {   # TESTLOG: an outer process holds the transcript and runs the child with -File as before (same exit codes, prompts still show)
             $quoted = (@($script:PowerShellExe) + $childArguments | ForEach-Object { "'" + ([string]$_ -replace "'", "''") + "'" }) -join ' '   # TESTLOG
-            $wrapper = "Start-Transcript -LiteralPath '$($stepLog -replace "'", "''")' -Force | Out-Null; & $quoted; `$c = `$LASTEXITCODE; Stop-Transcript | Out-Null; exit `$c"   # TESTLOG
+            $wrapper = "Start-Transcript -LiteralPath '$($stepLog -replace "'", "''")' -Force | Out-Null; `$c = -1; & $quoted; if (`$null -ne `$LASTEXITCODE) { `$c = `$LASTEXITCODE }; Stop-Transcript | Out-Null; exit `$c"   # TESTLOG
             & $script:PowerShellExe -NoLogo -NoProfile -ExecutionPolicy Bypass -EncodedCommand ([Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($wrapper)))   # TESTLOG
         }   # TESTLOG
         elseif ($script:CaptureChildOutput) { & $script:PowerShellExe @childArguments | Out-Host }
@@ -344,7 +345,7 @@ finally {
     Write-Host 'Restarting' -ForegroundColor Red
     shutdown -r -t 5
 }
-'@).Replace('__TESTLOG__', (Join-Path $script:RepoRoot 'Scripts\TestLog.ps1')), [Text.UTF8Encoding]::new($false))   # TESTLOG: Replace
+'@).Replace('__TESTLOG__', (Join-Path $script:RepoRoot 'Scripts\TestLog.ps1').Replace("'", "''")),[Text.UTF8Encoding]::new($false))   # TESTLOG: Replace
     $runOnce = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce'
     Set-ItemProperty -Path $runOnce -Name '*cullewiesafe' -Value "powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Maximized -File `"$safeScript`""
 
@@ -383,7 +384,14 @@ function Resume-FullSetup {
     $statePath = Join-Path $script:RepoRoot 'nvidia-setup-state.json'
     $failed = New-Object System.Collections.Generic.List[string]
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-    try { Wait-Internet } catch { $failed.Add($_.Exception.Message) }
+    try {
+        Wait-Internet
+        if ($script:TestLogOn) { Write-TestStep 'Internet' 'PASS' }   # TESTLOG
+    }
+    catch {
+        $failed.Add($_.Exception.Message)
+        if ($script:TestLogOn) { Write-TestStep 'Internet' 'FAIL'; Save-NetworkState }   # TESTLOG
+    }
     $hasNvidia = @(Get-PciGpu '10DE').Count -gt 0
     if ($hasNvidia) {
         if (Test-Path -LiteralPath $statePath -PathType Leaf) {
@@ -448,7 +456,7 @@ function Resume-FullSetup {
         Start-Sleep -Seconds 15
     }
     Write-Host 'Setup finished. Restarting normally.' -ForegroundColor Green
-    if ($script:TestLogOn) { Write-TestStep 'Restart' 'INFO' }   # TESTLOG
+    if ($script:TestLogOn) { Write-TestStep 'Restart' 'INFO'; Register-NextBootLog }   # TESTLOG
     shutdown -r -t 10
 }
 function Test-PendingReboot {
@@ -496,6 +504,7 @@ function Start-LiveSetup {
     $steps.Add(('{0,-50} exit {1,3}' -f $tool.Name, $script:LastChildExitCode))
     Write-Host ([Environment]::NewLine + 'Live setup summary (exit 0 = done):') -ForegroundColor Cyan
     $steps | ForEach-Object { Write-Host "  $_" }
+    if ($script:TestLogOn) { Register-NextBootLog }   # TESTLOG
     Write-Host "Nothing was restarted. Restart Windows when you are ready; services change then. Log: $log" -ForegroundColor Yellow
     Stop-Transcript | Out-Null
 }
@@ -526,6 +535,7 @@ try {
         # no question and no restart here: the script lists what it could not undo, the user restarts
         if ($script:TestLogOn) { [void](Start-TestRun 'vanilla') }   # TESTLOG
         Invoke-RequiredTool -Id 'vanilla'
+        if ($script:TestLogOn) { Register-NextBootLog }   # TESTLOG
         Write-Host 'Back to Windows defaults. Restart Windows now to finish.' -ForegroundColor Green
     }
     else { Start-FullSetup }

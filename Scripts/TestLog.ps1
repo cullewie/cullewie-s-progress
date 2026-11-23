@@ -4,6 +4,7 @@
 # so the steps after a restart land in the same folder. Nothing here may ever stop the setup: every function swallows
 # its own errors.
 $script:TestLogRoot = Join-Path $env:ProgramData 'Cullewie\Logs'
+$script:TestLogSelf = $PSCommandPath   # this file, for the next-boot entry
 
 function Get-TestRun([string]$Root = $script:TestLogRoot) {
     try {
@@ -55,6 +56,7 @@ function Save-BootEvents([string]$Root = $script:TestLogRoot) {
             $events = Get-WinEvent -FilterHashtable @{ LogName = $log; Level = 1, 2, 3; StartTime = $since } -ErrorAction SilentlyContinue
             $lines += @($events | Sort-Object TimeCreated | ForEach-Object { '  {0:yyyy-MM-ddTHH:mm:ss} {1} {2} {3} {4}' -f $_.TimeCreated, $log, $_.Id, $_.ProviderName, (($_.Message -split "`r?`n")[0]) })
         }
+        $lines += @(Get-NetworkLines)
         Add-Content -LiteralPath (Join-Path $run 'boots.log') -Value $lines -Encoding UTF8 -ErrorAction Stop
         Set-Content -LiteralPath $marker -Value $boot.ToString('o', [Globalization.CultureInfo]::InvariantCulture) -ErrorAction Stop
     }
@@ -71,4 +73,53 @@ function Start-TestRun([string]$Mode, [string]$Root = $script:TestLogRoot) {
         $run
     }
     catch { $null }
+}
+
+# network state: adapters, IPv4 / gateway / DNS, ping 1.1.1.1, DNS lookup of github.com (one line each)
+function Get-NetworkLines {
+    $out = @()
+    try { foreach ($a in @(Get-NetAdapter -ErrorAction Stop)) { $out += '  net adapter {0}: {1} {2}' -f $a.Name, $a.Status, $a.LinkSpeed } }
+    catch { $out += '  net adapter error: ' + $_.Exception.Message }
+    try {
+        foreach ($c in @(Get-NetIPConfiguration -ErrorAction Stop)) {
+            try {
+                $ip = @($c.IPv4Address | ForEach-Object { $_.IPAddress }) -join ','
+                $gw = @($c.IPv4DefaultGateway | ForEach-Object { $_.NextHop }) -join ','
+                $dns = @($c.DNSServer | Where-Object { $_.AddressFamily -eq 2 } | ForEach-Object { $_.ServerAddresses }) -join ','
+                $out += '  net ip {0}: {1} gw {2} dns {3}' -f $c.InterfaceAlias, $ip, $gw, $dns
+            }
+            catch { }
+        }
+    }
+    catch { $out += '  net ip error: ' + $_.Exception.Message }
+    $ping = 'FAIL'
+    try { if (Test-Connection -ComputerName 1.1.1.1 -Count 2 -Quiet -ErrorAction Stop) { $ping = 'OK' } } catch { }
+    $out += '  net ping 1.1.1.1: ' + $ping
+    $dnsOk = 'FAIL'
+    try { [void](Resolve-DnsName -Name github.com -DnsOnly -QuickTimeout -ErrorAction Stop); $dnsOk = 'OK' } catch { }
+    $out += '  net dns github.com: ' + $dnsOk
+    $out
+}
+
+# a network check at any moment (e.g. a minute after sign-in, or when the internet wait fails)
+function Save-NetworkState([string]$Root = $script:TestLogRoot) {
+    try {
+        $run = Get-TestRun -Root $Root
+        if (-not $run) { return }
+        $lines = @(('  net check {0:yyyy-MM-ddTHH:mm:ss}' -f (Get-Date))) + @(Get-NetworkLines)
+        Add-Content -LiteralPath (Join-Path $run 'boots.log') -Value $lines -Encoding UTF8 -ErrorAction Stop
+    }
+    catch { }
+}
+
+# the boot after the last restart runs no setup code: a one-time RunOnce entry records it (events, then network
+# at sign-in and a minute later). RunOnce ignores commands over 260 characters, so it stays short.
+function Register-NextBootLog([string]$Key = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce') {
+    try {
+        $self = $script:TestLogSelf
+        if (-not (Test-Path $Key)) { New-Item -Path $Key -Force -ErrorAction Stop | Out-Null }
+        $cmd = "powershell.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -Command "". '$($self -replace "'", "''")'; Save-BootEvents; Start-Sleep 60; Save-NetworkState"""
+        Set-ItemProperty -Path $Key -Name '*cullewielog' -Value $cmd -ErrorAction Stop
+    }
+    catch { }
 }
