@@ -32,7 +32,13 @@ foreach ($name in $installServices.Keys) {
     if ($svc.StartType -eq 'Disabled') { sc.exe config $name start= $($installServices[$name]) | Out-Null }
 }
 foreach ($name in 'wuauserv', 'BITS') { Start-Service -Name $name -ErrorAction SilentlyContinue }
-if ($Apps -eq 'xbox') { Start-Service -Name 'iphlpsvc' -ErrorAction SilentlyContinue }
+if ($Apps -eq 'xbox') {
+    Start-Service -Name 'iphlpsvc' -ErrorAction SilentlyContinue
+    # Teredo carries Xbox party chat and multiplayer NAT. "enterpriseclient": the plain client stays offline with
+    # "client is in a managed network" on many home routers (Xbox's own "Teredo is unable to qualify" fix)
+    Write-Host '  Teredo: enterprise client'
+    netsh interface teredo set state type=enterpriseclient | Out-Null
+}
 
 $winget = Get-Command winget.exe -ErrorAction SilentlyContinue
 foreach ($id in $packages.Keys) {

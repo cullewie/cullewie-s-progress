@@ -163,7 +163,7 @@ $sx = Get-Ast $storeXbox
 $sxParam = $sx.Ast.ParamBlock.Parameters | Where-Object { $_.Name.VariablePath.UserPath -eq 'Apps' }
 $sxText = [IO.File]::ReadAllText($storeXbox)
 $sxIds = @('9WZDNCRFJBMP', '9WZDNCRD1HKW', '9MWPM2CQNLHN', '9MV0B5HZVK9Z', '9NZKPSTSNW4P') | Where-Object { -not $sxText.Contains($_) }
-Assert ($sx.Errors.Count -eq 0 -and $sxParam -and $sxParam.Extent.Text -match "Mandatory" -and $sxParam.Extent.Text -match "ValidateSet\('store', 'xbox'\)" -and -not $sxIds -and $sxText -match 'Microsoft\.GameInput') 'StoreXbox-Script' "missing ids: $($sxIds -join ',')"
+Assert ($sx.Errors.Count -eq 0 -and $sxParam -and $sxParam.Extent.Text -match "Mandatory" -and $sxParam.Extent.Text -match "ValidateSet\('store', 'xbox'\)" -and -not $sxIds -and $sxText -match 'Microsoft\.GameInput' -and $sxText -match 'teredo set state type=enterpriseclient') 'StoreXbox-Script' "missing ids: $($sxIds -join ',')"
 Assert ([IO.File]::ReadAllText($launcher) -match "Id='store-xbox'.*Store-Xbox\.ps1" -and $resume -match 'store-xbox' -and $live -match 'store-xbox') 'Launcher-RunsStoreXbox'
 $question = 'Microsoft Store / Xbox kullaniyor musunuz? 1 = Hayir, 2 = Sadece Microsoft Store, 3 = Xbox ve Game Pass (Store dahil)'
 Assert ([IO.File]::ReadAllText($launcher).Contains($question)) 'Launcher-Question'
