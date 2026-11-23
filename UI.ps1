@@ -376,7 +376,7 @@ $xaml = @'
         </StackPanel>
         <DockPanel DockPanel.Dock="Bottom" Margin="0,14,0,0" LastChildFill="False">
           <TextBlock x:Name="LogPath" DockPanel.Dock="Left" VerticalAlignment="Center" FontSize="12" Foreground="#80878D" Text=""/>
-          <Button x:Name="RestartBtn" DockPanel.Dock="Right" Style="{StaticResource Yellow}" Content="Yeniden başlat" Visibility="Collapsed"/>
+          <Button x:Name="RestartBtn" DockPanel.Dock="Right" Style="{StaticResource Yellow}" Content="Şimdi yeniden başlat" Visibility="Collapsed"/>
         </DockPanel>
         <Expander x:Name="Details" Header="Ayrıntılar" IsExpanded="True" Margin="0,16,0,0" Foreground="#F2F2F2" FontSize="13">
           <Border Background="#232629" CornerRadius="8" Margin="0,8,0,0" Padding="12,10">
@@ -514,7 +514,7 @@ function Update-Progress {
         $script:Finished = $true
         if ($script:Mode -eq 'vanilla' -and -not $fails.Count -and $last -notlike 'Setup stopped*') {
             $ui.Current.Text = 'Kurulum bitti'; $ui.Bar.Value = 100; $ui.Percent.Text = '%100'
-            $ui.RestartInfo.Text = 'Değişikliklerin tamamlanması için bilgisayarı yeniden başlat.'
+            $ui.RestartInfo.Text = 'Bilgisayar 30 saniye içinde kendiliğinden yeniden başlar. Uygulamalar oturum açınca kurulur.'
             $ui.RestartBtn.Visibility = 'Visible'
         }
         elseif ($last -notlike 'Restart*') {
@@ -542,7 +542,7 @@ function Show-Done {
     $ui.VibranceValue.Text = '%' + [int]$ui.Vibrance.Value
 }
 
-$ui.ModeVanilla.Add_Checked({ $ui.ModeNote.Text = 'Yeniden başlatma yok. Bittiğinde bilgisayarı yeniden başlatman istenir.' })
+$ui.ModeVanilla.Add_Checked({ $ui.ModeNote.Text = 'Bitince bilgisayar bir kez kendiliğinden yeniden başlar; uygulamalar oturum açınca kurulur.' })
 foreach ($rb in 'ModeAllIn', 'ModeXbox', 'ModeStore') { $ui[$rb].Add_Checked({ $ui.ModeNote.Text = 'Bilgisayar 3 kez yeniden başlar. Her açılışta bu pencere kaldığı yerden devam eder.' }) }
 $ui.StartBtn.Add_Click({
     if ($ui.ModeVanilla.IsChecked) { $script:Mode = 'vanilla'; $script:Apps = 'off' }

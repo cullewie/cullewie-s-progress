@@ -8,16 +8,16 @@
     "files":  [
                   {
                       "path":  "Launcher.ps1",
-                      "size":  37619,
-                      "sha256":  "3e1f8eb745e6a9bc9e6750278f6b4e97b5a0da4658dccdd065a9a66efca26ec0",
+                      "size":  37666,
+                      "sha256":  "7841d6062a8ab983bcb8788a4db34e280492f5b4d8a9d59588921452570354b1",
                       "role":  "launcher",
                       "origin":  "project",
                       "derivedFrom":  null
                   },
                   {
                       "path":  "README.md",
-                      "size":  4864,
-                      "sha256":  "1c614c60474e75f576dd2a2401149fc6bf5c629eda687bc760db5d22872f9c71",
+                      "size":  4923,
+                      "sha256":  "f508921c35e2dbff92b9fee93a4c6f5f957998f77943beb228282540e2c40db4",
                       "role":  "documentation",
                       "origin":  "project",
                       "derivedFrom":  null
@@ -96,8 +96,8 @@
                   },
                   {
                       "path":  "Scripts/Windows/Vanilla.ps1",
-                      "size":  38762,
-                      "sha256":  "9ce58dd8f0cc76f45e63566c85e880255af2f27a1406fe3af59586655538534e",
+                      "size":  38589,
+                      "sha256":  "f5741ca1e4e007265e06f0c3a73dbbb304ca172d394bfb7bdf479b1a99415d9d",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null
@@ -144,8 +144,8 @@
                   },
                   {
                       "path":  "UI.ps1",
-                      "size":  38808,
-                      "sha256":  "912d522b6a489264aa85d577a13e05fa703f5e09594ef256af49ed3ebc156b4f",
+                      "size":  38865,
+                      "sha256":  "45c7d577a7c5425fac476fa224a1f93477b5d0cef95594b882e0631d026fc5be",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null

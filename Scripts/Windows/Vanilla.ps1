@@ -400,25 +400,11 @@ if ($needTrusted.Count) {
 $notApplied = @($plan | Where-Object { (Get-ItemProperty "$serviceRoot\$($_.Name)" -ErrorAction SilentlyContinue).Start -ne $_.To } | ForEach-Object Name)
 if ($notApplied) { Write-Log "  not applied: $($notApplied -join ', ')" 'Red' }
 
-Write-Log 'Network: IPv6, file sharing, QoS and discovery back on (Teredo: set by the Xbox step below)'
-# only the bindings that are off: re-binding restarts the adapter, and the connection drops for a few seconds
+Write-Log 'Network: IPv6, file sharing, QoS and discovery back on as the last step, right before the restart'
+# only the bindings that are off (re-binding restarts the adapter); switched on at the very end of this script
 $offBindings = @(Get-NetAdapterBinding -ComponentID 'ms_tcpip6', 'ms_server', 'ms_msclient', 'ms_pacer', 'ms_lldp', 'ms_lltdio', 'ms_rspndr' -ErrorAction SilentlyContinue | Where-Object { -not $_.Enabled })
-if ($offBindings) {
-    # Not now: with the services All-in disabled still loaded, switching a binding on while Windows runs hung (10 minutes)
-    # or cut the connection until a manual restart (2026-11-23), and the Store/Xbox step below needs the internet.
-    # A one-time task switches them on at the next startup, as SYSTEM, before anyone signs in, then removes itself.
-    $bindingCommand = (@($offBindings | ForEach-Object { "Enable-NetAdapterBinding -Name '$($_.Name -replace "'", "''")' -ComponentID '$($_.ComponentID)' -ErrorAction SilentlyContinue" }) -join '; ') +
-        "; Unregister-ScheduledTask -TaskName 'cullewie-bindings' -Confirm:`$false"
-    $encodedBindings = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($bindingCommand))
-    $bindingAction = New-ScheduledTaskAction -Execute "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -Argument "-NoProfile -ExecutionPolicy Bypass -EncodedCommand $encodedBindings"
-    $bindingTrigger = New-ScheduledTaskTrigger -AtStartup
-    $bindingPrincipal = New-ScheduledTaskPrincipal -UserId 'SYSTEM' -LogonType ServiceAccount -RunLevel Highest
-    try {
-        Register-ScheduledTask -TaskName 'cullewie-bindings' -Action $bindingAction -Trigger $bindingTrigger -Principal $bindingPrincipal -Force -ErrorAction Stop | Out-Null
-        Write-Log "  $($offBindings.Count) bindings go back on at the restart (now would cut the connection)"
-    }
-    catch { Write-Log "  could not schedule the bindings for the restart: $($_.Exception.Message)" 'Red' }
-}
+# a startup task an earlier version left for them is not needed any more
+Unregister-ScheduledTask -TaskName ('cullewie-' + 'bindings') -Confirm:$false -ErrorAction SilentlyContinue
 Remove-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip6\Parameters' -Name 'DisabledComponents' -ErrorAction SilentlyContinue
 
 Write-Log "Policies: $($presentPolicies.Count) values removed"
@@ -494,7 +480,21 @@ try {
 }
 catch { Write-Log "  could not schedule the app installs: $($_.Exception.Message). Run Vanilla Mode again after the restart." 'Red' }
 
-Write-Log "Vanilla done. Not undone: BitLocker, and apps that are no longer offered. Restart Windows now: the look, scaling, network and features apply then, and the apps install by themselves after you sign in. Log: $log" 'Green'
+# Last: the network bindings, then the restart. Switching a binding on while Windows runs could cut the connection or
+# hang until a restart (2026-11-23), and a startup task for it once left the PC without internet until a manual restart.
+# So it is the final step, with a time limit, and Windows restarts right after it: the restart settles the network.
+if ($offBindings) {
+    Write-Log "Network: switching $($offBindings.Count) bindings back on (the connection may drop until the restart)"
+    $bindingJob = Start-Job -ArgumentList (, @($offBindings | ForEach-Object { "$($_.Name)|$($_.ComponentID)" })) -ScriptBlock {
+        param([string[]]$Items)
+        foreach ($i in $Items) { $n, $c = $i -split '\|', 2; Enable-NetAdapterBinding -Name $n -ComponentID $c -ErrorAction SilentlyContinue }
+    }
+    if (-not (Wait-Job $bindingJob -Timeout 60)) { Write-Log '  the network adapter did not answer within a minute; the restart finishes it' 'Yellow'; Stop-Job $bindingJob }
+    Remove-Job $bindingJob -Force -ErrorAction SilentlyContinue
+}
+
+Write-Log "Vanilla done. Not undone: BitLocker, and apps that are no longer offered. Windows restarts in 30 seconds: the look, scaling, network and features apply then, and the apps install by themselves after you sign in. Log: $log" 'Green'
+shutdown /r /t 30 /c "Vanilla Mode: Windows restarts to finish (network, look, features). Apps install after you sign in."
 # a setting that did not apply makes the run a failure (apps that do not install later do not)
 if ($notApplied -or $global:CullewieTrustedBroken -or $global:CullewieTrustedFailed) { exit 1 }
 exit 0

@@ -559,7 +559,7 @@ try {
         if ($script:TestLogOn) { [void](Start-TestRun 'vanilla') }   # TESTLOG
         Invoke-RequiredTool -Id 'vanilla'
         if ($script:TestLogOn) { Register-NextBootLog }   # TESTLOG
-        Write-Host 'Back to Windows defaults. Restart Windows now to finish.' -ForegroundColor Green
+        Write-Host 'Back to Windows defaults. Windows restarts in 30 seconds to finish; the apps install after you sign in.' -ForegroundColor Green
     }
     else { Start-FullSetup }
 }

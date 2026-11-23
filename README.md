@@ -79,7 +79,7 @@ $env:CULLEWIE_MODE = 'vanilla'; iwr 'https://github.com/cullewie/cullewie-s-prog
 - Artık hiçbir yerde sunulmayan uygulamalar (Solitaire, Haritalar, Skype gibi) ve Uzak Masaüstü Bağlantısı
 - Akıllı Uygulama Denetimi ve Kurcalama Koruması
 
-Ağ ayarları açılırken internet birkaç saniye kesilir. Bitince bilgisayarı yeniden başlat (pencerede **Yeniden başlat** düğmesi çıkar).
+Ağ ayarları en son açılır ve bilgisayar hemen ardından kendiliğinden yeniden başlar. Microsoft Store, Xbox ve geri gelen uygulamalar, yeniden başladıktan sonra oturum açınca arka planda kurulur.
 
 ---
 
