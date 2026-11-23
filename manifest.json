@@ -8,8 +8,8 @@
     "files":  [
                   {
                       "path":  "Launcher.ps1",
-                      "size":  37666,
-                      "sha256":  "7841d6062a8ab983bcb8788a4db34e280492f5b4d8a9d59588921452570354b1",
+                      "size":  40245,
+                      "sha256":  "79675940123ed3ece4ad88e22e4c91ba21edf47a8fd87134f615f1254378797a",
                       "role":  "launcher",
                       "origin":  "project",
                       "derivedFrom":  null
@@ -152,8 +152,8 @@
                   },
                   {
                       "path":  "UI.ps1",
-                      "size":  40480,
-                      "sha256":  "8dfc9cece55e9b9da2e09678b35c8013780c23a7410922a08f57f12c0f97056e",
+                      "size":  42287,
+                      "sha256":  "b7ed8c6d99f066c5adacc81c91b3c737144f98298adc59a33d2e6698e78a29bf",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null

@@ -6,7 +6,9 @@
 #                        open can never keep the PC in safe mode)
 #   -Done                one-time logon task after the last restart: the "Hazır" screen with Digital Vibrance
 #   -Snapshot <folder>   renders the three screens to PNG files and closes (tests)
-param([switch]$Resume, [string]$SafeScript = '', [switch]$Done, [string]$Snapshot = '')
+#   -Auto                starts All-in without the mode screen (IWR.ps1: CULLEWIE_AUTO=all-in)
+# After the last restart -Done first runs the extra setup another tool left (Launcher -AfterSetup), if there is one.
+param([switch]$Resume, [string]$SafeScript = '', [switch]$Done, [string]$Snapshot = '', [switch]$Auto)
 
 $ps = "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe"
 $work = Join-Path $env:ProgramData 'Cullewie\Work'
@@ -56,7 +58,7 @@ function Get-RunState([string]$Root, [string]$StatusPath) {
     $state
 }
 # the steps a mode goes through, in order: Key = the step name in steps.log, Label = what the window shows
-function Get-ExpectedSteps([string]$Mode, [string]$Apps, [string]$Gpu) {
+function Get-ExpectedSteps([string]$Mode, [string]$Apps, [string]$Gpu, [switch]$After) {
     if ($Mode -eq 'vanilla') { return @([pscustomobject]@{ Key = 'Back to Windows defaults (vanilla)'; Label = 'Windows varsayılanlarına dönüş' }) }
     $list = [ordered]@{}
     if ($Gpu) { $list['DDU (driver cleanup)'] = 'Hazırlık: sürücü temizliği' }
@@ -76,6 +78,8 @@ function Get-ExpectedSteps([string]$Mode, [string]$Apps, [string]$Gpu) {
     $list['Display: full-screen scaling and vibrance'] = 'Tam ekran ölçekleme'
     $list['Services Off'] = 'Hizmetler'
     $list['Restart (final)'] = 'Son yeniden başlatma'
+    # an extra setup script runs after the last restart; its own rows (##step lines) follow this one
+    if ($After) { $list['Extra setup'] = 'Ek kurulum' }
     foreach ($k in $list.Keys) { [pscustomobject]@{ Key = $k; Label = $list[$k] } }
 }
 # one row per expected step (Wait / Run / Pass / Fail), then every other step the log names
@@ -447,6 +451,10 @@ catch { }
 $win.TaskbarItemInfo = New-Object Windows.Shell.TaskbarItemInfo
 
 $script:Mode = 'full'; $script:Apps = 'off'; $script:Gpu = Get-Gpu
+# an extra setup script waits for the end (another tool left it): its row shows from the start
+$afterFile = Join-Path $work 'after-setup.ps1'
+$script:AfterExpected = Test-Path -LiteralPath $afterFile
+$script:AfterSetupRun = $false
 $script:Expected = @(); $script:StartedAt = [datetime]::MinValue; $script:LastLogLen = -1; $script:Finished = $false
 $script:LogRoot = Join-Path $env:ProgramData 'Cullewie\Logs'
 $modeNames = @{ 'full-off' = 'All-in'; 'full-store' = 'Only Store Mode'; 'full-xbox' = 'Xbox & Store'; 'vanilla' = 'Vanilla Mode' }
@@ -469,7 +477,7 @@ function Set-ModeFromRun([string]$Run) {
     $leaf = Split-Path $Run -Leaf
     if ($leaf -match '-vanilla$') { $script:Mode = 'vanilla'; $script:Apps = 'off' }
     elseif ($leaf -match '-full-(off|store|xbox)$') { $script:Mode = 'full'; $script:Apps = $Matches[1] }
-    $script:Expected = @(Get-ExpectedSteps $script:Mode $script:Apps $script:Gpu)
+    $script:Expected = @(Get-ExpectedSteps $script:Mode $script:Apps $script:Gpu -After:$script:AfterExpected)
     $ui.ModeTitle.Text = $modeNames["$($script:Mode)$(if ($script:Mode -eq 'full') { '-' + $script:Apps })"]
 }
 function Update-Progress {
@@ -512,6 +520,8 @@ function Update-Progress {
     if ($last -like 'Restart*') { $ui.Current.Text = if ($last -eq 'Restart (final)') { 'Bitti · bilgisayar yeniden başlıyor…' } else { 'Bilgisayar yeniden başlıyor…' } }
     if ($workerDone -and $script:Worker -and -not $script:Finished) {
         $script:Finished = $true
+        # the extra setup after the last restart is over: the Done screen (vibrance, cleanup, restart) comes now
+        if ($script:AfterSetupRun) { $script:Timer.Stop(); try { Write-TestStep 'Ready' 'INFO' } catch { }; Show-Done; return }
         if ($script:Mode -eq 'vanilla' -and -not $fails.Count -and $last -notlike 'Setup stopped*') {
             $ui.Current.Text = 'Kurulum bitti'; $ui.Bar.Value = 100; $ui.Percent.Text = '%100'
             $ui.RestartInfo.Text = 'Bilgisayar 30 saniye içinde kendiliğinden yeniden başlar. Uygulamalar oturum açınca kurulur.'
@@ -547,7 +557,7 @@ foreach ($rb in 'ModeAllIn', 'ModeXbox', 'ModeStore') { $ui[$rb].Add_Checked({ $
 $ui.StartBtn.Add_Click({
     if ($ui.ModeVanilla.IsChecked) { $script:Mode = 'vanilla'; $script:Apps = 'off' }
     else { $script:Mode = 'full'; $script:Apps = if ($ui.ModeXbox.IsChecked) { 'xbox' } elseif ($ui.ModeStore.IsChecked) { 'store' } else { 'off' } }
-    $script:Expected = @(Get-ExpectedSteps $script:Mode $script:Apps $script:Gpu)
+    $script:Expected = @(Get-ExpectedSteps $script:Mode $script:Apps $script:Gpu -After:$script:AfterExpected)
     $ui.ModeTitle.Text = $modeNames["$($script:Mode)$(if ($script:Mode -eq 'full') { '-' + $script:Apps })"]
     Set-Rows @(Get-StepRows -Expected $script:Expected -Lines @() -Running '')
     $ui.RestartInfo.Text = if ($script:Mode -eq 'full') { 'Yeniden başlatma 0 / 3 · bilgisayar açılınca bu pencere kendiliğinden açılır.' } else { '' }
@@ -584,7 +594,8 @@ $script:CleanupTimer.Add_Tick({
     $ui.DoneNote.Foreground = $brush.Pass
     $ui.DoneNote.Text = ($script:CleanupBefore + "Disk temizlendi: $text yer açıldı. Bilgisayar 10 saniye içinde yeniden başlıyor.").Trim()
 })
-$win.Add_Closing({ if ($ui.DoneScreen.Visibility -eq 'Visible') { Start-Cleanup } })
+# (never for -Snapshot: it shows the Done screen and closes the window, and once restarted the PC from a test)
+$win.Add_Closing({ if (-not $Snapshot -and $ui.DoneScreen.Visibility -eq 'Visible') { Start-Cleanup } })
 $ui.SkipBtn.Add_Click({ Start-Cleanup 'Renk ayarına dokunulmadı. ' })
 $ui.ApplyBtn.Add_Click({
     if ($ui.VibrancePanel.Visibility -ne 'Visible') { Start-Cleanup; return }
@@ -639,8 +650,24 @@ if ($Snapshot) {
 if ($Done) {
     # one time only: remove the task first, record this boot for the test log, then ask the last question
     Unregister-ScheduledTask -TaskName $doneTask -Confirm:$false -ErrorAction SilentlyContinue
-    try { . (Join-Path $PSScriptRoot 'Scripts\TestLog.ps1'); Save-BootEvents; Write-TestStep 'Ready' 'INFO' } catch { }
-    Show-Done
+    try { . (Join-Path $PSScriptRoot 'Scripts\TestLog.ps1'); Save-BootEvents } catch { }
+    if (Test-Path -LiteralPath $afterFile) {
+        # extra setup first, shown like the other steps; Update-Progress opens the Done screen when it ends
+        $script:AfterSetupRun = $true; $script:AfterExpected = $true
+        Start-Worker @('-AfterSetup', '-Ui')
+        Show-Screen 'ProgressScreen'
+        $ui.Current.Text = 'Ek kurulum…'
+        $script:Timer.Start()
+    }
+    else {
+        try { Write-TestStep 'Ready' 'INFO' } catch { }
+        Show-Done
+    }
+}
+elseif ($Auto) {
+    # started for All-in by another tool: no mode screen, the same start as pressing Başlat with All-in picked
+    $ui.ModeAllIn.IsChecked = $true
+    $win.Add_ContentRendered({ $ui.StartBtn.RaiseEvent((New-Object Windows.RoutedEventArgs([Windows.Controls.Primitives.ButtonBase]::ClickEvent))) })
 }
 elseif ($Resume -or $SafeScript) {
     if ($Resume) { Start-Worker @('-ResumeFullSetup', '-Ui') }

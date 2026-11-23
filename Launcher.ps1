@@ -9,7 +9,9 @@ param(
     # store / xbox: keep Microsoft Store (and Xbox, Game Pass) working; full mode asks when this is empty, live mode never asks
     [string]$Apps = '',
     # started by UI.ps1: no questions in the console (the window asks), restarts reopen the window instead of a console
-    [switch]$Ui
+    [switch]$Ui,
+    # started by the window after the last restart: runs the extra setup script another tool left (see Invoke-AfterSetup)
+    [switch]$AfterSetup
 )
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
@@ -482,6 +484,41 @@ function Resume-FullSetup {
     }
     shutdown -r -t 10
 }
+# a line the extra setup script prints to get its own row in the window: "##step<TAB>name<TAB>PASS|FAIL|INFO"
+# (names starting with Restart are refused: the window counts those as restarts)
+function ConvertFrom-StepLine([string]$Line) {
+    $m = [regex]::Match([string]$Line, '^##step\t([^\t]+)\t(PASS|FAIL|INFO)\s*$')
+    if (-not $m.Success -or $m.Groups[1].Value -like 'Restart*') { return $null }
+    [pscustomobject]@{ Name = $m.Groups[1].Value.Trim(); Result = $m.Groups[2].Value }
+}
+# Extra setup: another tool (for example the owner's own app installer) may leave a script for after the last restart at
+# C:\ProgramData\Cullewie\Work\after-setup.ps1 with its SHA-256 in after-setup.sha256. That folder only administrators
+# and SYSTEM can write. It runs once, as the signed-in administrator, and is deleted afterwards.
+function Invoke-AfterSetup {
+    $file = Join-Path $env:ProgramData 'Cullewie\Work\after-setup.ps1'
+    $hashFile = Join-Path $env:ProgramData 'Cullewie\Work\after-setup.sha256'
+    if (-not (Test-Path -LiteralPath $file -PathType Leaf)) { return }
+    $watch = [Diagnostics.Stopwatch]::StartNew()
+    $expected = if (Test-Path -LiteralPath $hashFile) { (Get-Content -LiteralPath $hashFile -Raw).Trim() } else { '' }
+    $actual = (Get-FileHash -LiteralPath $file -Algorithm SHA256).Hash
+    $code = 1
+    if ($expected -notmatch '^[0-9a-fA-F]{64}$' -or $actual -ne $expected.ToUpperInvariant()) {
+        Write-Host 'Extra setup script failed its SHA-256 check; it was not run.' -ForegroundColor Red
+    }
+    else {
+        $stepLog = if ($script:TestLogOn) { Get-TestStepLog 'Extra setup' } else { $null }   # TESTLOG
+        if ($stepLog) { try { [IO.File]::WriteAllText($stepLog, '') } catch { $stepLog = $null } }
+        & $script:PowerShellExe -NoLogo -NoProfile -ExecutionPolicy Bypass -File $file | ForEach-Object {
+            if ($stepLog) { try { [IO.File]::AppendAllText($stepLog, "$_`r`n") } catch { } }
+            $row = ConvertFrom-StepLine $_
+            if ($row -and $script:TestLogOn) { Write-TestStep $row.Name $row.Result }   # TESTLOG
+            $_
+        } | Out-Host
+        $code = $LASTEXITCODE
+    }
+    if ($script:TestLogOn) { Write-TestStep 'Extra setup' $(if ($code -eq 0) { 'PASS' } else { 'FAIL' }) $code $watch.Elapsed }   # TESTLOG
+    Remove-Item -LiteralPath $file, $hashFile -Force -ErrorAction SilentlyContinue
+}
 function Test-PendingReboot {
     # Windows has updates or feature changes waiting for a restart
     (Test-Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Component Based Servicing\RebootPending') -or
@@ -547,7 +584,8 @@ if ($osVersion.Major -lt 10 -or $osVersion.Build -lt 22000) {
 }
 Write-Host 'cullewie-s-progress - Windows setup toolkit' -ForegroundColor Cyan
 try {
-    if ($ResumeFullSetup) { Resume-FullSetup }
+    if ($AfterSetup) { Invoke-AfterSetup }
+    elseif ($ResumeFullSetup) { Resume-FullSetup }
     elseif ($Mode -eq 'guided') {
         if ($script:TestLogOn) { [void](Start-TestRun 'guided') }   # TESTLOG
         Start-GuidedNvidiaSetup
