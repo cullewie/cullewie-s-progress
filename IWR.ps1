@@ -6,8 +6,8 @@ $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 $previousSecurityProtocol = [Net.ServicePointManager]::SecurityProtocol
 $Repository = 'cullewie/cullewie-s-progress'
-$PayloadCommit = 'a44b38613015fa897c97972ef43f84c839fba8b5'
-$ExpectedManifestSha256 = '77a39d6c8fb2a5fdb36cd4eecd5b6e959da59ee2ccdc6300bad9b4a340a5f9c8'
+$PayloadCommit = '62c75ac9742146229992f617ce169767a58b689c'
+$ExpectedManifestSha256 = '4c4c9357614da534c39d62207f797447c33d8661c818552f0b2af50cd26d7fa6'
 $RawRoot = 'https://raw.githubusercontent.com/' + $Repository + '/' + $PayloadCommit
 
 function Test-Administrator {
@@ -162,11 +162,20 @@ try {
     $mode = if ($env:CULLEWIE_MODE -in 'guided', 'live', 'vanilla') { $env:CULLEWIE_MODE } else { 'full' }
     Write-Host "Starting: $mode" -ForegroundColor Cyan
     # CULLEWIE_APPS=store or xbox keeps Microsoft Store (and Xbox, Game Pass) working; unset: full mode asks, live mode = off
+    # the plain command opens the window (UI.ps1): mode choice, progress, the last question; the commands with
+    # CULLEWIE_MODE or CULLEWIE_APPS keep the console
+    $uiScript = Join-Path $activePath 'UI.ps1'
+    if (-not $env:CULLEWIE_MODE -and -not $env:CULLEWIE_APPS -and (Test-Path -LiteralPath $uiScript -PathType Leaf)) {
+        Start-Process -FilePath $windowsPowerShell -ArgumentList @('-NoLogo', '-NoProfile', '-STA', '-ExecutionPolicy', 'Bypass', '-WindowStyle', 'Hidden', '-File', "`"$uiScript`"") -WindowStyle Hidden
+        Write-Host 'The setup window is open. You can close this PowerShell window.' -ForegroundColor Green
+    }
+    else {
     $launchArgs = @('-NoLogo', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $launcher, '-Mode', $mode)
     if ($env:CULLEWIE_APPS) { $launchArgs += @('-Apps', $env:CULLEWIE_APPS) }
     & $windowsPowerShell @launchArgs
     if ($LASTEXITCODE -ne 0) {
         Write-Host "Launcher exit code: $LASTEXITCODE" -ForegroundColor Yellow
+    }
     }
 }
 catch {
