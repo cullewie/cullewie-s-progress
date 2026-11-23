@@ -434,7 +434,7 @@ function Test-PendingReboot {
 function Start-LiveSetup {
     # Same steps as stages 3 and 4, in normal Windows and without restarting. Skipped: DDU (cleans best in safe mode),
     # Defender (Tamper Protection undoes it outside safe mode) and Scaling and Vibrance (it asks questions).
-    $log = Join-Path $env:ProgramData ('Cullewie\Work\live-setup-' + (Get-Date -Format 'yyyyMMdd-HHmmss') + '.log')
+    $log = Join-Path $env:ProgramData ('User\Work\live-setup-' + (Get-Date -Format 'yyyyMMdd-HHmmss') + '.log')
     Start-Transcript -Path $log -Force | Out-Null
     $script:CaptureChildOutput = $true
     # no question in live mode: the Store/Xbox level comes from -Apps (IWR: CULLEWIE_APPS); empty or unknown = off

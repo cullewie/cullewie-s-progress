@@ -8,16 +8,16 @@
     "files":  [
                   {
                       "path":  "Launcher.ps1",
-                      "size":  31100,
-                      "sha256":  "d51537b341e886e0e495889b65d7092bad045889e613b23c5a993d1e181de39a",
+                      "size":  31096,
+                      "sha256":  "4bedc956aaf31d89c615f480a8fe4cfc664758d4c609c03e742eca50f461481d",
                       "role":  "launcher",
                       "origin":  "project",
                       "derivedFrom":  null
                   },
                   {
                       "path":  "README.md",
-                      "size":  11279,
-                      "sha256":  "a215f0a9e574852201a1ddc4f3924a29eb1d02a709baca1a8498b9ce51576998",
+                      "size":  29032,
+                      "sha256":  "826e72f1b7430dd3c2a54a51201cc9e014095a61de681501fe144eb07b48c542",
                       "role":  "documentation",
                       "origin":  "project",
                       "derivedFrom":  null
