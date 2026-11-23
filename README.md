@@ -403,6 +403,6 @@ Kurulum sırasında oluşan çalışma dosyaları ve kayıtlar `C:\ProgramData\C
 
 Bu proje [MIT lisansı](LICENSE) ile yayınlanır: kodu okuyabilir, kopyalayabilir ve değiştirebilirsin.
 
-Bir hata bulursan ya da bir öneri yapmak istersen GitHub'da bir *issue* aç veya değişikliğini bir *pull request* olarak gönder. Değişiklik yaparken:
+Bir hata bulursan ya da bir öneri yapmak istersen GitHub'da bir *issue* aç veya değişikliğini bir *pull request* olarak gönder. Bir sorun yaşarsan bana X'ten de ulaşabilirsin: [@cullewie](https://x.com/cullewie). Değişiklik yaparken:
 - Dosyalar bayt bayt doğrulandığı için satır sonları korunmalıdır (`.gitattributes`: `* -text`).
 - Bir dosya değişince `manifest.json`'daki boyut ve SHA-256 değeri, ardından `IWR.ps1`'deki sabitlenmiş commit ve manifest parmak izi güncellenmelidir.
