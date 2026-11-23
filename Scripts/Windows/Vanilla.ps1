@@ -12,7 +12,8 @@
 #    apps no longer offered anywhere are listed, not forced
 # Not undone: BitLocker (turn it on yourself), apps that are no longer offered, Remote Desktop Connection.
 # -PlanOnly: write what would change to -PlanPath and stop; nothing is changed. Restart Windows afterwards.
-param([switch]$PlanOnly, [string]$PlanPath = "$env:ProgramData\Cullewie\Work\vanilla-plan.txt")
+# -AppsOnly: run by a one-time logon task after the restart: Store / Xbox apps and the removed apps only.
+param([switch]$PlanOnly, [string]$PlanPath = "$env:ProgramData\Cullewie\Work\vanilla-plan.txt", [switch]$AppsOnly)
 $ErrorActionPreference = 'Continue'
 $ProgressPreference = 'SilentlyContinue'
 $work = Join-Path $env:ProgramData 'Cullewie\Work'
@@ -262,6 +263,32 @@ $inventoryPath = Join-Path $env:ProgramData 'Cullewie\Work\removed-inventory.jso
 $inventory = Get-RemovedInventory $inventoryPath
 $restorePlan = if ($inventory) { @(Get-RestorePlan $inventory) } else { @() }
 
+if ($AppsOnly) {
+    # the second half of Vanilla, after its restart: the Store installs hung every time in the same session as the
+    # service reset (2026-11-23, the Game Bar, three times) and worked every time after a restart
+    Unregister-ScheduledTask -TaskName 'cullewie-vanilla-apps' -Confirm:$false -ErrorAction SilentlyContinue
+    try { . (Join-Path $PSScriptRoot '..\TestLog.ps1') } catch { }   # TESTLOG
+    $appsWatch = [Diagnostics.Stopwatch]::StartNew()
+    $until = (Get-Date).AddMinutes(5)
+    while (-not (Test-Connection -ComputerName 1.1.1.1 -Count 1 -Quiet -ErrorAction SilentlyContinue) -and (Get-Date) -lt $until) { Start-Sleep -Seconds 5 }
+    Write-Log 'Microsoft Store and Xbox apps (after the restart)'
+    & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot 'Store-Xbox.ps1') -Apps xbox
+    $appsExit = $LASTEXITCODE
+    $notBack = @()
+    if ($inventory) {
+        Write-Log "Removed apps and features: bringing back what can come back ($(@($restorePlan | Where-Object How -ne 'skip').Count) items)"
+        $notBack = @(Invoke-RestorePlan $restorePlan)
+        foreach ($n in $notBack) { Write-Log "  not restored  $($n.Name) ($($n.Reason))" 'Yellow' }
+        # what failed to install stays listed for the next Vanilla run; the rest is used up
+        Save-RemainingInventory -Plan $restorePlan -NotBack $notBack -Path $inventoryPath
+    }
+    $failedApps = @($notBack | Where-Object Reason -eq 'install failed').Count + $(if ($appsExit -ne 0) { 1 } else { 0 })
+    if ($failedApps) { Write-Log 'Some apps did not install (listed above); run Vanilla Mode again later to retry them.' 'Yellow' }
+    Write-Log "Vanilla apps done. Log: $log" 'Green'
+    if (Get-Command Write-TestStep -ErrorAction SilentlyContinue) { Write-TestStep 'Vanilla apps (after restart)' $(if ($failedApps) { 'FAIL' } else { 'PASS' }) $failedApps $appsWatch.Elapsed }   # TESTLOG
+    exit 0
+}
+
 if ($PlanOnly) {
     $out = @("Vanilla plan $(Get-Date -Format s)", "SERVICES ($($plan.Count) to change, $($stubs.Count) leftover keys to remove)")
     $out += $plan | ForEach-Object { "service`t$($_.Name)`t$($_.From)`t$($_.To)" }
@@ -436,23 +463,21 @@ if ($appearanceSaved.Count) {
 }
 else { Write-Log 'Appearance: no saved copy of your own settings (All-in ran before this version saved one), so the look stays as it is' 'Yellow' }
 
-Write-Log 'Microsoft Store and Xbox apps'
-& "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot 'Store-Xbox.ps1') -Apps xbox
-$appsExit = $LASTEXITCODE
-
-# after Store-Xbox: the Store and its services work again by now
-if ($inventory) {
-    Write-Log "Removed apps and features: bringing back what can come back ($(@($restorePlan | Where-Object How -ne 'skip').Count) items)"
-    $notBack = @(Invoke-RestorePlan $restorePlan)
-    foreach ($n in $notBack) { Write-Log "  not restored  $($n.Name) ($($n.Reason))" 'Yellow' }
-    # what failed to install (no internet, Store busy) stays listed for the next Vanilla run; the rest is used up
-    Save-RemainingInventory -Plan $restorePlan -NotBack $notBack -Path $inventoryPath
+# Store / Xbox apps and the removed apps: after the restart, by a one-time logon task (this script with -AppsOnly).
+# Installing them here, in the same session as the service reset, hung (2026-11-23, the Game Bar, three times).
+Write-Log 'Microsoft Store and Xbox apps, and the removed apps: installed after the restart, at sign-in'
+if (-not $inventory) { Write-Log '  (no saved list of removed apps: All-in ran before this version saved one, so only Store and Xbox)' 'Yellow' }
+try {
+    $user = [Security.Principal.WindowsIdentity]::GetCurrent().Name
+    $appsAction = New-ScheduledTaskAction -Execute "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -Argument "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$PSCommandPath`" -AppsOnly"
+    $appsTrigger = New-ScheduledTaskTrigger -AtLogOn -User $user
+    $appsPrincipal = New-ScheduledTaskPrincipal -UserId $user -LogonType Interactive -RunLevel Highest
+    $appsSettings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -ExecutionTimeLimit ([TimeSpan]::FromHours(2))
+    Register-ScheduledTask -TaskName 'cullewie-vanilla-apps' -Action $appsAction -Trigger $appsTrigger -Principal $appsPrincipal -Settings $appsSettings -Force -ErrorAction Stop | Out-Null
 }
-else { Write-Log 'Removed apps and features: no saved list (All-in ran before this version saved one), nothing is reinstalled' 'Yellow' }
+catch { Write-Log "  could not schedule the app installs: $($_.Exception.Message). Run Vanilla Mode again after the restart." 'Red' }
 
-Write-Log "Vanilla done. Not undone: BitLocker, and apps that are no longer offered (listed above). Restart Windows now (the look, scaling and features apply after it). Log: $log" 'Green'
-# Store / Xbox apps or removed apps that did not install are listed above (and kept for the next run); they do not make
-# the run a failure: Windows itself is back to its defaults. A setting that did not apply does.
-if ($appsExit -ne 0) { Write-Log 'Store / Xbox: some apps did not install (listed above); run Vanilla Mode again later to retry them.' 'Yellow' }
+Write-Log "Vanilla done. Not undone: BitLocker, and apps that are no longer offered. Restart Windows now: the look, scaling, network and features apply then, and the apps install by themselves after you sign in. Log: $log" 'Green'
+# a setting that did not apply makes the run a failure (apps that do not install later do not)
 if ($notApplied -or $global:CullewieTrustedBroken -or $global:CullewieTrustedFailed) { exit 1 }
 exit 0
