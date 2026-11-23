@@ -72,4 +72,48 @@ $inner = (Get-HereString $s.Ast '$ServicesOff') -replace "``'@", "'@"
 $innerErrors = $null; [void][System.Management.Automation.Language.Parser]::ParseInput($inner, [ref]$null, [ref]$innerErrors)
 Assert ($s.Errors.Count -eq 0 -and @($innerErrors).Count -eq 0) 'Services-Parses' "outer=$($s.Errors.Count) inner=$(@($innerErrors).Count)"
 
+# ---------------- Tweaks.ps1 (static only: Tweaks is never run here) ----------------
+$tweaks = Join-Path $repo 'Scripts\Windows\Tweaks.ps1'
+$t = Get-Ast $tweaks
+$offOnly = @('^Set-Reg .*"GlobalUserDisabled"', '^Set-Reg .*"LetAppsRunInBackground"')
+$notXbox = @("^Remove-MsiProduct '\*Microsoft GameInput\*'", 'XboxGamingOverlay \| Remove-AppxPackage', "^Import-Reg 'gamebaroff'", '^Run-Trusted .*PresenceWriter')
+$unguarded = @($offOnly | Where-Object { -not (Test-Guarded $t.Ast $_ "`$Apps -eq 'off'") }) + @($notXbox | Where-Object { -not (Test-Guarded $t.Ast $_ "`$Apps -ne 'xbox'") })
+Assert ($unguarded.Count -eq 0) 'Tweaks-Guards' "unguarded: $($unguarded -join ' | ')"
+
+$removeFn = Get-FunctionText $t.Ast 'Remove-RegKeyBlock'
+$cpText = Get-HereString $t.Ast '$controlPanel'
+if ($removeFn -and $cpText) {
+    Invoke-Expression $removeFn
+    foreach ($k in 'HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsStore\WindowsUpdate', 'HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\AppPrivacy', 'HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications') { $cpText = Remove-RegKeyBlock $cpText $k }
+    Assert ($cpText -notmatch 'AutoDownload|LetAppsRunInBackground|GlobalUserDisabled' -and $cpText -match 'LongPathsEnabled' -and $cpText -match 'IsPrelaunchEnabled') 'Tweaks-RemoveRegKeyBlock'
+} else { Assert $false 'Tweaks-RemoveRegKeyBlock' 'function or $controlPanel missing' }
+
+$setRegFn = Get-FunctionText $t.Ast 'Set-Reg'
+$policyFn = Get-FunctionText $t.Ast 'Set-AppsUpdatePolicy'
+if ($setRegFn -and $policyFn) {
+    Invoke-Expression $setRegFn; Invoke-Expression $policyFn
+    $root = 'HKCU:\Software\ClaudeAppsTest'
+    try {
+        Set-AppsUpdatePolicy -PolicyKey "$root\WU" -UxKey "$root\UX" -DisplayVersion '25H2'
+        $wu = Get-Item "$root\WU"; $ux = Get-Item "$root\UX"
+        $ok = $wu.GetValue('TargetReleaseVersion') -eq 1 -and $wu.GetValueKind('TargetReleaseVersion') -eq 'DWord' -and
+              $wu.GetValue('ProductVersion') -eq 'Windows 11' -and $wu.GetValueKind('ProductVersion') -eq 'String' -and
+              $wu.GetValue('TargetReleaseVersionInfo') -eq '25H2' -and $wu.GetValueKind('TargetReleaseVersionInfo') -eq 'String' -and
+              $wu.GetValue('ExcludeWUDriversInQualityUpdate') -eq 1 -and $wu.GetValue('AllowOptionalContent') -eq 0 -and
+              $wu.GetValue('SetAllowOptionalContent') -eq 0 -and $wu.GetValueKind('SetAllowOptionalContent') -eq 'DWord' -and
+              $ux.GetValue('IsContinuousInnovationOptedIn') -eq 0 -and $ux.GetValueKind('IsContinuousInnovationOptedIn') -eq 'DWord'
+        Assert $ok 'Tweaks-UpdatePolicy'
+    }
+    finally { Remove-Item $root -Recurse -Force -ErrorAction SilentlyContinue }
+} else { Assert $false 'Tweaks-UpdatePolicy' 'Set-Reg or Set-AppsUpdatePolicy missing' }
+
+$loop = $t.Ast.FindAll({ param($n) $n -is [System.Management.Automation.Language.ForEachStatementAst] -and $n.Condition.Extent.Text -match 'ms_lldp' }, $true) | Select-Object -First 1
+$listText = $loop.Condition.Extent.Text
+$listFor = { param($level) $Apps = $level; @(Invoke-Expression $listText) }
+Assert ($listText -match '\$Apps' -and (& $listFor 'xbox') -notcontains 'ms_tcpip6' -and (& $listFor 'store') -contains 'ms_tcpip6' -and (& $listFor 'off') -contains 'ms_tcpip6' -and (& $listFor 'xbox') -contains 'ms_server') 'Tweaks-BindingList'
+$relaunchT = Select-String -Path $tweaks -Pattern 'Start-Process PowerShell\.exe' | Select-Object -First 1
+Assert (-not $relaunchT -or $relaunchT.Line -match '\$Apps') 'Tweaks-RelaunchForwardsApps'
+$tParams = @($t.Ast.ParamBlock.Parameters | ForEach-Object { $_.Name.VariablePath.UserPath })
+Assert ($t.Errors.Count -eq 0 -and $tParams -contains 'Apps' -and $tParams -contains 'DryRun') 'Tweaks-Parses' "errors=$($t.Errors.Count) params=$($tParams -join ',')"
+
 exit $script:failures

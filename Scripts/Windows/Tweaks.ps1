@@ -3,7 +3,7 @@
 #     is named in the lists is removed: apps the user installed (Claude, ChatGPT, games, Store apps) are never touched.
 #     The apps themselves are kept: Microsoft Store, App Installer (winget), the Xbox app, Gaming Services, WSL/Hyper-V.
 #     But with the default Services list (Windows Update, BITS and Xbox services off) Store and Game Pass downloads do
-#     not work. Also removed: Microsoft GameInput, the Game Bar overlay, Copilot, Widgets, OneDrive, Windows Hello Face,
+#     not work; choose -Apps store or xbox (also in Services) for them. Also removed: Microsoft GameInput, the Game Bar overlay, Copilot, Widgets, OneDrive, Windows Hello Face,
 #     Update Health Tools.
 #  2. General tweaks: privacy, telemetry, Explorer, game settings, Nagle, MSI mode, HDCP, memory compression,
 #     Visual C++ runtimes. System Restore is turned off so Windows never creates restore points.
@@ -16,7 +16,9 @@
 #     background apps off, Automatic Maintenance and scheduled defrag/retrim off, app access to the document/picture/
 #     music/video libraries and passkeys denied, Lock and Sleep hidden in the power menu, Alt+Shift layout switching off.
 # -DryRun: only writes what step 1 would remove to bloatware-dryrun.txt and stops; nothing is changed.
-param([switch]$DryRun)
+# -Apps store: Store auto-update and background apps stay on; Windows Update gets the monthly update only.
+#       xbox:  the same, and GameInput, the Game Bar and IPv6 (Teredo, for Xbox party chat and multiplayer) stay too.
+param([switch]$DryRun, [ValidateSet('off', 'store', 'xbox')][string]$Apps = 'off')
 
 $ErrorActionPreference = 'Continue'
 $ProgressPreference = 'SilentlyContinue'
@@ -88,7 +90,7 @@ function Remove-MsiProduct([string]$Like) {
         if (-not $DryRun) { Start-Process 'msiexec.exe' -ArgumentList "/x $($p.PSChildName) /qn /norestart" -Wait -NoNewWindow }
     }
 }
-Remove-MsiProduct '*Microsoft GameInput*'
+if ($Apps -ne 'xbox') { Remove-MsiProduct '*Microsoft GameInput*' }   # Game Pass games need it
 Remove-MsiProduct '*Update for x64-based Windows Systems (KB5001716)*'   # exact KB, a bare wildcard could match other servicing updates
 Remove-MsiProduct '*Microsoft Update Health Tools*'
 Write-Plan 'program' 'OneDrive'
@@ -153,6 +155,23 @@ function Set-Reg {
         Set-ItemProperty -Path $Path -Name $Name -Type $Type -Value $Value -ErrorAction SilentlyContinue
     }
 }
+# drops one [key] block (its header and value lines, up to the blank line after it) from .reg text
+function Remove-RegKeyBlock([string]$Text, [string]$Key) {
+    [regex]::Replace($Text, '(?im)^\[' + [regex]::Escape($Key) + '\]\r?\n(?:[^\[\r\n][^\r\n]*\r?\n)*(?:\r?\n)?', '')
+}
+# -Apps store / xbox turn Windows Update back on: only the monthly cumulative update, no new Windows version,
+# no drivers, no optional or preview updates (Windows 11 has no separate security-only update)
+function Set-AppsUpdatePolicy([string]$PolicyKey = 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate',
+                              [string]$UxKey = 'HKLM:\SOFTWARE\Microsoft\WindowsUpdate\UX\Settings',
+                              [string]$DisplayVersion = (Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion').DisplayVersion) {
+    Set-Reg -Path $PolicyKey -Name 'TargetReleaseVersion' -Value 1
+    Set-Reg -Path $PolicyKey -Name 'ProductVersion' -Type 'String' -Value 'Windows 11'
+    Set-Reg -Path $PolicyKey -Name 'TargetReleaseVersionInfo' -Type 'String' -Value $DisplayVersion
+    Set-Reg -Path $PolicyKey -Name 'ExcludeWUDriversInQualityUpdate' -Value 1
+    Set-Reg -Path $PolicyKey -Name 'AllowOptionalContent' -Value 0
+    Set-Reg -Path $PolicyKey -Name 'SetAllowOptionalContent' -Value 0
+    Set-Reg -Path $UxKey -Name 'IsContinuousInnovationOptedIn' -Value 0
+}
 
 Write-Host "System Restore off"
 Disable-ComputerRestore -Drive "$env:SystemDrive\" -ErrorAction SilentlyContinue
@@ -189,9 +208,11 @@ $consentPath = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccess
 foreach ($store in "location","userNotificationListener","userAccountInformation","contacts","appointments","phoneCall","phoneCallHistory","email","chat","radios","appDiagnostics") {
     Set-Reg -Path "$consentPath\$store" -Name "Value" -Type "String" -Value "Deny"
 }
-Set-Reg -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications" -Name "GlobalUserDisabled" -Value 1
-# background apps off for all apps
-Set-Reg -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AppPrivacy" -Name "LetAppsRunInBackground" -Value 2
+# background apps off for all apps (not with -Apps: Store and Xbox downloads and sign-in run in the background)
+if ($Apps -eq 'off') {
+    Set-Reg -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications" -Name "GlobalUserDisabled" -Value 1
+    Set-Reg -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AppPrivacy" -Name "LetAppsRunInBackground" -Value 2
+}
 Set-Reg -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Search" -Name "BackgroundAppGlobalToggle" -Value 0
 Set-Reg -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\DriverSearching" -Name "SearchOrderConfig" -Value 0
 
@@ -367,7 +388,8 @@ function Import-AppSettings([string]$SettingsDat, [string]$Name, [string]$Conten
     else { Write-Host "  ${Name}: settings file is in use, skipped (close the app and run Tweaks again)." -ForegroundColor Yellow }
 }
 
-# only the Game Bar overlay goes; the Xbox app and Gaming Services (Game Pass games) stay
+# only the Game Bar overlay goes; the Xbox app and Gaming Services (Game Pass games) stay. -Apps xbox keeps the Game Bar.
+if ($Apps -ne 'xbox') {
 Write-Host 'Game Bar: off'
 Stop-Process -Force -Name GameBar -ErrorAction SilentlyContinue
 Get-AppxPackage -AllUsers Microsoft.XboxGamingOverlay | Remove-AppxPackage -AllUsers -ErrorAction SilentlyContinue
@@ -409,6 +431,7 @@ Windows Registry Editor Version 5.00
 @="%SystemRoot%\\System32\\systray.exe"
 '@
 Run-Trusted "reg add `"HKLM\SOFTWARE\Microsoft\WindowsRuntime\ActivatableClassId\Windows.Gaming.GameBar.PresenceServer.Internal.PresenceWriter`" /v `"ActivationType`" /t REG_DWORD /d `"0`" /f"
+}
 
 Write-Host 'Start menu: new layout, list view'
 Import-Reg 'newstartmenu' @'
@@ -1374,6 +1397,14 @@ E0,F6,C5,D5,0E,CA,50,00,00
 [HKEY_CURRENT_USER\Console\%SystemRoot%_System32_WindowsPowerShell_v1.0_powershell.exe]
 "ScreenColors"=dword:0000000F
 '@
+# -Apps store / xbox: keep Store auto-update and background apps (Store and Xbox downloads, sign-in)
+if ($Apps -ne 'off') {
+    foreach ($key in 'HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsStore\WindowsUpdate',
+                     'HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\AppPrivacy',
+                     'HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications') {
+        $controlPanel = Remove-RegKeyBlock $controlPanel $key
+    }
+}
 Import-Reg 'controlpanel' $controlPanel.Replace('?', '$')
 Stop-Service -Name camsvc -Force -ErrorAction SilentlyContinue
 Run-Trusted "Remove-Item `"$env:ProgramData\Microsoft\Windows\CapabilityAccessManager\CapabilityConsentStorage.db*`" -Force"
@@ -1429,7 +1460,8 @@ foreach ($key in Get-ChildItem 'HKLM:\SYSTEM\ControlSet001\Control\Class\{4d36e9
 }
 
 Write-Host 'Network: IPv4 only'
-foreach ($binding in 'ms_lldp', 'ms_lltdio', 'ms_implat', 'ms_rspndr', 'ms_tcpip6', 'ms_server', 'ms_msclient', 'ms_pacer') {
+# -Apps xbox keeps IPv6 (ms_tcpip6): Teredo carries Xbox party chat and multiplayer
+foreach ($binding in (@('ms_lldp', 'ms_lltdio', 'ms_implat', 'ms_rspndr') + @(if ($Apps -ne 'xbox') { 'ms_tcpip6' }) + @('ms_server', 'ms_msclient', 'ms_pacer'))) {
     Disable-NetAdapterBinding -Name '*' -ComponentID $binding -ErrorAction SilentlyContinue
 }
 
@@ -1467,6 +1499,11 @@ Windows Registry Editor Version 5.00
 '@
 
 Write-Host "Done.`n"
+if ($Apps -ne 'off') {
+    Write-Host 'Store/Xbox: Windows Update gets the monthly update only (no new Windows version, drivers or previews)'
+    Set-AppsUpdatePolicy
+}
+
 # non-zero when a critical step failed (TrustedInstaller path not restored), so the Launcher shows it
 if ($global:CullewieTrustedBroken -or $global:CullewieTrustedFailed) { exit 1 }
 exit 0
