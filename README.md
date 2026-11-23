@@ -19,10 +19,9 @@ Bilgisayarı oyun için en sade haline getirir:
 - Eski ekran kartı sürücüsünü güvenli modda DDU ile siler, NVIDIA'nın ya da AMD'nin (Radeon RX 5000–9000) sitesinden en yenisini kurar. Sürücünün dijital imzası kontrol edilir.
 - NVIDIA veya AMD ayarlarını yapar, monitörü en yüksek yenileme hızına (Hz) alır. Sonda Digital Vibrance ya da AMD'de Color Saturation için bir değer sorar.
 - Gereksiz uygulamaları ve Windows hizmetlerini kapatır, Windows'u oyun için ayarlar.
+- Windows Update, Microsoft Store, Xbox ve oyun dışı bazı Windows özellikleri bu seçenekte çalışmaz.
 
 Kurulum sırasında bilgisayar üç kez kendiliğinden yeniden başlar. Her açılışta Windows'a giriş yapman yeterli.
-
-**Bu seçenekte çalışmayanlar:** Windows Update, Microsoft Store ve Xbox, yazıcı, Bluetooth, dosya ve yazıcı paylaşımı, IPv6, Başlat aramasında dosya içeriği, Windows bildirimleri. Sistem Geri Yükleme kapanır, BitLocker şifrelemesi kaldırılır. Windows Defender'ın gerçek zamanlı koruması açık kalır; SmartScreen ve bulut koruması kapanır.
 
 **Yeniden başlatmadan çalıştırmak için** (güvenli mod, sürücü temizliği, Defender ayarları ve ekran sorusu atlanır; hizmetler bir sonraki yeniden başlatmada değişir):
 
