@@ -1,6 +1,6 @@
 # cullewie's-progress
 
-Windows 11'i formatladıktan sonra bilgisayarı oyun için hazırlayan, tek komutla çalışan açık kaynak bir kurulum aracı. Yaptığı her şey bu depodaki dosyalarda yazılıdır.
+Windows 11'i formatladıktan sonra bilgisayarı oyun için hazırlayan, tek komutla çalışan açık kaynak bir kurulum aracı.
 
 Başlat menüsünde **PowerShell**'e sağ tıkla, **Yönetici olarak çalıştır**'ı seç ve aşağıdaki seçeneklerden birinin komutunu yapıştır: **All-in**, **Xbox & Store**, **Only Store Mode** ya da hepsini geri almak için **Vanilla Mode**.
 

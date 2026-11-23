@@ -16,8 +16,8 @@
                   },
                   {
                       "path":  "README.md",
-                      "size":  4523,
-                      "sha256":  "f225dae55cd2b9b4b4c0e61230f89bd30856592c5f1b4af80fee8e90408363dd",
+                      "size":  4466,
+                      "sha256":  "3684cdcf7e21b565a83c22cfd745072393fe9784849e7950fbba62535054e432",
                       "role":  "documentation",
                       "origin":  "project",
                       "derivedFrom":  null
