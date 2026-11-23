@@ -41,7 +41,7 @@ function Test-Guarded($Ast, [string]$Pattern, [string]$Condition) {
 }
 $storeStart = @{ wuauserv = 3; BITS = 3; UsoSvc = 2; WaaSMedicSvc = 3; PushToInstall = 3 }
 $xboxStart = $storeStart.Clone()
-foreach ($k in @{ XblAuthManager = 3; XblGameSave = 3; XboxGipSvc = 3; XboxNetApiSvc = 3; iphlpsvc = 2; GameInputSvc = 3; WpnService = 2; WpnUserService = 2 }.GetEnumerator()) { $xboxStart[$k.Key] = $k.Value }
+foreach ($k in @{ XblAuthManager = 3; XblGameSave = 3; XboxGipSvc = 3; XboxNetApiSvc = 3; IKEEXT = 3; iphlpsvc = 2; GameInputSvc = 3; WpnService = 2; WpnUserService = 2; bthserv = 3; DeviceAssociationService = 3; DevicesFlowUserSvc = 3 }.GetEnumerator()) { $xboxStart[$k.Key] = $k.Value }
 
 # ---------------- Services.ps1 ----------------
 $services = Join-Path $repo 'Scripts\Windows\Services.ps1'
@@ -49,11 +49,17 @@ $services = Join-Path $repo 'Scripts\Windows\Services.ps1'
 # (safe mode, restart). Only invoke it when its param block really declares PlanOnly and PlanPath.
 $servicesParams = @((Get-Ast $services).Ast.ParamBlock.Parameters | ForEach-Object { $_.Name.VariablePath.UserPath })
 $canPlan = ($servicesParams -contains 'PlanOnly') -and ($servicesParams -contains 'PlanPath') -and ($servicesParams -contains 'Apps')
+# ... and only when the PlanOnly exit comes before every command that changes the system (outside the here-strings)
+$sAst = (Get-Ast $services).Ast
+$planExit = $sAst.FindAll({ param($n) $n -is [System.Management.Automation.Language.IfStatementAst] -and $n.Clauses[0].Item1.Extent.Text -eq '$PlanOnly' }, $true) | Select-Object -Last 1
+$firstDanger = $sAst.FindAll({ param($n) $n -is [System.Management.Automation.Language.CommandAst] -and $n.Extent.Text -match 'bcdedit|RunOnce|shutdown|Run-Trusted|reg import|Regedit' }, $true) | Sort-Object { $_.Extent.StartOffset } | Select-Object -First 1
+$canPlan = $canPlan -and $planExit -and (-not $firstDanger -or $planExit.Extent.EndOffset -lt $firstDanger.Extent.StartOffset)
+Assert $canPlan 'Services-PlanOnlyExitsFirst'
 function Invoke-ServicesPlan([string[]]$Extra) {
     if (-not $canPlan) { return [pscustomobject]@{ Exit = -1; Plan = @{}; Path = $null } }
     $tmp = [IO.Path]::GetTempFileName()
-    & $ps -NoProfile -ExecutionPolicy Bypass -File $services -PlanOnly -PlanPath $tmp @Extra | Out-Null
-    [pscustomobject]@{ Exit = $LASTEXITCODE; Plan = (Get-Plan $tmp); Path = $tmp }
+    $output = & $ps -NoProfile -ExecutionPolicy Bypass -File $services -PlanOnly -PlanPath $tmp @Extra 2>&1 | Out-String
+    [pscustomobject]@{ Exit = $LASTEXITCODE; Plan = (Get-Plan $tmp); Path = $tmp; Output = $output }
 }
 $off = Invoke-ServicesPlan @()
 Assert ($off.Exit -eq 0 -and $off.Plan.Count -eq 248 -and $off.Plan['BITS'] -eq 4 -and $off.Plan['wuauserv'] -eq 4 -and $off.Plan['XblAuthManager'] -eq 4) 'Off-PlanUnchanged' "exit=$($off.Exit) count=$($off.Plan.Count)"
@@ -64,6 +70,9 @@ Assert ($store.Exit -eq 0 -and $store.Plan.Count -eq 248 -and -not $bad -and $st
 $xbox = Invoke-ServicesPlan @('-Apps', 'xbox')
 $bad = @($xboxStart.Keys | Where-Object { $xbox.Plan[$_] -ne $xboxStart[$_] })
 Assert ($xbox.Exit -eq 0 -and $xbox.Plan.Count -eq 248 -and -not $bad -and $xbox.Plan['DiagTrack'] -eq 4) 'Xbox-PlanSetsDefaults' "exit=$($xbox.Exit) wrong=$($bad -join ',')"
+# a kept service must be able to start: no "note: <name> (manual) needs X, which is disabled" for any of them
+$blocked = @(foreach ($r in @(@{ P = $store; S = $storeStart }, @{ P = $xbox; S = $xboxStart })) { foreach ($n in $r.S.Keys) { if ($r.P.Output -match "note: $n(_\w+)? \(manual\) needs") { $n } } })
+Assert ($blocked.Count -eq 0) 'Apps-KeptServicesCanStart' "blocked: $($blocked -join ',')"
 $off, $store, $xbox | Where-Object Path | ForEach-Object { Remove-Item $_.Path -Force -ErrorAction SilentlyContinue }
 $relaunch = (Select-String -Path $services -Pattern 'Start-Process PowerShell\.exe' | Select-Object -First 1).Line
 Assert ($relaunch -match '\$Apps') 'Services-RelaunchForwardsApps'
@@ -111,6 +120,9 @@ $loop = $t.Ast.FindAll({ param($n) $n -is [System.Management.Automation.Language
 $listText = $loop.Condition.Extent.Text
 $listFor = { param($level) $Apps = $level; @(Invoke-Expression $listText) }
 Assert ($listText -match '\$Apps' -and (& $listFor 'xbox') -notcontains 'ms_tcpip6' -and (& $listFor 'store') -contains 'ms_tcpip6' -and (& $listFor 'off') -contains 'ms_tcpip6' -and (& $listFor 'xbox') -contains 'ms_server') 'Tweaks-BindingList'
+$undoStore = @('LetAppsRunInBackground.*-ErrorAction', "GlobalUserDisabled' -Value 0", "Name 'AutoDownload'") | Where-Object { -not (Test-Guarded $t.Ast "^Remove-ItemProperty .*$_|^Set-Reg .*$_" "`$Apps -ne 'off'") }
+$undoXbox = @('^Enable-NetAdapterBinding .*ms_tcpip6', 'SOFTWARE\\Classes\\\$protocol', '^Run-Trusted .*PresenceWriter.*/d `"1`"') | Where-Object { -not (Test-Guarded $t.Ast $_ "`$Apps -eq 'xbox'") }
+Assert (@($undoStore).Count -eq 0 -and @($undoXbox).Count -eq 0) 'Tweaks-UndoesEarlierRun' "missing: $(@($undoStore) + @($undoXbox) -join ' | ')"
 $relaunchT = Select-String -Path $tweaks -Pattern 'Start-Process PowerShell\.exe' | Select-Object -First 1
 Assert (-not $relaunchT -or $relaunchT.Line -match '\$Apps') 'Tweaks-RelaunchForwardsApps'
 $tParams = @($t.Ast.ParamBlock.Parameters | ForEach-Object { $_.Name.VariablePath.UserPath })
@@ -146,6 +158,13 @@ if ($convert -and $getArgs) {
     Remove-Item $flag -ErrorAction SilentlyContinue
     Assert ($r -eq '-Live -Apps xbox|0|0') 'Launcher-AppsArguments' "got $r"
 } else { Assert $false 'Launcher-AppsArguments' 'functions missing' }
+$storeXbox = Join-Path $repo 'Scripts\Windows\Store-Xbox.ps1'
+$sx = Get-Ast $storeXbox
+$sxParam = $sx.Ast.ParamBlock.Parameters | Where-Object { $_.Name.VariablePath.UserPath -eq 'Apps' }
+$sxText = [IO.File]::ReadAllText($storeXbox)
+$sxIds = @('9WZDNCRFJBMP', '9WZDNCRD1HKW', '9MWPM2CQNLHN', '9MV0B5HZVK9Z', '9NZKPSTSNW4P') | Where-Object { -not $sxText.Contains($_) }
+Assert ($sx.Errors.Count -eq 0 -and $sxParam -and $sxParam.Extent.Text -match "Mandatory" -and $sxParam.Extent.Text -match "ValidateSet\('store', 'xbox'\)" -and -not $sxIds -and $sxText -match 'Microsoft\.GameInput') 'StoreXbox-Script' "missing ids: $($sxIds -join ',')"
+Assert ([IO.File]::ReadAllText($launcher) -match "Id='store-xbox'.*Store-Xbox\.ps1" -and $resume -match 'store-xbox' -and $live -match 'store-xbox') 'Launcher-RunsStoreXbox'
 $question = 'Microsoft Store / Xbox kullaniyor musunuz? 1 = Hayir, 2 = Sadece Microsoft Store, 3 = Xbox ve Game Pass (Store dahil)'
 Assert ([IO.File]::ReadAllText($launcher).Contains($question)) 'Launcher-Question'
 $lParams = @($l.Ast.ParamBlock.Parameters | ForEach-Object { $_.Name.VariablePath.UserPath })

@@ -7,13 +7,14 @@ param([switch]$Live, [ValidateSet('off', 'store', 'xbox')][string]$Apps = 'off',
       [string]$PlanPath = "$env:ProgramData\Cullewie\Work\services-plan.txt")
         # SCRIPT RUN AS ADMIN (keep every parameter: without -Live or -PlanOnly the elevated copy would restart into safe mode)
         If (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]"Administrator"))
-        {Start-Process PowerShell.exe -ArgumentList ("-NoProfile -ExecutionPolicy Bypass -File `"{0}`"{1}{2} -Apps {3} -PlanPath `"{4}`"" -f $PSCommandPath, $(if ($Live) { ' -Live' } else { '' }), $(if ($PlanOnly) { ' -PlanOnly' } else { '' }), $Apps, $PlanPath) -Verb RunAs
+        {Start-Process PowerShell.exe -ArgumentList ("-NoProfile -ExecutionPolicy Bypass -File `"{0}`"{1}{2} -Apps {3} -PlanPath `"{4}`"" -f $PSCommandPath, $(if ($Live) { ' -Live' } else { '' }), $(if ($PlanOnly) { ' -PlanOnly' } else { '' }), $Apps, $PlanPath.TrimEnd('\')) -Verb RunAs
         Exit}
 # Start values that -Apps store / xbox write instead of the list's own (Windows 11 defaults)
 function Get-AppsServiceStart([string]$Apps) {
     $start = @{}
     if ($Apps -in 'store', 'xbox') { $start += @{ wuauserv = 3; BITS = 3; UsoSvc = 2; WaaSMedicSvc = 3; PushToInstall = 3 } }
-    if ($Apps -eq 'xbox') { $start += @{ XblAuthManager = 3; XblGameSave = 3; XboxGipSvc = 3; XboxNetApiSvc = 3; iphlpsvc = 2; GameInputSvc = 3; WpnService = 2; WpnUserService = 2 } }
+    # XboxNetApiSvc needs IKEEXT; Bluetooth controllers need bthserv, DeviceAssociationService and DevicesFlowUserSvc
+    if ($Apps -eq 'xbox') { $start += @{ XblAuthManager = 3; XblGameSave = 3; XboxGipSvc = 3; XboxNetApiSvc = 3; IKEEXT = 3; iphlpsvc = 2; GameInputSvc = 3; WpnService = 2; WpnUserService = 2; bthserv = 3; DeviceAssociationService = 3; DevicesFlowUserSvc = 3 } }
     $start
 }
 function Set-ServiceStartInText([string]$Text, [hashtable]$Start) {
@@ -884,6 +885,7 @@ Run-Trusted "cmd /c `"reg import $env:ProgramData\Cullewie\Work\servicesoff.reg 
 cmd /c "reg import `"$env:ProgramData\Cullewie\Work\servicesoff.reg`" >nul 2>&1"
 # check the result by reading it back (reg's exit code is useless here: admins can't write some keys such as RpcSs,
 # so the admin pass always "fails" and only the TrustedInstaller pass writes those)
+Remove-Item -Path "$env:ProgramData\Cullewie\Work\services-not-applied.txt" -Force -ErrorAction SilentlyContinue
 $notApplied = @()
 foreach ($m in [regex]::Matches((Get-Content "$env:ProgramData\Cullewie\Work\servicesoff.reg" -Raw), '(?m)^\[HKEY_LOCAL_MACHINE\\SYSTEM\\ControlSet001\\Services\\([^\]]+)\]\r?\n"Start"=dword:0*(\d)')) {
     $now = (Get-ItemProperty "HKLM:\SYSTEM\ControlSet001\Services\$($m.Groups[1].Value)" -ErrorAction SilentlyContinue).Start
@@ -908,7 +910,6 @@ if ($global:CullewieTrustedFailed -or $global:CullewieTrustedBroken) { exit 1 }
 '@
 # -Apps store / xbox: their services at Windows defaults (no change for off)
 $ServicesOff = Set-ServiceStartInText $ServicesOff (Get-AppsServiceStart $Apps)
-Set-Content -Path "$env:ProgramData\Cullewie\Work\servicesoff.ps1" -Value $ServicesOff -Force
 
 # dependency check: a service left on must not depend on one this list turns off (e.g. SENS needs EventSystem).
 # Stops before safe mode is turned on, so nothing has changed yet.
@@ -958,8 +959,9 @@ if ($PlanOnly) {
     exit 0
 }
 
-# edit servicesoff.ps1
+# write servicesoff.ps1 (after -PlanOnly, so a plan run writes nothing else), then fix its nested here-string end
 $ServicesOffPs1 = "$env:ProgramData\Cullewie\Work\servicesoff.ps1"
+Set-Content -Path $ServicesOffPs1 -Value $ServicesOff -Force
 (Get-Content $ServicesOffPs1 -Raw) -replace "``'@","'@" | Set-Content $ServicesOffPs1 -NoNewline
 
 # -Live: apply now in normal Windows (as TrustedInstaller, then as admin), no safe mode and no restart.

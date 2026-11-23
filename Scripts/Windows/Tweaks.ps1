@@ -1502,6 +1502,19 @@ Write-Host "Done.`n"
 if ($Apps -ne 'off') {
     Write-Host 'Store/Xbox: Windows Update gets the monthly update only (no new Windows version, drivers or previews)'
     Set-AppsUpdatePolicy
+    # undo what an earlier default run set, so a PC that was already set up works too
+    Remove-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\AppPrivacy' -Name 'LetAppsRunInBackground' -ErrorAction SilentlyContinue
+    Set-Reg -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications' -Name 'GlobalUserDisabled' -Value 0
+    Remove-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsStore\WindowsUpdate' -Name 'AutoDownload' -ErrorAction SilentlyContinue
+}
+if ($Apps -eq 'xbox') {
+    Write-Host 'Xbox: IPv6 (Teredo) and the Game Bar back on'
+    Enable-NetAdapterBinding -Name '*' -ComponentID 'ms_tcpip6' -ErrorAction SilentlyContinue
+    # the default run pointed these Game Bar links at systray.exe; without the override the Game Bar app handles them
+    foreach ($protocol in 'ms-gamebar', 'ms-gamebarservices', 'ms-gamingoverlay') {
+        Remove-Item -Path "HKLM:\SOFTWARE\Classes\$protocol" -Recurse -Force -ErrorAction SilentlyContinue
+    }
+    Run-Trusted "reg add `"HKLM\SOFTWARE\Microsoft\WindowsRuntime\ActivatableClassId\Windows.Gaming.GameBar.PresenceServer.Internal.PresenceWriter`" /v `"ActivationType`" /t REG_DWORD /d `"1`" /f"
 }
 
 # non-zero when a critical step failed (TrustedInstaller path not restored), so the Launcher shows it

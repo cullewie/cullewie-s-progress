@@ -29,6 +29,7 @@ $script:Tools = @(
     [pscustomobject]@{ Id='timer-resolution'; Name='Timer Resolution On'; Category='Windows'; Path='Scripts/Windows/Timer-Resolution.ps1'; Wrapper='' }
     [pscustomobject]@{ Id='tweaks'; Name='Windows Tweaks (apps, widgets, Copilot, settings)'; Category='Windows'; Path='Scripts/Windows/Tweaks.ps1'; Wrapper='' }
     [pscustomobject]@{ Id='defender'; Name='Defender Optimize'; Category='Windows'; Path='Scripts/Windows/Defender.ps1'; Wrapper='' }
+    [pscustomobject]@{ Id='store-xbox'; Name='Microsoft Store / Xbox apps'; Category='Windows'; Path='Scripts/Windows/Store-Xbox.ps1'; Wrapper='' }
     [pscustomobject]@{ Id='refresh-rate'; Name='Highest Refresh Rate'; Category='GPU'; Path='Scripts/GPU/Refresh-Rate.ps1'; Wrapper='' }
     [pscustomobject]@{ Id='display-options'; Name='Display: full-screen scaling and vibrance'; Category='GPU'; Path='Scripts/GPU/Display-Options.ps1'; Wrapper='' }
 )
@@ -398,9 +399,11 @@ function Resume-FullSetup {
     $windowsIds = @('power-plan', 'timer-resolution', 'tweaks', 'display-options')
     $amdSettingsRan = Test-Path (Join-Path $env:ProgramData 'Cullewie\Work\amd-installed.flag')
     if (-not $hasNvidia -and -not $amdSettingsRan) { $windowsIds = @('refresh-rate') + $windowsIds }
+    # Store / Xbox chosen: install the missing apps right after Tweaks (the step switches on the services it needs itself)
+    if (@(Get-AppsArguments).Count) { $windowsIds = @($windowsIds | ForEach-Object { $_; if ($_ -eq 'tweaks') { 'store-xbox' } }) }
     foreach ($id in $windowsIds) {
         $toolArguments = @()
-        if ($id -eq 'tweaks') { $toolArguments = @(Get-AppsArguments) }
+        if ($id -in 'tweaks', 'store-xbox') { $toolArguments = @(Get-AppsArguments) }
         try { Invoke-RequiredTool -Id $id -Arguments $toolArguments } catch { $failed.Add($_.Exception.Message) }
     }
     if ($failed.Count) {
@@ -443,12 +446,13 @@ function Start-LiveSetup {
     if ($hasNvidia) { $ids += 'nvidia-updater', 'settings-github' }
     elseif (@(Get-PciGpu '1002').Count) { $ids += 'amd-updater' }
     $ids += 'power-plan', 'timer-resolution', 'tweaks'
+    if (@(Get-AppsArguments).Count) { $ids += 'store-xbox' }
     foreach ($id in $ids) {
         $tool = $script:Tools | Where-Object { $_.Id -eq $id } | Select-Object -First 1
         $sw = [Diagnostics.Stopwatch]::StartNew()
         # no questions in live mode: NVIDIA Settings leaves scaling and vibrance as they are
         if ($id -eq 'settings-github') { Invoke-ChildScript -Tool $tool -Arguments @('-SkipDisplay') }
-        elseif ($id -eq 'tweaks') { Invoke-ChildScript -Tool $tool -Arguments @(Get-AppsArguments) }
+        elseif ($id -in 'tweaks', 'store-xbox') { Invoke-ChildScript -Tool $tool -Arguments @(Get-AppsArguments) }
         else { Invoke-ChildScript -Tool $tool }
         $steps.Add(('{0,-50} exit {1,3}  {2:mm\:ss}' -f $tool.Name, $script:LastChildExitCode, $sw.Elapsed))
     }

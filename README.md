@@ -110,11 +110,13 @@ Kurulum varsayılan olarak Store ve Xbox'ın kullandığı hizmetleri kapatır. 
 
 - **1 = Hayır:** her şey yukarıda anlatıldığı gibi.
 - **2 = Sadece Microsoft Store:** Store'dan indirme, kurma ve güncelleme çalışır. Store'un otomatik güncellemesi ve arka plan uygulamaları açık kalır.
-- **3 = Xbox ve Game Pass:** Store'a ek olarak Xbox uygulaması, Gaming Services, kumanda, Xbox ağ hizmetleri (Teredo, IPv6), GameInput ve Game Bar da çalışır.
+- **3 = Xbox ve Game Pass:** Store'a ek olarak Xbox uygulaması, Gaming Services, kumanda (kablolu, adaptör ve Bluetooth), Xbox ağ hizmetleri (Teredo, IPv6), GameInput ve Game Bar da çalışır.
 
-2 ve 3'te Windows Update açık kalır ama **yalnızca aylık güncellemeyi** alır: yeni Windows sürümü, sürücü güncellemesi ve önizleme güncellemeleri gelmez. (Windows 11'de "yalnızca güvenlik" diye ayrı bir güncelleme yoktur; güvenlik düzeltmeleri bu aylık pakette gelir.) Daha önce kurulum yapılmış bir bilgisayarda da bu hizmetler Windows varsayılanlarına geri döner.
+Eksik olan uygulamaları (Microsoft Store; 3'te ayrıca Xbox, Gaming Services, Xbox Identity Provider, Game Bar ve GameInput) kurulum kendisi indirip kurar, yeniden başlatma beklemeden. Daha önce kurulum yapılmış bir bilgisayarda da kapatılmış hizmetler ve ayarlar geri açılır.
 
-Yeniden başlatmadan çalıştırırken soru sorulmaz; seçimi komutun başına ekle: `$env:CULLEWIE_APPS = 'xbox'` (ya da `'store'`).
+2 ve 3'te Windows Update açık kalır ama **yalnızca aylık güncellemeyi** alır: yeni Windows sürümü, sürücü güncellemesi ve önizleme güncellemeleri gelmez. (Windows 11'de "yalnızca güvenlik" diye ayrı bir güncelleme yoktur; güvenlik düzeltmeleri bu aylık pakette gelir.) Windows sürümü kurulumdaki sürüme sabitlenir; o sürümün desteği bitince aylık güncellemeler de durur, o zaman Windows'u elle yeni sürüme yükseltip kurulumu bir kez daha çalıştır. Windows 11 Home'da sürüm sabitleme her zaman işlemeyebilir.
+
+Soru sorulmadan seçmek için komutun başına ekle (yeniden başlatmadan çalıştırırken de böyle seçilir): `$env:CULLEWIE_APPS = 'xbox'` (ya da `'store'`). Bu değişken açık kaldığı sürece aynı penceredeki sonraki kurulumlar da soruyu sormadan bunu kullanır.
 
 ## Bir şey bozulursa
 
