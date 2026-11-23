@@ -211,6 +211,15 @@ function Get-RestorePlan($Inventory) {
     }
 }
 # installs each item (the runner returns $true when it worked); returns what did not come back, with the reason
+# keeps only the items whose install failed (for the next run); removes the file when nothing is left to retry
+function Save-RemainingInventory([object[]]$Plan, [object[]]$NotBack, [string]$Path) {
+    $failed = @($NotBack | Where-Object { $_.Reason -eq 'install failed' } | ForEach-Object { $_.Name })
+    $left = [ordered]@{ apps = @(); capabilities = @(); features = @(); programs = @() }
+    $listOf = @{ app = 'apps'; capability = 'capabilities'; feature = 'features'; program = 'programs' }
+    foreach ($item in $Plan) { if ($failed -contains $item.Name) { $left[$listOf[$item.Kind]] += $item.Name } }
+    if ($failed.Count) { [IO.File]::WriteAllText($Path, ($left | ConvertTo-Json -Depth 3), [Text.UTF8Encoding]::new($false)) }
+    else { Remove-Item -LiteralPath $Path -Force -ErrorAction SilentlyContinue }
+}
 function Invoke-RestorePlan([object[]]$Plan, [scriptblock]$Runner) {
     if (-not $Runner) {
         $Runner = {
@@ -337,22 +346,20 @@ Write-Log 'Network: IPv6, file sharing, QoS and discovery back on (Teredo: set b
 # only the bindings that are off: re-binding restarts the adapter, and the connection drops for a few seconds
 $offBindings = @(Get-NetAdapterBinding -ComponentID 'ms_tcpip6', 'ms_server', 'ms_msclient', 'ms_pacer', 'ms_lldp', 'ms_lltdio', 'ms_rspndr' -ErrorAction SilentlyContinue | Where-Object { -not $_.Enabled })
 if ($offBindings) {
-    Write-Log '  (the network connection drops for a few seconds while the adapter restarts)'
-    # the services behind file sharing and network discovery were disabled by All-in; their new start types are only in
-    # the registry so far (Windows reads it at boot), and switching a binding on waited for a service the service manager
-    # still saw as disabled (10 minutes, 2026-11-23). Tell the service manager first.
-    $scStart = @{ 2 = 'auto'; 3 = 'demand'; 4 = 'disabled' }
-    foreach ($svc in 'LanmanServer', 'LanmanWorkstation', 'lltdsvc', 'lmhosts') {
-        if (Get-Service -Name $svc -ErrorAction SilentlyContinue) { sc.exe config $svc start= $scStart[(Get-DefaultStart $svc)] | Out-Null }
+    # Not now: with the services All-in disabled still loaded, switching a binding on while Windows runs hung (10 minutes)
+    # or cut the connection until a manual restart (2026-11-23), and the Store/Xbox step below needs the internet.
+    # A one-time task switches them on at the next startup, as SYSTEM, before anyone signs in, then removes itself.
+    $bindingCommand = (@($offBindings | ForEach-Object { "Enable-NetAdapterBinding -Name '$($_.Name -replace "'", "''")' -ComponentID '$($_.ComponentID)' -ErrorAction SilentlyContinue" }) -join '; ') +
+        "; Unregister-ScheduledTask -TaskName 'cullewie-bindings' -Confirm:`$false"
+    $encodedBindings = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($bindingCommand))
+    $bindingAction = New-ScheduledTaskAction -Execute "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -Argument "-NoProfile -ExecutionPolicy Bypass -EncodedCommand $encodedBindings"
+    $bindingTrigger = New-ScheduledTaskTrigger -AtStartup
+    $bindingPrincipal = New-ScheduledTaskPrincipal -UserId 'SYSTEM' -LogonType ServiceAccount -RunLevel Highest
+    try {
+        Register-ScheduledTask -TaskName 'cullewie-bindings' -Action $bindingAction -Trigger $bindingTrigger -Principal $bindingPrincipal -Force -ErrorAction Stop | Out-Null
+        Write-Log "  $($offBindings.Count) bindings go back on at the restart (now would cut the connection)"
     }
-    # in a separate process with a time limit: a binding that still does not answer is applied at the restart anyway
-    $bindingJob = Start-Job -ArgumentList (, @($offBindings | ForEach-Object { "$($_.Name)|$($_.ComponentID)" })) -ScriptBlock {
-        param([string[]]$Items)
-        foreach ($i in $Items) { $n, $c = $i -split '\|', 2; Enable-NetAdapterBinding -Name $n -ComponentID $c -ErrorAction SilentlyContinue }
-    }
-    if (Wait-Job $bindingJob -Timeout 120) { Write-Log "  $($offBindings.Count) bindings back on" }
-    else { Write-Log '  the network adapter did not answer within 2 minutes; the bindings are switched on at the restart' 'Yellow'; Stop-Job $bindingJob }
-    Remove-Job $bindingJob -Force -ErrorAction SilentlyContinue
+    catch { Write-Log "  could not schedule the bindings for the restart: $($_.Exception.Message)" 'Red' }
 }
 Remove-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip6\Parameters' -Name 'DisabledComponents' -ErrorAction SilentlyContinue
 
@@ -424,8 +431,8 @@ if ($inventory) {
     Write-Log "Removed apps and features: bringing back what can come back ($(@($restorePlan | Where-Object How -ne 'skip').Count) items)"
     $notBack = @(Invoke-RestorePlan $restorePlan)
     foreach ($n in $notBack) { Write-Log "  not restored  $($n.Name) ($($n.Reason))" 'Yellow' }
-    # used up, like the appearance copy: the next All-in run lists what the PC has then
-    Remove-Item -LiteralPath $inventoryPath -Force -ErrorAction SilentlyContinue
+    # what failed to install (no internet, Store busy) stays listed for the next Vanilla run; the rest is used up
+    Save-RemainingInventory -Plan $restorePlan -NotBack $notBack -Path $inventoryPath
 }
 else { Write-Log 'Removed apps and features: no saved list (All-in ran before this version saved one), nothing is reinstalled' 'Yellow' }
 

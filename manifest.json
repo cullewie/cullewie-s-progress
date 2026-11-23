@@ -96,8 +96,8 @@
                   },
                   {
                       "path":  "Scripts/Windows/Vanilla.ps1",
-                      "size":  32924,
-                      "sha256":  "3582c579c88f56e16658865e0f9643243c43252ed55352d394c0c72b4756765d",
+                      "size":  33833,
+                      "sha256":  "bb21aa14d88aeae0846f57119a0e37c4c5c752c7c8d062206737d6db08174773",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null
