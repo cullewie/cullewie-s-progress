@@ -40,8 +40,8 @@
                   },
                   {
                       "path":  "Scripts/GPU/NVIDIA/Settings.ps1",
-                      "size":  16323,
-                      "sha256":  "3d0d34feb73eab68ccc971c29edaeea1dee2ede2bcb3323a6440a70b2fdfe341",
+                      "size":  16339,
+                      "sha256":  "268d28df1079fb666678ba9017790d744be289aff5ebdba95bde8caa2555822f",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null
@@ -56,8 +56,8 @@
                   },
                   {
                       "path":  "Scripts/Windows/Services.ps1",
-                      "size":  36444,
-                      "sha256":  "d87e63008f41f9dfb068068e3bcbc554f21487cbe6b83c4819bdd9f97c98a3e3",
+                      "size":  36454,
+                      "sha256":  "c93225ce30052ca2de6c4f8780e03e71d2047d6402e8887cb204e67dc8a33ea9",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null
@@ -128,16 +128,8 @@
                   },
                   {
                       "path":  "Scripts/GPU/Display-Options.ps1",
-                      "size":  16840,
-                      "sha256":  "a0fce8f5a2db38f46d967b957da6763bb9fbe03917225afd9235ef6687991708",
-                      "role":  "source",
-                      "origin":  "project",
-                      "derivedFrom":  null
-                  },
-                  {
-                      "path":  "Scripts/Windows/Services-Restore.ps1",
-                      "size":  3040,
-                      "sha256":  "d5c9d8ac423fcaa30a8847297843850f7b43e9e8c5d87fb3ffe873a8f6f1b5fb",
+                      "size":  17004,
+                      "sha256":  "393ded3dc26d2dfb5328208eea225bbad13620a7f0fd674df39ef6fe1199997f",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null

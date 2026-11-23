@@ -313,10 +313,10 @@ else { Write-Host "Refresh rate: skipped, $refreshRate not found." -ForegroundCo
 
 # full-screen scaling and digital vibrance
 $displayOptions = Join-Path $PSScriptRoot '..\Display-Options.ps1'
-if ($SkipDisplay) { Write-Host 'Scaling and vibrance: skipped (no questions in this mode).' }
+if ($SkipDisplay) { Write-Host 'Scaling and Digital Vibrance: skipped (no questions in this mode).' }
 elseif (Test-Path $displayOptions) {
     & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -ExecutionPolicy Bypass -File $displayOptions
-    if ($LASTEXITCODE -ne 0) { Write-Host "Scaling and vibrance: $LASTEXITCODE step(s) failed, see above." -ForegroundColor Yellow }
+    if ($LASTEXITCODE -ne 0) { Write-Host "Scaling and Digital Vibrance: $LASTEXITCODE step(s) failed, see above." -ForegroundColor Yellow }
 }
 Write-Host 'NVIDIA Settings: done.' -ForegroundColor Green
 Stop-Transcript | Out-Null

@@ -146,14 +146,14 @@ public static class DisplayOptions {
                             string line = "adapter " + index + " display " + logical + ":";
                             int cur, def, min, max, step;
                             if (ADL2_Display_Color_Get(ctx, index, logical, ADL_DISPLAY_COLOR_SATURATION, out cur, out def, out min, out max, out step) == 0) {
-                                line += " saturation " + cur + " (default " + def + ", range " + min + ".." + max + ")";
+                                line += " Color Saturation " + cur + " (default " + def + ", range " + min + ".." + max + ")";
                                 if (percent >= 0) {
                                     int v = Math.Max(min, Math.Min(max, percent));
                                     if (apply) { r = ADL2_Display_Color_Set(ctx, index, logical, ADL_DISPLAY_COLOR_SATURATION, v); line += r == 0 ? " -> " + v : " -> set failed: " + r; }
                                     else line += " -> would set " + v;
                                 }
                             }
-                            else line += " saturation not supported";
+                            else line += " Color Saturation not supported";
                             if (stretch) {
                                 if (apply) { r = ADL2_DFP_GPUScalingEnable_Set(ctx, index, logical, 1); line += r == 0 ? ", GPU scaling on" : ", GPU scaling failed: " + r; }
                                 else line += ", would turn GPU scaling on";
@@ -188,13 +188,13 @@ Write-Host 'Display options' -ForegroundColor Cyan
 # full-screen scaling is always turned on, without a question (-Scaling no skips it)
 if (-not $Scaling) { $Scaling = 'yes' }
 if (-not $PSBoundParameters.ContainsKey('Level')) {
-    if ($hasNvidia) { $Level = Read-Host 'Dijital canlilik yuzde kac olsun? 50 = varsayilan, 100 = en yuksek (bos = dokunma)' }
-    elseif ($hasAmd) { $Level = Read-Host 'Doygunluk yuzde kac olsun? 100 = varsayilan, 200 = en yuksek, en az 100 (bos = dokunma)' }
+    if ($hasNvidia) { $Level = Read-Host 'Digital Vibrance (Dijital Canlilik) yuzde kac olsun? 50 = varsayilan, 100 = en yuksek (bos = dokunma)' }
+    elseif ($hasAmd) { $Level = Read-Host 'Color Saturation (Renk Doygunlugu) yuzde kac olsun? 100 = varsayilan, 200 = en yuksek, en az 100 (bos = dokunma)' }
     else { $Level = '' }
 }
 $percent = -1
 if ("$Level".Trim()) {
-    if ("$Level".Trim() -notmatch '^\d{1,3}$') { Write-Host "Not a number: $Level. Vibrance left as is." -ForegroundColor Yellow }
+    if ("$Level".Trim() -notmatch '^\d{1,3}$') { Write-Host "Not a number: $Level. Digital Vibrance / Color Saturation left as is." -ForegroundColor Yellow }
     else {
         $percent = [int]"$Level".Trim()
         if ($hasNvidia) { $percent = [Math]::Max(50, [Math]::Min(100, $percent)) }
@@ -220,15 +220,15 @@ else { Write-Host 'Full-screen scaling: left as is' }
 
 try {
     if ($hasNvidia) {
-        [DisplayOptions]::NvidiaVibrance($percent, -not $TestOnly) | ForEach-Object { Write-Host "Digital vibrance: $_"; if ($_ -match 'failed') { $failed++ } }
+        [DisplayOptions]::NvidiaVibrance($percent, -not $TestOnly) | ForEach-Object { Write-Host "Digital Vibrance: $_"; if ($_ -match 'failed') { $failed++ } }
     }
     if ($hasAmd -and ($percent -ge 0 -or $Scaling -eq 'yes')) {
         [DisplayOptions]::Amd($(if ($hasNvidia) { -1 } else { $percent }), $Scaling -eq 'yes', -not $TestOnly) | ForEach-Object { Write-Host "AMD: $_"; if ($_ -match 'failed') { $failed++ } }
     }
-    if (-not $hasNvidia -and -not $hasAmd) { Write-Host 'No NVIDIA or AMD driver found. Vibrance skipped.' -ForegroundColor Yellow }
+    if (-not $hasNvidia -and -not $hasAmd) { Write-Host 'No NVIDIA or AMD driver found. Digital Vibrance / Color Saturation skipped.' -ForegroundColor Yellow }
 }
 catch {
-    Write-Host "Vibrance could not be set: $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host "Digital Vibrance / Color Saturation could not be set: $($_.Exception.Message)" -ForegroundColor Red
     $failed++
 }
 
@@ -248,7 +248,7 @@ if ($percent -ge 0 -and -not $TestOnly -and -not $Reapply -and ($hasNvidia -or $
             $principal = New-ScheduledTaskPrincipal -UserId $user -LogonType Interactive -RunLevel Highest  # the copy sits in a folder only admins can read
             $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -ExecutionTimeLimit (New-TimeSpan -Minutes 5)
             Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $trigger -Principal $principal -Settings $settings -Force | Out-Null
-            Write-Host "Vibrance is set again at every sign-in (task $taskName)." -ForegroundColor Green
+            Write-Host "Digital Vibrance / Color Saturation is set again at every sign-in (task $taskName)." -ForegroundColor Green
         }
         catch { Write-Host "Could not create the sign-in task: $($_.Exception.Message)" -ForegroundColor Red; $failed++ }
     }

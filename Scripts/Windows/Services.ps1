@@ -948,7 +948,7 @@ $warnings | ForEach-Object { Write-Host "  note: $_" -ForegroundColor DarkYellow
 if ($conflicts) {
     Write-Host "Services: stopped, nothing was changed.`n" -ForegroundColor Red
     $conflicts | ForEach-Object { Write-Host "  $_" -ForegroundColor Red }
-    Write-Host "  If an older run disabled these, run Scripts\Windows\Services-Restore.ps1 first, restart, then try again." -ForegroundColor Yellow
+    Write-Host "  If an older run disabled these, run Vanilla Mode first (`$env:CULLEWIE_MODE = 'vanilla'), restart, then try again." -ForegroundColor Yellow
     exit 1
 }
 
