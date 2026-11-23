@@ -354,7 +354,6 @@ Scripts/
     ├── Store-Xbox.ps1   Store / Xbox seçilince eksik uygulamaları kurar
     ├── Services.ps1     hizmetleri kapatır (bağımlılık kontrolüyle)
     └── Services-Restore.ps1  eski bir sürümün bozduğu hizmetleri onarır
-Tests/Apps.Tests.ps1     geliştirme testleri (Store/Xbox seçeneği); kurulumla birlikte indirilmez
 ```
 
 Kurulum sırasında oluşan çalışma dosyaları ve kayıtlar `C:\ProgramData\Cullewie\Work\` klasöründe tutulur. Live mod kaydı ise `C:\ProgramData\User\Work\` klasöründedir.
