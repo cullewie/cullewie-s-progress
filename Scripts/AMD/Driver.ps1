@@ -142,7 +142,8 @@ try {
     }
     Write-Progress -Activity 'Installing AMD driver' -Completed
     # AMD log: ResultCode 0 = every package installed (some may want a restart)
-    $result = if (Test-Path $log) { (Select-String -Path $log -Pattern 'ResultCode\s*=\s*(\d+)' | Select-Object -First 1).Matches.Groups[1].Value } else { $null }
+    $match = if (Test-Path $log) { Select-String -Path $log -Pattern 'ResultCode\s*=\s*(\d+)' | Select-Object -First 1 }
+    $result = if ($match) { $match.Matches[0].Groups[1].Value } else { $null }
     if (-not $result -and $setup.ExitCode -eq 0) { $result = '0' }
     if ($result -ne '0') { throw "AMD driver install failed (Setup exit code $($setup.ExitCode), ResultCode '$result'; log: $log)." }
 

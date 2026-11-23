@@ -1,14 +1,20 @@
 # Windows tweaks: Bloatware, Tweaks and Extras in one script, in this order:
 #  1. Removes preinstalled Windows apps, optional capabilities and legacy features a gaming PC does not need. Only what
 #     is named in the lists is removed: apps the user installed (Claude, ChatGPT, games, Store apps) are never touched.
-#     Kept on purpose: Microsoft Store, App Installer (winget), the Xbox app, Gaming Services, WSL/Hyper-V.
-#     Microsoft GameInput is removed.
+#     The apps themselves are kept: Microsoft Store, App Installer (winget), the Xbox app, Gaming Services, WSL/Hyper-V.
+#     But with the default Services list (Windows Update, BITS and Xbox services off) Store and Game Pass downloads do
+#     not work. Also removed: Microsoft GameInput, the Game Bar overlay, Copilot, Widgets, OneDrive, Windows Hello Face,
+#     Update Health Tools.
 #  2. General tweaks: privacy, telemetry, Explorer, game settings, Nagle, MSI mode, HDCP, memory compression,
-#     Visual C++ runtimes.
-#     System Restore is turned off so Windows never creates restore points.
+#     Visual C++ runtimes. System Restore is turned off so Windows never creates restore points.
+#     BitLocker is turned off (the system drive is decrypted).
 #  3. Extra settings: Game Bar off, new Start menu, Edge kept (WebView2 draws the Start search box), Notepad, Control
-#     Panel and Settings options, audio Enhancements tab, device and network power saving/wake off, IPv4 only, disk
-#     write-cache flushing off, dark theme (the desktop keeps its wallpaper). Where 2 and 3 set the same value, 3 wins.
+#     Panel and Settings options, audio Enhancements tab, device and network power saving/wake off (keyboard and mouse
+#     cannot wake the PC), IPv4 only with file sharing/SMB client and server unbound, disk write-cache flushing off
+#     (power loss can cost data), dark theme (the desktop keeps its wallpaper). Where 2 and 3 set the same value, 3 wins.
+#     Deliberately aggressive, also: display scaling fixed at 100%, all toast notifications off, Store auto-update and
+#     background apps off, Automatic Maintenance and scheduled defrag/retrim off, app access to the document/picture/
+#     music/video libraries and passkeys denied, Lock and Sleep hidden in the power menu, Alt+Shift layout switching off.
 # -DryRun: only writes what step 1 would remove to bloatware-dryrun.txt and stops; nothing is changed.
 param([switch]$DryRun)
 
@@ -83,7 +89,7 @@ function Remove-MsiProduct([string]$Like) {
     }
 }
 Remove-MsiProduct '*Microsoft GameInput*'
-Remove-MsiProduct '*Update for x64-based Windows Systems*'
+Remove-MsiProduct '*Update for x64-based Windows Systems (KB5001716)*'   # exact KB, a bare wildcard could match other servicing updates
 Remove-MsiProduct '*Microsoft Update Health Tools*'
 Write-Plan 'program' 'OneDrive'
 Write-Plan 'program' 'Remote Desktop Connection'
@@ -172,11 +178,8 @@ Set-Reg -Path "HKCU:\Software\Policies\Microsoft\Windows\Explorer" -Name "Disabl
 Set-Reg -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search" -Name "DisableWebSearch" -Value 1
 Set-Reg -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Name "Start_ShowRecommended" -Value 0
 
-Write-Host "Delivery Optimization off"
+Write-Host "Delivery Optimization: HTTP only, no peer-to-peer (Store downloads keep working)"
 Set-Reg -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DeliveryOptimization" -Name "DODownloadMode" -Value 0
-
-Write-Host "Taskbar End Task"
-Set-Reg -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Name "TaskbarEndTask" -Value 1
 
 Write-Host "Folder type discovery off"
 Set-Reg -Path "HKCU:\Software\Classes\Local Settings\Software\Microsoft\Windows\Shell\Bags\AllFolders\Shell" -Name "FolderType" -Type "String" -Value "NotSpecified"
@@ -193,7 +196,6 @@ Set-Reg -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Search" -Name "Ba
 Set-Reg -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\DriverSearching" -Name "SearchOrderConfig" -Value 0
 
 Write-Host "Telemetry services off"
-Set-Service -Name "RemoteRegistry" -StartupType Manual -ErrorAction SilentlyContinue
 Set-Service -Name "MapsBroker" -StartupType Manual -ErrorAction SilentlyContinue
 foreach ($svc in "DiagTrack","dmwappushservice") {
     Stop-Service -Name $svc -Force -ErrorAction SilentlyContinue
@@ -203,8 +205,7 @@ foreach ($svc in "DiagTrack","dmwappushservice") {
 Write-Host "Widgets package removed"
 Get-AppxPackage -AllUsers *WebExperience* | Remove-AppxPackage -AllUsers -ErrorAction SilentlyContinue
 
-Write-Host "WPBT and reserved storage off"
-Set-Reg -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager" -Name "DisableWPBT" -Value 1
+Write-Host "Reserved storage off"
 Set-Reg -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\ReserveManager" -Name "ShippedWithReserves" -Value 0
 
 Write-Host "Prefer IPv4"
@@ -219,14 +220,6 @@ foreach ($svc in "MicrosoftEdgeElevationService","edgeupdate","edgeupdatem") {
     Set-Service -Name $svc -StartupType Disabled -ErrorAction SilentlyContinue
 }
 
-Write-Host "OneDrive removed"
-Stop-Process -Name "OneDrive" -Force -ErrorAction SilentlyContinue
-if (Test-Path "$env:SystemRoot\System32\OneDriveSetup.exe") {
-    Start-Process "$env:SystemRoot\System32\OneDriveSetup.exe" -ArgumentList "/uninstall" -Wait
-}
-
-Write-Host "Classic context menu"
-Set-Reg -Path "HKCU:\Software\Classes\CLSID\{86ca1aa0-34a9-4b08-ac74-0705a6e54656}\InprocServer32" -Name "(Default)" -Type "String" -Value ""
 
 Write-Host "Win32 priority separation"
 Set-Reg -Path "HKLM:\SYSTEM\CurrentControlSet\Control\PriorityControl" -Name "Win32PrioritySeparation" -Value 38
@@ -279,6 +272,7 @@ Write-Host "Interrupt steering on the toolkit power plan"
 Set-Reg -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Power\PowerSettings\48672f38-7a9a-4bb2-8bf8-3d85be19de4e\2bfc24f9-5ea2-4801-8213-3dbae01aa39d" -Name "Attributes" -Value 2
 powercfg /setacvalueindex 99999999-9999-9999-9999-999999999999 48672f38-7a9a-4bb2-8bf8-3d85be19de4e 2bfc24f9-5ea2-4801-8213-3dbae01aa39d 5 2>$null
 powercfg /setdcvalueindex 99999999-9999-9999-9999-999999999999 48672f38-7a9a-4bb2-8bf8-3d85be19de4e 2bfc24f9-5ea2-4801-8213-3dbae01aa39d 5 2>$null
+powercfg /setactive scheme_current 2>$null   # changed values apply only when the plan is re-activated
 
 # Device and GPU extras. Tweaks runs after the NVIDIA driver, so the GPU keys below already exist.
 Write-Host "GPU: MSI mode on, HDCP off"
@@ -313,19 +307,41 @@ $ProgressPreference = 'SilentlyContinue'
 $work = Join-Path $env:ProgramData 'Cullewie\Work'
 New-Item -ItemType Directory -Path $work -Force | Out-Null
 
+# Runs $Command once as TrustedInstaller (the service is pointed at powershell for one start).
+# Never kills a busy Windows Modules Installer, waits until the command has finished,
+# and checks that the real TrustedInstaller path is back (Windows Update and DISM depend on it).
 function Run-Trusted([string]$Command) {
-    try { Stop-Service -Name TrustedInstaller -Force -ErrorAction Stop } catch { taskkill /im trustedinstaller.exe /f 2>$null | Out-Null }
     $default = "$env:SystemRoot\servicing\TrustedInstaller.exe"
-    $encoded = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($Command))
-    # the original path always comes back, even if this is interrupted (Windows servicing depends on it)
+    $key = 'HKLM:\SYSTEM\CurrentControlSet\Services\TrustedInstaller'
+    $done = Join-Path $env:ProgramData ('Cullewie\Work\trusted-' + [guid]::NewGuid().ToString('N') + '.done')
+    $deadline = (Get-Date).AddMinutes(10)
+    while ((Get-Service TrustedInstaller).Status -ne 'Stopped') {
+        # idle: stop it politely; busy with servicing (TiWorker) or still starting: wait
+        if (-not (Get-Process TiWorker -ErrorAction SilentlyContinue)) { Stop-Service TrustedInstaller -ErrorAction SilentlyContinue }
+        if ((Get-Date) -gt $deadline) { Write-Host 'TrustedInstaller is busy with Windows servicing; this step was skipped.' -ForegroundColor Yellow; $global:CullewieTrustedFailed = $true; return }
+        Start-Sleep -Seconds 2
+    }
+    $encoded = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes("$Command`nSet-Content -LiteralPath '$done' -Value ok"))
     try {
-        sc.exe config TrustedInstaller binPath= "cmd.exe /c powershell.exe -encodedcommand $encoded" | Out-Null
+        sc.exe config TrustedInstaller binPath= "cmd.exe /c powershell.exe -NoProfile -EncodedCommand $encoded" | Out-Null
         sc.exe start TrustedInstaller | Out-Null
+        # 1053 ("did not respond in time") is expected: powershell is not a service. Any other error: it never ran, don't wait.
+        $wait = if ($LASTEXITCODE -in 0, 1053) { (Get-Date).AddMinutes(3) } else { Get-Date }
+        while (-not (Test-Path -LiteralPath $done) -and (Get-Date) -lt $wait) { Start-Sleep -Milliseconds 500 }
     }
     finally {
-        sc.exe config TrustedInstaller binpath= "`"$default`"" | Out-Null
-        try { Stop-Service -Name TrustedInstaller -Force -ErrorAction Stop } catch { taskkill /im trustedinstaller.exe /f 2>$null | Out-Null }
+        for ($i = 0; $i -lt 10; $i++) {
+            sc.exe config TrustedInstaller binPath= "`"$default`"" | Out-Null
+            if ((Get-ItemProperty $key).ImagePath -match 'servicing\\TrustedInstaller\.exe"?$') { break }
+            Start-Sleep -Seconds 1
+        }
     }
+    if ((Get-ItemProperty $key).ImagePath -notmatch 'servicing\\TrustedInstaller\.exe"?$') {
+        Write-Host "TrustedInstaller path was NOT restored. Run as admin: sc.exe config TrustedInstaller binPath= `"$default`"" -ForegroundColor Red
+        $global:CullewieTrustedBroken = $true
+    }
+    if (Test-Path -LiteralPath $done) { Remove-Item -LiteralPath $done -Force }
+    else { Write-Host 'A TrustedInstaller step did not finish in time; it may not be applied.' -ForegroundColor Yellow; $global:CullewieTrustedFailed = $true }
 }
 function Import-Reg([string]$Name, [string]$Content) {
     $file = Join-Path $work "$Name.reg"
@@ -340,9 +356,15 @@ function Import-AppSettings([string]$SettingsDat, [string]$Name, [string]$Conten
     reg load 'HKLM\Settings' $SettingsDat 2>$null | Out-Null
     if ($LASTEXITCODE -eq 0) {
         reg import $file 2>$null | Out-Null
-        [gc]::Collect(); Start-Sleep -Seconds 2
-        reg unload 'HKLM\Settings' 2>$null | Out-Null
+        # an unload that fails leaves the app's settings locked until restart (for Client.CBS: Start and search), so retry and say so
+        for ($i = 0; $i -lt 5; $i++) {
+            [gc]::Collect(); Start-Sleep -Seconds 2
+            cmd /c "reg unload HKLM\Settings >nul 2>&1"
+            if ($LASTEXITCODE -eq 0) { break }
+        }
+        if ($LASTEXITCODE -ne 0) { Write-Host "  ${Name}: settings file still loaded; restart Windows before using this app." -ForegroundColor Yellow }
     }
+    else { Write-Host "  ${Name}: settings file is in use, skipped (close the app and run Tweaks again)." -ForegroundColor Yellow }
 }
 
 # only the Game Bar overlay goes; the Xbox app and Gaming Services (Game Pass games) stay
@@ -428,7 +450,8 @@ Windows Registry Editor Version 5.00
 '@
 # Edge's own sign-in setup and run-once entries
 Get-ChildItem 'HKLM:\SOFTWARE\Microsoft\Active Setup\Installed Components' -ErrorAction SilentlyContinue | ForEach-Object {
-    if ((Get-ItemProperty $_.PSPath -ErrorAction SilentlyContinue).'(default)' -like '*Edge*') { Remove-Item $_.PSPath -Force -ErrorAction SilentlyContinue }
+    # only the Edge browser component; a name match could also hit WebView2, which Start search needs
+    if ($_.PSChildName -eq '{9459C573-B17A-45AE-9F64-1857B5D58CEE}') { Remove-Item $_.PSPath -Force -ErrorAction SilentlyContinue }
 }
 $runOnce = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce'
 (Get-Item $runOnce -ErrorAction SilentlyContinue).Property | Where-Object { $_ -like '*msedge*' } | ForEach-Object { Remove-ItemProperty -Path $runOnce -Name $_ -Force -ErrorAction SilentlyContinue }
@@ -724,7 +747,7 @@ Windows Registry Editor Version 5.00
 "VisualFXSetting"=dword:00000003
 
 [HKEY_CURRENT_USER\Control Panel\Desktop]
-"UserPreferencesMask"=hex(2):90,12,03,80,12,00,00,00
+"UserPreferencesMask"=hex:90,12,03,80,12,00,00,00
 "DragFullWindows"="0"
 "FontSmoothing"="2"
 "MenuShowDelay"="0"
@@ -1357,6 +1380,7 @@ Run-Trusted "Remove-Item `"$env:ProgramData\Microsoft\Windows\CapabilityAccessMa
 Get-ScheduledTask | Where-Object { $_.TaskName -match 'ScheduledDefrag' } | Disable-ScheduledTask | Out-Null
 powercfg /setdcvalueindex scheme_current sub_none consolelock 0 2>$null
 powercfg /setacvalueindex scheme_current sub_none consolelock 0 2>$null
+powercfg /setactive scheme_current 2>$null
 # app actions off for Paint and Photos (the Start/search component is left alone)
 'AppActions', 'DesktopStickerEditorWin32Exe', 'DiscoveryHubApp', 'VisualAssistExe', 'CrossDeviceResume' | ForEach-Object { Stop-Process -Name $_ -Force -ErrorAction SilentlyContinue }
 Import-AppSettings "$env:LOCALAPPDATA\Packages\MicrosoftWindows.Client.CBS_cw5n1h2txyewy\Settings\settings.dat" 'appactions' @'
@@ -1380,7 +1404,8 @@ Start-Service audiosrv -ErrorAction SilentlyContinue
 
 Write-Host 'Devices: power saving and wake off'
 foreach ($bus in 'ACPI', 'HID', 'PCI', 'USB') {
-    foreach ($key in Get-ChildItem "HKLM:\SYSTEM\ControlSet001\Enum\$bus" -Recurse -ErrorAction SilentlyContinue) {
+    # Ignore, not SilentlyContinue: the locked Properties subkeys would otherwise fill $Error and push real errors out
+    foreach ($key in Get-ChildItem "HKLM:\SYSTEM\CurrentControlSet\Enum\$bus" -Recurse -ErrorAction Ignore) {
         $path = $key.Name
         if ($key.PSChildName -eq 'Device Parameters') {
             cmd /c "reg add `"$path`" /v `"EnhancedPowerManagementEnabled`" /t REG_DWORD /d `"0`" /f >nul 2>&1"
@@ -1410,7 +1435,7 @@ foreach ($binding in 'ms_lldp', 'ms_lltdio', 'ms_implat', 'ms_rspndr', 'ms_tcpip
 
 Write-Host 'Disks: write-cache buffer flushing off'
 foreach ($bus in 'SCSI', 'NVME') {
-    Get-ChildItem "HKLM:\SYSTEM\ControlSet001\Enum\$bus" -Recurse -ErrorAction SilentlyContinue | Where-Object { $_.PSChildName -eq 'Device Parameters' } | ForEach-Object {
+    Get-ChildItem "HKLM:\SYSTEM\CurrentControlSet\Enum\$bus" -Recurse -ErrorAction Ignore | Where-Object { $_.PSChildName -eq 'Device Parameters' } | ForEach-Object {
         cmd /c "reg add `"$($_.Name)\Disk`" /v `"CacheIsPowerProtected`" /t REG_DWORD /d `"1`" /f >nul 2>&1"
     }
 }
@@ -1442,4 +1467,6 @@ Windows Registry Editor Version 5.00
 '@
 
 Write-Host "Done.`n"
+# non-zero when a critical step failed (TrustedInstaller path not restored), so the Launcher shows it
+if ($global:CullewieTrustedBroken -or $global:CullewieTrustedFailed) { exit 1 }
 exit 0

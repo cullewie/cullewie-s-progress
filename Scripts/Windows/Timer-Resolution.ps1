@@ -222,7 +222,14 @@ Set-Content -Path "$env:SystemDrive\Windows\SetTimerResolutionService.cs" -Value
 if (Get-Service -Name "Set Timer Resolution Service" -ErrorAction SilentlyContinue) {
 Stop-Service -Name "Set Timer Resolution Service" -Force -ErrorAction SilentlyContinue
 sc.exe delete "Set Timer Resolution Service" | Out-Null
-Start-Sleep -Seconds 2
+# a service "marked for deletion" (a handle still open) would make New-Service below fail silently
+$wait = (Get-Date).AddSeconds(20)
+while ((Get-Service -Name "Set Timer Resolution Service" -ErrorAction SilentlyContinue) -and (Get-Date) -lt $wait) { Start-Sleep -Milliseconds 500 }
+if (Get-Service -Name "Set Timer Resolution Service" -ErrorAction SilentlyContinue) {
+    Write-Host "Timer Resolution: the old service is still being removed; restart Windows and run this again." -ForegroundColor Red
+    Remove-Item "$env:SystemDrive\Windows\SetTimerResolutionService.cs" -ErrorAction SilentlyContinue
+    exit 1
+}
 }
 
 # icon for Task Manager: a stopwatch with "0.5" on a dark rounded square, drawn here (no image file in the repo);
@@ -270,7 +277,13 @@ foreach ($f in $frames) { $bw.Write([byte[]]$f[1]) }
 [IO.File]::WriteAllBytes($iconPath, $ico.ToArray())
 
 # compile and create service
-Start-Process -Wait "C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe" -ArgumentList "-out:C:\Windows\SetTimerResolutionService.exe `"-win32icon:$iconPath`" C:\Windows\SetTimerResolutionService.cs" -WindowStyle Hidden
+Remove-Item "$env:SystemDrive\Windows\SetTimerResolutionService.exe" -Force -ErrorAction SilentlyContinue
+$csc = Start-Process -Wait -PassThru "C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe" -ArgumentList "-out:C:\Windows\SetTimerResolutionService.exe `"-win32icon:$iconPath`" C:\Windows\SetTimerResolutionService.cs" -WindowStyle Hidden
+if ($csc.ExitCode -ne 0 -or -not (Test-Path "$env:SystemDrive\Windows\SetTimerResolutionService.exe")) {
+    Write-Host "Timer Resolution: compiling the service failed (csc exit code $($csc.ExitCode)); nothing was installed." -ForegroundColor Red
+    Remove-Item "$env:SystemDrive\Windows\SetTimerResolutionService.cs" -ErrorAction SilentlyContinue
+    exit 1
+}
 
 # remove cs file
 Remove-Item "$env:SystemDrive\Windows\SetTimerResolutionService.cs" -ErrorAction SilentlyContinue | Out-Null

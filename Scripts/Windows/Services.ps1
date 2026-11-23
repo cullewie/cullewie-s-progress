@@ -1,8 +1,8 @@
 # -Live: apply in normal Windows without safe mode or a restart (Launcher -Mode live)
 param([switch]$Live)
-        # SCRIPT RUN AS ADMIN
+        # SCRIPT RUN AS ADMIN (keep -Live, or the elevated copy would take the safe-mode path and restart)
         If (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]"Administrator"))
-        {Start-Process PowerShell.exe -ArgumentList ("-NoProfile -ExecutionPolicy Bypass -File `"{0}`"" -f $PSCommandPath) -Verb RunAs
+        {Start-Process PowerShell.exe -ArgumentList ("-NoProfile -ExecutionPolicy Bypass -File `"{0}`"{1}" -f $PSCommandPath, $(if ($Live) { ' -Live' } else { '' })) -Verb RunAs
         Exit}
         $Host.UI.RawUI.WindowTitle = $myInvocation.MyCommand.Definition + " (Administrator)"
         $Host.UI.RawUI.BackgroundColor = "Black"
@@ -11,17 +11,14 @@ param([switch]$Live)
         Clear-Host
         New-Item -ItemType Directory -Path "$env:ProgramData\Cullewie\Work" -Force | Out-Null
 <#
-        camsvc for mic
-        netprofm for mic w11, w10 can disable
-        schedule for task scheduler, can disable
-        dnscache for internet w11, w10 can disable
-        sppsvc for windows activation, can disable
-        graphic driver & defender services untouched
-        seclogon will always enable itself, can disable
-        dispbrokerdesktopsvc for resolution w11, w10 can disable
-        appxsvc & textinputmanagementservice for w11, w10 can disable
-        sens & gpsvc for multiple account logins, single account can disable
-        termservice keyiso ngcctnrsvc & ngcsvc for microsoft account login, local account can disable
+        Services kept on (do not move them to the disabled list):
+        camsvc and netprofm (microphone), schedule (Task Scheduler), dnscache and dhcp (internet),
+        sppsvc (activation), dispbrokerdesktopsvc (resolution), appxsvc and textinputmanagementservice,
+        sens and gpsvc, termservice keyiso ngcctnrsvc ngcsvc (sign-in). Graphics driver and Defender services untouched.
+        TrustedInstaller is not in the list: Windows switches it to automatic when updates or feature changes wait for a
+        restart, and writing Manual over that left them unapplied (pending.xml stuck, setup blocked).
+        Never disable BFE, mpssvc, EventSystem, Wcmsvc, WinHttpAutoProxySvc, NlaSvc, SamSs or PlugPlay:
+        an older list did, and Wi-Fi, the firewall and app sign-in broke. The dependency check below guards this.
         #>
 
         while ($true) {
@@ -46,36 +43,41 @@ $ServicesOff = @'
         $Host.PrivateData.ProgressForegroundColor = "White"
         Clear-Host
 
-        # FUNCTION RUN AS TRUSTED INSTALLER
-        function Run-Trusted([String]$command) {
-        try {
-    	Stop-Service -Name TrustedInstaller -Force -ErrorAction Stop -WarningAction Stop
-  		}
-  		catch {
-    	taskkill /im trustedinstaller.exe /f >$null
-  		}
-        $service = Get-CimInstance -ClassName Win32_Service -Filter "Name='TrustedInstaller'"
-        $DefaultBinPath = $service.PathName
-  		$trustedInstallerPath = "$env:SystemRoot\servicing\TrustedInstaller.exe"
-  		if ($DefaultBinPath -ne $trustedInstallerPath) {
-    	$DefaultBinPath = $trustedInstallerPath
-  		}
-        $bytes = [System.Text.Encoding]::Unicode.GetBytes($command)
-        $base64Command = [Convert]::ToBase64String($bytes)
-        # the original path always comes back, even if this is interrupted (Windows servicing depends on it)
-        try {
-            sc.exe config TrustedInstaller binPath= "cmd.exe /c powershell.exe -encodedcommand $base64Command" | Out-Null
-            sc.exe start TrustedInstaller | Out-Null
-        }
-        finally {
-            sc.exe config TrustedInstaller binpath= "`"$DefaultBinPath`"" | Out-Null
-        }
-        try {
-    	Stop-Service -Name TrustedInstaller -Force -ErrorAction Stop -WarningAction Stop
-  		}
-  		catch {
-    	taskkill /im trustedinstaller.exe /f >$null
-  		}
+        # Runs $Command once as TrustedInstaller (the service is pointed at powershell for one start).
+        # Never kills a busy Windows Modules Installer, waits until the command has finished,
+        # and checks that the real TrustedInstaller path is back (Windows Update and DISM depend on it).
+        function Run-Trusted([string]$Command) {
+            $default = "$env:SystemRoot\servicing\TrustedInstaller.exe"
+            $key = 'HKLM:\SYSTEM\CurrentControlSet\Services\TrustedInstaller'
+            $done = Join-Path $env:ProgramData ('Cullewie\Work\trusted-' + [guid]::NewGuid().ToString('N') + '.done')
+            $deadline = (Get-Date).AddMinutes(10)
+            while ((Get-Service TrustedInstaller).Status -ne 'Stopped') {
+                # idle: stop it politely; busy with servicing (TiWorker) or still starting: wait
+                if (-not (Get-Process TiWorker -ErrorAction SilentlyContinue)) { Stop-Service TrustedInstaller -ErrorAction SilentlyContinue }
+                if ((Get-Date) -gt $deadline) { Write-Host 'TrustedInstaller is busy with Windows servicing; this step was skipped.' -ForegroundColor Yellow; $global:CullewieTrustedFailed = $true; return }
+                Start-Sleep -Seconds 2
+            }
+            $encoded = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes("$Command`nSet-Content -LiteralPath '$done' -Value ok"))
+            try {
+                sc.exe config TrustedInstaller binPath= "cmd.exe /c powershell.exe -NoProfile -EncodedCommand $encoded" | Out-Null
+                sc.exe start TrustedInstaller | Out-Null
+                # 1053 ("did not respond in time") is expected: powershell is not a service. Any other error: it never ran, don't wait.
+                $wait = if ($LASTEXITCODE -in 0, 1053) { (Get-Date).AddMinutes(3) } else { Get-Date }
+                while (-not (Test-Path -LiteralPath $done) -and (Get-Date) -lt $wait) { Start-Sleep -Milliseconds 500 }
+            }
+            finally {
+                for ($i = 0; $i -lt 10; $i++) {
+                    sc.exe config TrustedInstaller binPath= "`"$default`"" | Out-Null
+                    if ((Get-ItemProperty $key).ImagePath -match 'servicing\\TrustedInstaller\.exe"?$') { break }
+                    Start-Sleep -Seconds 1
+                }
+            }
+            if ((Get-ItemProperty $key).ImagePath -notmatch 'servicing\\TrustedInstaller\.exe"?$') {
+                Write-Host "TrustedInstaller path was NOT restored. Run as admin: sc.exe config TrustedInstaller binPath= `"$default`"" -ForegroundColor Red
+                $global:CullewieTrustedBroken = $true
+            }
+            if (Test-Path -LiteralPath $done) { Remove-Item -LiteralPath $done -Force }
+            else { Write-Host 'A TrustedInstaller step did not finish in time; it may not be applied.' -ForegroundColor Yellow; $global:CullewieTrustedFailed = $true }
         }
 
 Write-Host "Services: Off...`n"
@@ -214,7 +216,7 @@ Windows Registry Editor Version 5.00
 "Start"=dword:00000004
 
 [HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\DeviceInstall]
-"Start"=dword:00000002
+"Start"=dword:00000003
 
 [HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\DevicePickerUserSvc]
 "Start"=dword:00000004
@@ -618,9 +620,6 @@ Windows Registry Editor Version 5.00
 [HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\stisvc]
 "Start"=dword:00000004
 
-[HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\StiSvc]
-"Start"=dword:00000004
-
 [HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\svsvc]
 "Start"=dword:00000004
 
@@ -656,9 +655,6 @@ Windows Registry Editor Version 5.00
 
 [HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\TroubleshootingSvc]
 "Start"=dword:00000004
-
-[HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\TrustedInstaller]
-"Start"=dword:00000003
 
 [HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\tzautoupdate]
 "Start"=dword:00000004
@@ -724,7 +720,7 @@ Windows Registry Editor Version 5.00
 "Start"=dword:00000004
 
 [HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\W32Time]
-"Start"=dword:00000004
+"Start"=dword:00000003
 
 [HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\WaaSMedicSvc]
 "Start"=dword:00000004
@@ -862,11 +858,11 @@ Windows Registry Editor Version 5.00
 cmd /c "bcdedit /deletevalue {current} safeboot >nul 2>&1"
 Set-Content -Path "$env:ProgramData\Cullewie\Work\servicesoff.reg" -Value $ServicesOff -Force
 
-# import reg file as trusted
-Run-Trusted "Regedit.exe /S `"$env:ProgramData\Cullewie\Work\servicesoff.reg`""
-
-# import reg file as admin
-Regedit.exe /S "$env:ProgramData\Cullewie\Work\servicesoff.reg"
+# import reg file as trusted, then as admin. reg import, not regedit: PowerShell does not wait for regedit,
+# so the "done" marker and the restart below would come before the import had finished.
+Run-Trusted "cmd /c `"reg import $env:ProgramData\Cullewie\Work\servicesoff.reg >nul 2>&1`""
+cmd /c "reg import `"$env:ProgramData\Cullewie\Work\servicesoff.reg`" >nul 2>&1"
+if ($LASTEXITCODE -ne 0) { Write-Host "Services: importing the list failed (reg exit code $LASTEXITCODE)." -ForegroundColor Red; $global:CullewieTrustedFailed = $true }
 
 # remove safe mode boot
 cmd /c "bcdedit /deletevalue {current} safeboot >nul 2>&1"
@@ -876,6 +872,8 @@ Write-Host "Restarting`n" -ForegroundColor Red
 # restart
 Start-Sleep -Seconds 5
 shutdown -r -t 00
+# -Live (no restart): report a TrustedInstaller step that was skipped, timed out or left the service path wrong
+if ($global:CullewieTrustedFailed -or $global:CullewieTrustedBroken) { exit 1 }
 '@
 Set-Content -Path "$env:ProgramData\Cullewie\Work\servicesoff.ps1" -Value $ServicesOff -Force
 
@@ -883,17 +881,40 @@ Set-Content -Path "$env:ProgramData\Cullewie\Work\servicesoff.ps1" -Value $Servi
 # Stops before safe mode is turned on, so nothing has changed yet.
 $planned = @{}
 foreach ($m in [regex]::Matches($ServicesOff, '(?m)^\[HKEY_LOCAL_MACHINE\\SYSTEM\\ControlSet001\\Services\\([^\]]+)\]\r?\n"Start"=dword:0*(\d)')) { $planned[$m.Groups[1].Value] = [int]$m.Groups[2].Value }
-$conflicts = @()
+# Effective start after this list = planned value, else the current registry value (catches services an older run already disabled).
+# Per-user instances (CDPUserSvc_1a2b3 ...) follow their template. Drivers (0/1) and services (2) that start on their own block the run;
+# demand-start ones (3) only warn, since they fail only when something asks for them.
+$current = @{}
 foreach ($svc in Get-ChildItem 'HKLM:\SYSTEM\CurrentControlSet\Services' -ErrorAction SilentlyContinue) {
     $p = Get-ItemProperty $svc.PSPath -ErrorAction SilentlyContinue
-    if (-not $p -or $p.PSObject.Properties.Name -notcontains 'Start' -or $p.PSObject.Properties.Name -notcontains 'DependOnService') { continue }
-    $start = if ($planned.ContainsKey($svc.PSChildName)) { $planned[$svc.PSChildName] } else { [int]$p.Start }
-    if ($start -ne 2) { continue }
-    foreach ($dep in $p.DependOnService) { if ($planned[$dep] -eq 4) { $conflicts += "$($svc.PSChildName) starts automatically but needs $dep, which this list disables" } }
+    if ($p -and $p.PSObject.Properties.Name -contains 'Start') { $current[$svc.PSChildName] = $p }
 }
+function Get-EffectiveStart([string]$Name) {
+    $template = $Name -replace '_[0-9a-f]{4,}$', ''
+    if ($planned.ContainsKey($Name)) { return $planned[$Name] }
+    if ($template -ne $Name -and $planned.ContainsKey($template)) { return $planned[$template] }
+    if ($current.ContainsKey($Name)) { return [int]$current[$Name].Start }
+    return $null
+}
+$conflicts = @(); $warnings = @()
+foreach ($name in $current.Keys) {
+    $p = $current[$name]
+    if ($p.PSObject.Properties.Name -notcontains 'DependOnService') { continue }
+    $start = Get-EffectiveStart $name
+    if ($start -ge 4) { continue }
+    foreach ($dep in $p.DependOnService) {
+        if (-not $dep) { continue }
+        if ((Get-EffectiveStart $dep) -eq 4) {
+            if ($start -le 2) { $conflicts += "$name starts on its own but needs $dep, which is disabled" }
+            else { $warnings += "$name (manual) needs $dep, which is disabled; it cannot start" }
+        }
+    }
+}
+$warnings | ForEach-Object { Write-Host "  note: $_" -ForegroundColor DarkYellow }
 if ($conflicts) {
     Write-Host "Services: stopped, nothing was changed.`n" -ForegroundColor Red
     $conflicts | ForEach-Object { Write-Host "  $_" -ForegroundColor Red }
+    Write-Host "  If an older run disabled these, run Scripts\Windows\Services-Restore.ps1 first, restart, then try again." -ForegroundColor Yellow
     exit 1
 }
 

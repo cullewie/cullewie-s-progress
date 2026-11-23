@@ -10,8 +10,10 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 $script:RepoRoot = $PSScriptRoot
-$script:PowerShellExe = Join-Path $PSHOME 'powershell.exe'
+# always Windows PowerShell 5.1: PowerShell 7 has no powershell.exe in $PSHOME
+$script:PowerShellExe = "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe"
 $script:CaptureChildOutput = $false
+$script:SuspendedBitLocker = $false
 $script:Tools = @(
     [pscustomobject]@{ Id='nvidia-updater'; Name='NVIDIA Driver'; Category='NVIDIA'; Path='Scripts/NVIDIA/Driver.ps1'; Wrapper='NvidiaCase' }
     [pscustomobject]@{ Id='ddu'; Name='DDU (driver cleanup)'; Category='GPU'; Path='Scripts/GPU/DDU.ps1'; Wrapper='' }
@@ -126,11 +128,10 @@ function Start-GuidedNvidiaSetup {
         Remove-Item -LiteralPath $statePath -Force -ErrorAction SilentlyContinue
     }
 }
-# Full setup runs in four stages, without turning UAC off:
+# Full setup runs in three stages, without turning UAC off:
 #   1 normal  (menu):      save GPU name, prepare DDU and Defender, queue stages 2 and 3, restart into safe mode
 #   2 safe mode (RunOnce): DDU removes the NVIDIA driver, Defender settings apply, restart normally
-#   3 normal  (task):      driver, NVIDIA settings, Windows tools; Services queues stage 4 and restarts
-#   4 safe mode (RunOnce): Services settings apply, restart normally
+#   3 normal  (task):      driver, NVIDIA settings, Windows tools, then Services in normal Windows (-Live), restart normally
 $script:FullSetupTask = 'cullewie-full-setup'
 function Get-NvidiaNameCandidates {
     # pci.ids name -> NVIDIA catalog names, e.g. "AD106M [GeForce RTX 4070 Max-Q / Mobile]" -> "GeForce RTX 4070 Laptop GPU"
@@ -202,7 +203,8 @@ function Start-FullSetup {
     }
     $statePath = Join-Path $script:RepoRoot 'nvidia-setup-state.json'
     $dduFlag = Join-Path $env:ProgramData 'Cullewie\Work\cullewie-ddu.flag'
-    Remove-Item -LiteralPath $statePath, $dduFlag -Force -ErrorAction SilentlyContinue
+    # also the AMD state an aborted run may have left (its saved link could install an older driver)
+    Remove-Item -LiteralPath $statePath, $dduFlag, (Join-Path $env:ProgramData 'Cullewie\Work\amd-driver.json') -Force -ErrorAction SilentlyContinue
 
     $nvidiaDriver = Get-CimInstance -ClassName Win32_PnPSignedDriver -ErrorAction Stop |
         Where-Object { $_.DeviceClass -eq 'DISPLAY' -and $_.DeviceID -like 'PCI\VEN_10DE&*' -and $_.DriverProviderName -match 'NVIDIA' } |
@@ -234,21 +236,25 @@ function Start-FullSetup {
     }
     Invoke-RequiredTool -Id 'defender' -Arguments '-QueueOnly'
 
+    # any error from here on undoes the preparation (catch below), so nothing stays half-set
+    try {
     # BitLocker can ask for the recovery key when boot settings change; suspend it until Tweaks turns it off
     if (Get-Command Get-BitLockerVolume -ErrorAction SilentlyContinue) {
         $bitLocker = Get-BitLockerVolume -MountPoint $env:SystemDrive -ErrorAction SilentlyContinue
         if ($bitLocker -and [string]$bitLocker.ProtectionStatus -eq 'On') {
             Suspend-BitLocker -MountPoint $env:SystemDrive -RebootCount 0 | Out-Null
+            $script:SuspendedBitLocker = $true
         }
     }
     # keep Windows Update from installing its own NVIDIA driver between DDU and the real driver
-    New-Item -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\DriverSearching' -Force | Out-Null
+    # (New-Item -Force on an existing key would wipe its other values and subkeys, so create only when missing)
+    foreach ($key in 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\DriverSearching', 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate', 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\PasswordLess\Device') {
+        if (-not (Test-Path $key)) { New-Item -Path $key | Out-Null }
+    }
     Set-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\DriverSearching' -Name 'SearchOrderConfig' -Value 0 -Type DWord
-    New-Item -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate' -Force | Out-Null
     Set-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate' -Name 'ExcludeWUDriversInQualityUpdate' -Value 1 -Type DWord
 
     # safe mode has no Windows Hello PIN; show the password option at sign-in
-    New-Item -Path 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\PasswordLess\Device' -Force | Out-Null
     Set-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\PasswordLess\Device' -Name 'DevicePasswordLessBuildVersion' -Value 0 -Type DWord
 
     # stage 2: one safe-mode script runs DDU and Defender in order, then always leaves safe mode
@@ -294,10 +300,19 @@ finally {
     Register-ScheduledTask -TaskName $script:FullSetupTask -Action $action -Trigger $trigger -Principal $principal -Settings $settings -Force | Out-Null
 
     cmd /c "bcdedit /set {current} safeboot minimal >nul 2>&1"
-    if ($LASTEXITCODE -ne 0) {
+    if ($LASTEXITCODE -ne 0) { throw 'Could not turn on safe boot. Full setup stopped.' }
+    }
+    catch {
+        # undo what matters if setup never continues: the resume task and RunOnce entry, the WU driver block,
+        # the DDU flag, and the BitLocker suspension (no time limit) when this run suspended it
         Unregister-ScheduledTask -TaskName $script:FullSetupTask -Confirm:$false -ErrorAction SilentlyContinue
-        Remove-ItemProperty -Path $runOnce -Name '*cullewiesafe' -ErrorAction SilentlyContinue
-        throw 'Could not turn on safe boot. Full setup stopped.'
+        Remove-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce' -Name '*cullewiesafe' -ErrorAction SilentlyContinue
+        Remove-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate' -Name 'ExcludeWUDriversInQualityUpdate' -ErrorAction SilentlyContinue
+        Remove-Item -LiteralPath "$env:ProgramData\Cullewie\Work\cullewie-ddu.flag" -Force -ErrorAction SilentlyContinue
+        if ($script:SuspendedBitLocker -and (Get-Command Resume-BitLocker -ErrorAction SilentlyContinue)) {
+            Resume-BitLocker -MountPoint $env:SystemDrive -ErrorAction SilentlyContinue | Out-Null
+        }
+        throw
     }
     Write-Host 'Restarting into safe mode. Sign in after each restart; setup continues by itself.' -ForegroundColor Cyan
     shutdown -r -t 5
@@ -361,7 +376,14 @@ function Resume-FullSetup {
     # Services goes last and applies in normal Windows, then a normal restart. Not in safe mode: Bloatware has just
     # queued feature changes that Windows applies at the next boot, and in safe mode they fail and get rolled back
     # ("undoing changes"), with extra restarts.
-    Invoke-RequiredTool -Id 'services' -Arguments '-Live'
+    # a Services problem (e.g. a TrustedInstaller step skipped because Windows was busy) must not cancel the restart:
+    # the list itself is already imported as admin, and the restart is what applies it
+    try { Invoke-RequiredTool -Id 'services' -Arguments '-Live' }
+    catch {
+        Write-Host $_.Exception.Message -ForegroundColor Red
+        Write-Host 'Services reported a problem (see above); restarting anyway.' -ForegroundColor Yellow
+        Start-Sleep -Seconds 15
+    }
     Write-Host 'Setup finished. Restarting normally.' -ForegroundColor Green
     shutdown -r -t 10
 }
@@ -401,7 +423,7 @@ function Start-LiveSetup {
     }
     $tool = $script:Tools | Where-Object { $_.Id -eq 'services' } | Select-Object -First 1
     Invoke-ChildScript -Tool $tool -Arguments @('-Live')
-    $steps.Add(('{0,-26} exit {1,3}' -f $tool.Name, $script:LastChildExitCode))
+    $steps.Add(('{0,-50} exit {1,3}' -f $tool.Name, $script:LastChildExitCode))
     Write-Host ([Environment]::NewLine + 'Live setup summary (exit 0 = done):') -ForegroundColor Cyan
     $steps | ForEach-Object { Write-Host "  $_" }
     Write-Host "Nothing was restarted. Restart Windows when you are ready; services change then. Log: $log" -ForegroundColor Yellow

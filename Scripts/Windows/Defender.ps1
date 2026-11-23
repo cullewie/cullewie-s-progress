@@ -4,9 +4,9 @@ param(
     [switch]$QueueOnly
 )
 
-        # SCRIPT RUN AS ADMIN
+        # SCRIPT RUN AS ADMIN (keep -QueueOnly, or the elevated copy would restart into safe mode right away)
         If (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]"Administrator"))
-        {Start-Process PowerShell.exe -ArgumentList ("-NoProfile -ExecutionPolicy Bypass -File `"{0}`"" -f $PSCommandPath) -Verb RunAs
+        {Start-Process PowerShell.exe -ArgumentList ("-NoProfile -ExecutionPolicy Bypass -File `"{0}`"{1}" -f $PSCommandPath, $(if ($QueueOnly) { ' -QueueOnly' } else { '' })) -Verb RunAs
         Exit}
         $Host.UI.RawUI.WindowTitle = $myInvocation.MyCommand.Definition + " (Administrator)"
         $Host.UI.RawUI.BackgroundColor = "Black"
@@ -33,36 +33,41 @@ $DefenderOptimize = @'
         $Host.PrivateData.ProgressForegroundColor = "White"
         Clear-Host
 
-        # FUNCTION RUN AS TRUSTED INSTALLER
-        function Run-Trusted([String]$command) {
-        try {
-    	Stop-Service -Name TrustedInstaller -Force -ErrorAction Stop -WarningAction Stop
-  		}
-  		catch {
-    	taskkill /im trustedinstaller.exe /f >$null
-  		}
-        $service = Get-CimInstance -ClassName Win32_Service -Filter "Name='TrustedInstaller'"
-        $DefaultBinPath = $service.PathName
-  		$trustedInstallerPath = "$env:SystemRoot\servicing\TrustedInstaller.exe"
-  		if ($DefaultBinPath -ne $trustedInstallerPath) {
-    	$DefaultBinPath = $trustedInstallerPath
-  		}
-        $bytes = [System.Text.Encoding]::Unicode.GetBytes($command)
-        $base64Command = [Convert]::ToBase64String($bytes)
-        # the original path always comes back, even if this is interrupted (Windows servicing depends on it)
-        try {
-            sc.exe config TrustedInstaller binPath= "cmd.exe /c powershell.exe -encodedcommand $base64Command" | Out-Null
-            sc.exe start TrustedInstaller | Out-Null
-        }
-        finally {
-            sc.exe config TrustedInstaller binpath= "`"$DefaultBinPath`"" | Out-Null
-        }
-        try {
-    	Stop-Service -Name TrustedInstaller -Force -ErrorAction Stop -WarningAction Stop
-  		}
-  		catch {
-    	taskkill /im trustedinstaller.exe /f >$null
-  		}
+        # Runs $Command once as TrustedInstaller (the service is pointed at powershell for one start).
+        # Never kills a busy Windows Modules Installer, waits until the command has finished,
+        # and checks that the real TrustedInstaller path is back (Windows Update and DISM depend on it).
+        function Run-Trusted([string]$Command) {
+            $default = "$env:SystemRoot\servicing\TrustedInstaller.exe"
+            $key = 'HKLM:\SYSTEM\CurrentControlSet\Services\TrustedInstaller'
+            $done = Join-Path $env:ProgramData ('Cullewie\Work\trusted-' + [guid]::NewGuid().ToString('N') + '.done')
+            $deadline = (Get-Date).AddMinutes(10)
+            while ((Get-Service TrustedInstaller).Status -ne 'Stopped') {
+                # idle: stop it politely; busy with servicing (TiWorker) or still starting: wait
+                if (-not (Get-Process TiWorker -ErrorAction SilentlyContinue)) { Stop-Service TrustedInstaller -ErrorAction SilentlyContinue }
+                if ((Get-Date) -gt $deadline) { Write-Host 'TrustedInstaller is busy with Windows servicing; this step was skipped.' -ForegroundColor Yellow; $global:CullewieTrustedFailed = $true; return }
+                Start-Sleep -Seconds 2
+            }
+            $encoded = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes("$Command`nSet-Content -LiteralPath '$done' -Value ok"))
+            try {
+                sc.exe config TrustedInstaller binPath= "cmd.exe /c powershell.exe -NoProfile -EncodedCommand $encoded" | Out-Null
+                sc.exe start TrustedInstaller | Out-Null
+                # 1053 ("did not respond in time") is expected: powershell is not a service. Any other error: it never ran, don't wait.
+                $wait = if ($LASTEXITCODE -in 0, 1053) { (Get-Date).AddMinutes(3) } else { Get-Date }
+                while (-not (Test-Path -LiteralPath $done) -and (Get-Date) -lt $wait) { Start-Sleep -Milliseconds 500 }
+            }
+            finally {
+                for ($i = 0; $i -lt 10; $i++) {
+                    sc.exe config TrustedInstaller binPath= "`"$default`"" | Out-Null
+                    if ((Get-ItemProperty $key).ImagePath -match 'servicing\\TrustedInstaller\.exe"?$') { break }
+                    Start-Sleep -Seconds 1
+                }
+            }
+            if ((Get-ItemProperty $key).ImagePath -notmatch 'servicing\\TrustedInstaller\.exe"?$') {
+                Write-Host "TrustedInstaller path was NOT restored. Run as admin: sc.exe config TrustedInstaller binPath= `"$default`"" -ForegroundColor Red
+                $global:CullewieTrustedBroken = $true
+            }
+            if (Test-Path -LiteralPath $done) { Remove-Item -LiteralPath $done -Force }
+            else { Write-Host 'A TrustedInstaller step did not finish in time; it may not be applied.' -ForegroundColor Yellow; $global:CullewieTrustedFailed = $true }
         }
 
 # these settings only apply in safe mode; if Windows started normally, queue this step again and restart into safe mode
@@ -109,7 +114,6 @@ $windowssecuritysettings = @(
 'cmd /c "reg add `"HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows Defender Security Center\Account protection`" /v `"DisableNotifications`" /t REG_DWORD /d `"1`" /f >nul 2>&1"',
 'cmd /c "reg add `"HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows Defender Security Center\Account protection`" /v `"DisableDynamiclockNotifications`" /t REG_DWORD /d `"1`" /f >nul 2>&1"',
 'cmd /c "reg add `"HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows Defender Security Center\Account protection`" /v `"DisableWindowsHelloNotifications`" /t REG_DWORD /d `"1`" /f >nul 2>&1"',
-'cmd /c "reg add `"HKEY_LOCAL_MACHINE\System\ControlSet001\Services\SharedAccess\Epoch`" /v `"Epoch`" /t REG_DWORD /d `"1231`" /f >nul 2>&1"',
 'cmd /c "reg add `"HKEY_LOCAL_MACHINE\System\ControlSet001\Services\SharedAccess\Parameters\FirewallPolicy\DomainProfile`" /v `"DisableNotifications`" /t REG_DWORD /d `"1`" /f >nul 2>&1"',
 'cmd /c "reg add `"HKEY_LOCAL_MACHINE\System\ControlSet001\Services\SharedAccess\Parameters\FirewallPolicy\PublicProfile`" /v `"DisableNotifications`" /t REG_DWORD /d `"1`" /f >nul 2>&1"',
 'cmd /c "reg add `"HKEY_LOCAL_MACHINE\System\ControlSet001\Services\SharedAccess\Parameters\FirewallPolicy\StandardProfile`" /v `"DisableNotifications`" /t REG_DWORD /d `"1`" /f >nul 2>&1"',
@@ -142,10 +146,13 @@ $windowssecuritysettings = @(
 
 )
 
-# run $windowssecuritysettings as function with trusted installer
-foreach ($command in $windowssecuritysettings) {
-    Run-Trusted $command
-}
+# run $windowssecuritysettings with trusted installer, all in one start
+# (a second start fails while the previous one is still pending, so one call per command skipped most of them)
+$trustedPs1 = "$env:ProgramData\Cullewie\Work\defender-trusted.ps1"
+Set-Content -Path $trustedPs1 -Value ($windowssecuritysettings -join "`n") -Force
+Run-Trusted "Invoke-Expression ([IO.File]::ReadAllText('$trustedPs1'))"
+# keep the file if the step timed out: TrustedInstaller may still be reading it
+if (-not $global:CullewieTrustedFailed) { Remove-Item $trustedPs1 -Force -ErrorAction SilentlyContinue }
 
 # run $windowssecuritysettings as admin
 foreach ($command in $windowssecuritysettings) {
@@ -167,6 +174,7 @@ Write-Host "Restarting`n" -ForegroundColor Red
 Start-Sleep -Seconds 5
 shutdown -r -t 00
 }
+if ($global:CullewieTrustedFailed -or $global:CullewieTrustedBroken) { exit 1 }
 '@
 Set-Content -Path "$env:ProgramData\Cullewie\Work\defenderoptimize.ps1" -Value $DefenderOptimize -Force
 if ($QueueOnly) {

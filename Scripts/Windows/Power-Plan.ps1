@@ -18,9 +18,16 @@ Clear-Host
 
 # cullewie powerplan: a copy of High Performance, then the 177 settings (AC and DC) below.
 # The old plan is deleted first so a rerun does not keep an Ultimate-based copy under the same GUID.
+# A first run deletes every other plan (below), so a rerun has no High Performance or Balanced to start from:
+# restore Windows' default plans first (this also removes the old 99999999 copy and makes Balanced active).
+cmd /c "powercfg -restoredefaultschemes >nul 2>&1"
+# in case the restore was blocked (e.g. a managed power policy): leave the old copy and delete it explicitly
 cmd /c "powercfg /SETACTIVE 381b4222-f694-41f0-9685-ff5bb260df2e >nul 2>&1"
 cmd /c "powercfg /delete 99999999-9999-9999-9999-999999999999 >nul 2>&1"
 cmd /c "powercfg /duplicatescheme 8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c 99999999-9999-9999-9999-999999999999 >nul 2>&1"
+# Modern Standby laptops have no High Performance plan: start from Balanced (the settings below set the values anyway)
+if ($LASTEXITCODE -ne 0) { cmd /c "powercfg /duplicatescheme 381b4222-f694-41f0-9685-ff5bb260df2e 99999999-9999-9999-9999-999999999999 >nul 2>&1" }
+if ($LASTEXITCODE -ne 0) { Write-Host 'Power plan: could not create the cullewie plan (Windows default plans were restored).' -ForegroundColor Red; exit 1 }
 cmd /c "powercfg /changename 99999999-9999-9999-9999-999999999999 `"cullewie powerplan`" `"En yuksek islemci performansi.`" >nul 2>&1"
 # every AC (plugged in) and DC (battery) value of the plan, hidden settings included:
 # subgroup, setting, AC, DC. Settings this PC does not have are skipped by powercfg.
@@ -219,12 +226,8 @@ $powerPlans = @()
 foreach ($line in $output) {
 
 # extract guid manually to avoid language issues
-if ($line -match ':') {
-$parse = $line -split ':'
-$index = $parse[1].Trim().indexof('(')
-$guid = $parse[1].Trim().Substring(0, $index)
-$powerPlans += $guid
-}
+$m = [regex]::Match($line, '[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}')
+if ($m.Success) { $powerPlans += $m.Value }
 }
 
 # delete all powerplans

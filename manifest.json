@@ -8,80 +8,80 @@
     "files":  [
                   {
                       "path":  "Launcher.ps1",
-                      "size":  26559,
-                      "sha256":  "2d54e1640e4b29df4150548740b23f6b49b2181b26c3300c26fc4d13887be3b6",
+                      "size":  28283,
+                      "sha256":  "b2ed09e0fd9281f551b4caaea7b4d1afe8c25ed3e3170308f594227780170df2",
                       "role":  "launcher",
                       "origin":  "project",
                       "derivedFrom":  null
                   },
                   {
                       "path":  "README.md",
-                      "size":  9237,
-                      "sha256":  "eb906a56b6eed2be1e381786af92ed4dbb5b671b7888bd9afbc46c4ebeca47bd",
+                      "size":  9466,
+                      "sha256":  "9fad040f5ec9b194e48e2db723369a616ac654bef72c084692d91e53979e760b",
                       "role":  "documentation",
                       "origin":  "project",
                       "derivedFrom":  null
                   },
                   {
                       "path":  "Scripts/GPU/DDU.ps1",
-                      "size":  12856,
-                      "sha256":  "e600f5d64a343e0b24f34beac08a85e994ac44c9f6cb379953f2339d0dfb9998",
+                      "size":  13754,
+                      "sha256":  "5a4fd72bf563b951a9bc54be6ccc9e03839ae1f948951165f96b01ab011d59c9",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null
                   },
                   {
                       "path":  "Scripts/NVIDIA/Driver.ps1",
-                      "size":  13320,
-                      "sha256":  "db9b93999c4298abbd58a6dfeaf8597a5a190888a50150e568feb03657b82a71",
+                      "size":  13441,
+                      "sha256":  "2f9bcae0f2dfc143111355e36b0d043932a03d3d8bbb0522fc017eb28f50049c",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null
                   },
                   {
                       "path":  "Scripts/NVIDIA/Settings.ps1",
-                      "size":  15978,
-                      "sha256":  "5a4981c7f47fc133a3e42561a00866279b6463c970d2b93c0aae13ee0edbcded",
+                      "size":  16331,
+                      "sha256":  "fc7cffec08fb62faf54ce01c24d4b0a657f1ad197b727aab725f52560c27ff9f",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null
                   },
                   {
                       "path":  "Scripts/Windows/Power-Plan.ps1",
-                      "size":  31817,
-                      "sha256":  "a73bc7fbe52ee22fedc3d61e12c0ae2f063a76d37f24f198c0cd18ba1716a9d5",
+                      "size":  32586,
+                      "sha256":  "b2794ec553d113cb0dfa46fbc0252c54aef0ac1efa3438653ceb807fc5523460",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null
                   },
                   {
                       "path":  "Scripts/Windows/Services.ps1",
-                      "size":  29795,
-                      "sha256":  "e41a961dc113696f1557baefe81a8c55af2daa868b991bebc9ee516750e41004",
+                      "size":  33209,
+                      "sha256":  "085cca19357cf6672cf6da612e9f695c64c1527841a2169aca84729af43427d7",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null
                   },
                   {
                       "path":  "Scripts/Windows/Timer-Resolution.ps1",
-                      "size":  13769,
-                      "sha256":  "ab9fdaec5487c65e73cbbd67e47200cbe34a6f8fb8f7b98264217c074b1d33e4",
+                      "size":  14859,
+                      "sha256":  "1e17ebce8e4507053ab6d90f826e66260e56368253512f6f2b572a217b78d697",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null
                   },
                   {
                       "path":  "Scripts/Windows/Tweaks.ps1",
-                      "size":  68602,
-                      "sha256":  "b491e5a3121c9f2db8f7418635c458838d440b94cdabcaf964190c15ed46362f",
+                      "size":  71527,
+                      "sha256":  "c268fa07f5632358ee5de9ef31a8f99168acf4345d49e22cd2b41722814bed84",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null
                   },
                   {
                       "path":  "Scripts/Windows/Defender.ps1",
-                      "size":  12935,
-                      "sha256":  "35d7d1f10f76cfdbe95db34b79577522ed986bb729f9c536f05791180e4731bb",
+                      "size":  15034,
+                      "sha256":  "423e48609e22fd9ae6daff491f8bf458dadf569ca8651e150b8f21414b2ab2ee",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null
@@ -96,8 +96,8 @@
                   },
                   {
                       "path":  "Scripts/AMD/Driver.ps1",
-                      "size":  9182,
-                      "sha256":  "fbc2746268dfc6fb5d07018dfeed9d487a3afc66c58e2eb14e58a8f5ab9fe274",
+                      "size":  9218,
+                      "sha256":  "7f023e9374508c29a714a594c0d3a4798a4d39c3e222f50e2cf6fa5229306131",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null
@@ -112,8 +112,8 @@
                   },
                   {
                       "path":  "Scripts/GPU/Display-Options.ps1",
-                      "size":  16762,
-                      "sha256":  "cca9b941c2cf9edf975bde1ca79fe2fe30b131933380f28ac5a1d3a8a7f6849a",
+                      "size":  16840,
+                      "sha256":  "a0fce8f5a2db38f46d967b957da6763bb9fbe03917225afd9235ef6687991708",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null

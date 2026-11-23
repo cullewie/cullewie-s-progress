@@ -61,8 +61,13 @@ cmd /c "reg add `"HKLM\SYSTEM\CurrentControlSet\Services\nvlddmkm\Parameters\FTS
 New-Item -Path "$env:SystemDrive\Program Files (x86)\Nvidia Profile Inspector" -ItemType Directory -Force -ErrorAction SilentlyContinue | Out-Null
 
 # download nvidia profile inspector
-IWR "https://github.com/cullewie/cullewie-s-progress/releases/download/files/inspector.exe" -OutFile "$env:SystemDrive\Program Files (x86)\Nvidia Profile Inspector\Nvidia Profile Inspector.exe"
-if ((Get-FileHash "$env:SystemDrive\Program Files (x86)\Nvidia Profile Inspector\Nvidia Profile Inspector.exe" -Algorithm SHA256).Hash -ne '071f38bfeec4fab0a33261f7fa010940e2c3c96fb21f03d18d490110ddb90b03') { throw 'inspector.exe SHA-256 mismatch; download stopped.' }
+# download to the work folder, check the hash, and only then move it into Program Files
+$inspectorDownload = "$env:ProgramData\Cullewie\Work\inspector.exe"
+IWR "https://github.com/cullewie/cullewie-s-progress/releases/download/files/inspector.exe" -OutFile $inspectorDownload -UseBasicParsing
+if ((Get-FileHash $inspectorDownload -Algorithm SHA256).Hash -ne '071f38bfeec4fab0a33261f7fa010940e2c3c96fb21f03d18d490110ddb90b03') { Remove-Item $inspectorDownload -Force -ErrorAction SilentlyContinue; throw 'inspector.exe SHA-256 mismatch; download stopped.' }
+# copy, not move: a moved file keeps the admin-only access of the work folder and the shortcuts could not open it
+Copy-Item -LiteralPath $inspectorDownload -Destination "$env:SystemDrive\Program Files (x86)\Nvidia Profile Inspector\Nvidia Profile Inspector.exe" -Force
+Remove-Item -LiteralPath $inspectorDownload -Force -ErrorAction SilentlyContinue
 
 # create desktop shortcut
 $WshShell = New-Object -comObject WScript.Shell
@@ -281,7 +286,6 @@ $importArgs = "-silentImport -silent `"$env:ProgramData\Cullewie\Work\inspector.
 $gpu = Get-CimInstance Win32_PnPEntity -Filter "PNPDeviceID LIKE 'PCI\\VEN_10DE%'" | Where-Object { @($_.CompatibleID) -match '^PCI\\CC_03' } | Select-Object -First 1
 $driverReady = $gpu -and $gpu.ConfigManagerErrorCode -eq 0 -and $gpu.Name -match 'NVIDIA|GeForce|Quadro|RTX|GTX|TITAN' -and (Test-Path "$env:SystemRoot\System32\nvapi64.dll")
 if (-not $driverReady) {
-    New-Item -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce' -Force | Out-Null
     Set-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce' -Name 'CullewieNvidiaProfile' -Value "`"$inspector`" $importArgs"
     Write-Host 'NVIDIA driver is not loaded yet (restart pending): the profile is imported at the next sign-in.' -ForegroundColor Yellow
 }

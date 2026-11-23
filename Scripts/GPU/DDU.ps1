@@ -35,6 +35,7 @@ if ((Get-FileHash "$env:ProgramData\Cullewie\Work\7zip.exe" -Algorithm SHA256).H
 
 # install 7zip
 Start-Process -Wait "$env:ProgramData\Cullewie\Work\7zip.exe" -ArgumentList "/S"
+if (-not (Test-Path "$env:SystemDrive\Program Files\7-Zip\7z.exe")) { throw '7-Zip did not install; DDU cannot be extracted.' }
 
 # set config for 7zip
 cmd /c "reg add `"HKEY_CURRENT_USER\Software\7-Zip\Options`" /v `"ContextMenu`" /t REG_DWORD /d `"259`" /f >nul 2>&1"
@@ -49,7 +50,10 @@ IWR "https://github.com/cullewie/cullewie-s-progress/releases/download/files/ddu
 if ((Get-FileHash "$env:ProgramData\Cullewie\Work\ddu.exe" -Algorithm SHA256).Hash -ne '9b2611ec6d5a9d8853936cc071cc4026c6cfe91beed956cd41cc81c0930acd47') { throw 'ddu.exe SHA-256 mismatch; download stopped.' }
 
 # extract ddu with 7zip
+# fresh folder: a DDU left from an earlier run must not pass the checks below, and 7z cannot overwrite the read-only Settings.xml
+Remove-Item "$env:ProgramData\Cullewie\Work\ddu" -Recurse -Force -ErrorAction SilentlyContinue
 & "$env:SystemDrive\Program Files\7-Zip\7z.exe" x "$env:ProgramData\Cullewie\Work\ddu.exe" -o"$env:ProgramData\Cullewie\Work\ddu" -y | Out-Null
+if ($LASTEXITCODE -ne 0) { throw "Extracting DDU failed (7-Zip exit code $LASTEXITCODE)." }
 
 # set config for ddu
 $DduConfig = @'
@@ -105,7 +109,7 @@ if ($PrepareOnly) {
 
 # The guided NVIDIA path cleans only NVIDIA in normal Windows mode.
 if ($GuidedNvidia) {
-    $dduExe = Join-Path $env:SystemRoot 'Temp/ddu/Display Driver Uninstaller.exe'
+    $dduExe = "$env:ProgramData\Cullewie\Work\ddu\Display Driver Uninstaller.exe"
     if (-not (Test-Path -LiteralPath $dduExe -PathType Leaf)) {
         throw 'The DDU executable was not extracted successfully.'
     }
@@ -167,6 +171,7 @@ if ((Get-FileHash "$env:ProgramData\Cullewie\Work\7zip.exe" -Algorithm SHA256).H
 
 # install 7zip
 Start-Process -Wait "$env:ProgramData\Cullewie\Work\7zip.exe" -ArgumentList "/S"
+if (-not (Test-Path "$env:SystemDrive\Program Files\7-Zip\7z.exe")) { throw '7-Zip did not install; DDU cannot be extracted.' }
 
 # set config for 7zip
 cmd /c "reg add `"HKEY_CURRENT_USER\Software\7-Zip\Options`" /v `"ContextMenu`" /t REG_DWORD /d `"259`" /f >nul 2>&1"
@@ -181,7 +186,10 @@ IWR "https://github.com/cullewie/cullewie-s-progress/releases/download/files/ddu
 if ((Get-FileHash "$env:ProgramData\Cullewie\Work\ddu.exe" -Algorithm SHA256).Hash -ne '9b2611ec6d5a9d8853936cc071cc4026c6cfe91beed956cd41cc81c0930acd47') { throw 'ddu.exe SHA-256 mismatch; download stopped.' }
 
 # extract ddu with 7zip
+# fresh folder: a DDU left from an earlier run must not pass the checks below, and 7z cannot overwrite the read-only Settings.xml
+Remove-Item "$env:ProgramData\Cullewie\Work\ddu" -Recurse -Force -ErrorAction SilentlyContinue
 & "$env:SystemDrive\Program Files\7-Zip\7z.exe" x "$env:ProgramData\Cullewie\Work\ddu.exe" -o"$env:ProgramData\Cullewie\Work\ddu" -y | Out-Null
+if ($LASTEXITCODE -ne 0) { throw "Extracting DDU failed (7-Zip exit code $LASTEXITCODE)." }
 
 # set config for ddu
 $DduConfig = @'

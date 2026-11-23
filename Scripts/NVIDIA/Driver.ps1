@@ -256,7 +256,7 @@
         # Do not let Windows fetch NVIDIA Control Panel from the Store after the driver installs
         # ("download manufacturers' apps for devices" = No); with Store services off that install only fails.
         foreach ($Key in 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Device Metadata', 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\Device Metadata') {
-            New-Item -Path $Key -Force | Out-Null
+            if (-not (Test-Path $Key)) { New-Item -Path $Key | Out-Null }
             Set-ItemProperty -Path $Key -Name 'PreventDeviceMetadataFromNetwork' -Value 1 -Type DWord
         }
 
@@ -285,8 +285,7 @@
     catch {
         Write-Host "`nNVIDIA DRIVER ERROR:" -ForegroundColor Red
         Write-Host $_.Exception.Message -ForegroundColor Red
-
-        Pause
+        # no Pause: the Launcher shows the failure in its summary, and live/resume runs must not wait for a key
         exit 1
     }
 }

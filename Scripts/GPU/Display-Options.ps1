@@ -243,9 +243,9 @@ if ($percent -ge 0 -and -not $TestOnly -and -not $Reapply -and ($hasNvidia -or $
             $copy = Join-Path $dir 'Display-Options.ps1'
             Copy-Item -LiteralPath $PSCommandPath -Destination $copy -Force
             $user = [Security.Principal.WindowsIdentity]::GetCurrent().Name
-            $action = New-ScheduledTaskAction -Execute (Join-Path $PSHOME 'powershell.exe') -Argument "-NoLogo -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$copy`" -Reapply -Level $percent"
+            $action = New-ScheduledTaskAction -Execute "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -Argument "-NoLogo -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$copy`" -Reapply -Level $percent"
             $trigger = New-ScheduledTaskTrigger -AtLogOn -User $user
-            $principal = New-ScheduledTaskPrincipal -UserId $user -LogonType Interactive -RunLevel Limited
+            $principal = New-ScheduledTaskPrincipal -UserId $user -LogonType Interactive -RunLevel Highest  # the copy sits in a folder only admins can read
             $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -ExecutionTimeLimit (New-TimeSpan -Minutes 5)
             Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $trigger -Principal $principal -Settings $settings -Force | Out-Null
             Write-Host "Vibrance is set again at every sign-in (task $taskName)." -ForegroundColor Green

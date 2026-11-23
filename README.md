@@ -23,7 +23,7 @@ Kurulum üç aşamada ilerler. Bilgisayar arada üç kez kendiliğinden yeniden 
 
 - **Önce bekleyen güncellemeye bakar.** Windows bir güncellemeyi bitirmek için yeniden başlatma bekliyorsa kurulum başlamaz ve önce bilgisayarı bir kez yeniden başlatmanı ister. (Bekleyen güncelleme güvenli modda uygulanmaya çalışılırsa başarısız olur ve Windows "değişiklikler geri alınıyor" döngüsüne girer.)
 - **Ekran kartının adını not eder**, eski sürücü silinince de hangi kart olduğunu bilsin diye.
-- **Windows Update'in araya girip kendi sürücüsünü kurmasını engeller**, kurulum bitene kadar.
+- **Windows Update'in araya girip kendi sürücüsünü kurmasını engeller.** Güncellemelerdeki sürücü engeli kurulum bitince kalkar; "cihaz sürücülerini Windows Update'ten otomatik indir" ayarı ise kapalı kalır.
 - **BitLocker açıksa duraklatır**, böylece yeniden başlatmalarda kurtarma anahtarı sorulmaz.
 
 ### 2. Temizlik (güvenli mod)
@@ -33,8 +33,8 @@ Kurulum üç aşamada ilerler. Bilgisayar arada üç kez kendiliğinden yeniden 
 
 ### 3. Kurulum ve ayarlar (normal Windows)
 
-- **En yeni ekran kartı sürücüsünü kurar.** Sürücüyü NVIDIA'nın ya da AMD'nin kendi sitesinden indirir ve dijital imzasını kontrol eder; imza üreticiye ait değilse kurmaz. NVIDIA'da yalnızca sürücünün kendisi kurulur: NVIDIA App ve Control Panel kurulmaz. Aynı sürüm zaten kuruluysa indirmeyi atlar.
-- **NVIDIA ayarlarını yapar.** NVIDIA Profile Inspector ile tüm oyunlara 30 ayar uygular: V-Sync kapalı, Low Latency Mode kapalı, güç modu "en yüksek performans", doku filtreleme "yüksek performans", G-SYNC kapalı. Kartı hep en yüksek hızında tutar (P0 durumu) ve MSI modunu açar.
+- **En yeni ekran kartı sürücüsünü kurar.** Sürücüyü NVIDIA'nın ya da AMD'nin kendi sitesinden indirir ve dijital imzasını kontrol eder; imza üreticiye ait değilse kurmaz. NVIDIA'da yalnızca sürücünün kendisi kurulur: NVIDIA App ve Control Panel kurulmaz. NVIDIA'da aynı sürüm zaten kuruluysa indirmeyi atlar; AMD'de sürücü her seferinde yeniden kurulur.
+- **NVIDIA ayarlarını yapar.** NVIDIA Profile Inspector ile tüm oyunlara 30 ayar uygular: V-Sync kapalı, Low Latency Mode kapalı, güç modu "en yüksek performans", doku filtreleme "yüksek performans", G-SYNC kapalı. Kartı hep en yüksek hızında tutar (P0 durumu). (Ekran kartının MSI modu Windows ayarları adımında açılır.)
 - **Ekranı en yüksek yenileme hızına alır.** Örneğin monitörün 240 Hz destekliyorsa 60 Hz'de kalmaz.
 - **Widget'ları ve Copilot'u kapatır.**
 - **Güç planını en yüksek performansa ayarlar.** Ekran hiç kapanmaz, hazırda bekletme kapalıdır.
