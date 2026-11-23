@@ -136,16 +136,16 @@
                   },
                   {
                       "path":  "Scripts/TestLog.ps1",
-                      "size":  7024,
-                      "sha256":  "fe3dd88fefdb33d89abbe9c2cbfc54d209e8e9eb4d741602d6cb9932d937ccac",
+                      "size":  7199,
+                      "sha256":  "8d9e1ec5b98479f01dcfa773524bb4be050f62ae9aa0682b2cd3e95764202d40",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null
                   },
                   {
                       "path":  "UI.ps1",
-                      "size":  35713,
-                      "sha256":  "992858d340655e2b32712cf47929be61188c53475c7dffaf63e45c0f2f1b3604",
+                      "size":  37319,
+                      "sha256":  "adb347962aa2c37e9dac015c9251c74421a3eba23181ffeca9280b1322ddc134",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null

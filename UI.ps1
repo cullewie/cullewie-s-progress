@@ -93,6 +93,21 @@ function Get-StepRows([object[]]$Expected, [string[]]$Lines, [string]$Running) {
     $known = @($Expected | ForEach-Object Key)
     foreach ($k in $results.Keys) { if ($known -notcontains $k) { [pscustomobject]@{ Label = $k; State = $results[$k]; Key = $k } } }
 }
+# the Launcher's messages are English (the console keeps them); the window shows the known ones in Turkish
+function ConvertTo-TurkishStatus([string]$Text) {
+    if ($Text -match 'waiting for a restart') { return 'Windows, güncellemeleri bitirmek için yeniden başlatma bekliyor. Bilgisayarı bir kez normal şekilde yeniden başlat, sonra kurulumu yeniden çalıştır.' }
+    if ($Text -match 'No internet connection') { return 'İnternet bağlantısı yok (5 dakika beklendi). Bağlantıyı kontrol edip kurulumu yeniden çalıştır.' }
+    if ($Text -match 'safe boot') { return 'Güvenli mod açılamadı, kurulum durdu. Hiçbir şey değiştirilmedi.' }
+    if ($Text -match 'NVIDIA model name') { return 'Ekran kartının modeli kaydedilemedi, kurulum durdu.' }
+    if ($Text -match '^DDU did not complete') { return 'DDU sürücü temizliğini bitiremedi; NVIDIA kurulumu durduruldu.' }
+    if ($Text -match '^(.+) did not complete\. Full setup stopped') {
+        $name = $Matches[1]
+        $label = @(Get-ExpectedSteps 'full' 'xbox' 'nvidia') + @(Get-ExpectedSteps 'full' 'off' 'amd') + @(Get-ExpectedSteps 'vanilla' 'off' '') |
+            Where-Object Key -eq $name | Select-Object -First 1 -ExpandProperty Label
+        return "'$(if ($label) { $label } else { $name })' adımı tamamlanamadı, kurulum durdu. Ayrıntılar kayıtta."
+    }
+    $Text
+}
 function Get-Gpu {
     try {
         $ids = @(Get-CimInstance Win32_VideoController -ErrorAction Stop | ForEach-Object { [string]$_.PNPDeviceID })
@@ -444,7 +459,7 @@ function Update-Progress {
     if (-not $run) {
         if ($workerDone -and $script:Worker) {
             $ui.Current.Text = 'Kurulum başlamadı'
-            Show-Banner $(if ($state.Status) { $state.Status } else { 'Kurulum hiç başlamadı. Pencereyi kapatıp yeniden dene.' })
+            Show-Banner $(if ($state.Status) { ConvertTo-TurkishStatus $state.Status } else { 'Kurulum hiç başlamadı. Pencereyi kapatıp yeniden dene.' })
             $script:Timer.Stop()
         }
         return
@@ -481,7 +496,7 @@ function Update-Progress {
         }
         elseif ($last -notlike 'Restart*') {
             $ui.Current.Text = 'Kurulum durdu'
-            Show-Banner $(if ($state.Status) { $state.Status } else { 'Kurulum bir hatayla durdu. Ayrıntılar kayıtta.' })
+            Show-Banner $(if ($state.Status) { ConvertTo-TurkishStatus $state.Status } else { 'Kurulum bir hatayla durdu. Ayrıntılar kayıtta.' })
         }
     }
 }
@@ -542,6 +557,8 @@ $script:ApplyTimer.Add_Tick({
 $ui.CloseBtn.Add_Click({ $win.Close() })
 $ui.MinBtn.Add_Click({ $win.WindowState = 'Minimized' })
 $ui.TitleBar.Add_MouseLeftButtonDown({ $win.DragMove() })
+# at sign-in other windows (a terminal, the desktop) open on top of it: bring it to the front once
+$win.Add_ContentRendered({ $win.Topmost = $true; $win.Activate(); $win.Topmost = $false })
 $script:Timer = New-Object Windows.Threading.DispatcherTimer
 $script:Timer.Interval = [TimeSpan]::FromMilliseconds(800)
 $script:Timer.Add_Tick({ try { Update-Progress } catch { } })

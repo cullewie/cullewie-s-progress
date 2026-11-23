@@ -21,7 +21,9 @@ function Write-TestStep([string]$Step, [string]$Result, [int]$ExitCode = 0, [tim
     try {
         $run = Get-TestRun -Root $Root
         if (-not $run) { return }
-        $line = '{0:yyyy-MM-ddTHH:mm:ss}{1}{2}{1}{3}{1}exit {4}{1}{5:mm\:ss}' -f (Get-Date), "`t", $Step, $Result, $ExitCode, $Duration
+        # minutes keep counting past an hour (mm:ss alone would show 1 h 05 min as 05:00)
+        $length = '{0:00}:{1:00}' -f [math]::Floor($Duration.TotalMinutes), $Duration.Seconds
+        $line = '{0:yyyy-MM-ddTHH:mm:ss}{1}{2}{1}{3}{1}exit {4}{1}{5}' -f (Get-Date), "`t", $Step, $Result, $ExitCode, $length
         Add-Content -LiteralPath (Join-Path $run 'steps.log') -Value $line -Encoding UTF8 -ErrorAction Stop
     }
     catch { }
