@@ -269,22 +269,39 @@ if ($AppsOnly) {
     Unregister-ScheduledTask -TaskName 'cullewie-vanilla-apps' -Confirm:$false -ErrorAction SilentlyContinue
     try { . (Join-Path $PSScriptRoot '..\TestLog.ps1') } catch { }   # TESTLOG
     $appsWatch = [Diagnostics.Stopwatch]::StartNew()
+    # the whole output (winget's messages too), since this runs in a hidden window
+    try { Start-Transcript -LiteralPath ($log -replace '\.log$', '-apps.log') -Force | Out-Null } catch { }
+    # right after sign-in the Store is not ready yet, even with the internet up (2026-11-23: failed within 32 seconds at
+    # sign-in, installed by hand 3 minutes later): wait a minute, then try up to 3 times, 2 minutes apart
+    Start-Sleep -Seconds 60
     $until = (Get-Date).AddMinutes(5)
     while (-not (Test-Connection -ComputerName 1.1.1.1 -Count 1 -Quiet -ErrorAction SilentlyContinue) -and (Get-Date) -lt $until) { Start-Sleep -Seconds 5 }
-    Write-Log 'Microsoft Store and Xbox apps (after the restart)'
-    & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot 'Store-Xbox.ps1') -Apps xbox
-    $appsExit = $LASTEXITCODE
+    $plan = $restorePlan
     $notBack = @()
+    for ($attempt = 1; $attempt -le 3; $attempt++) {
+        Write-Log "Microsoft Store and Xbox apps (after the restart, attempt $attempt of 3)"
+        & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot 'Store-Xbox.ps1') -Apps xbox
+        $appsExit = $LASTEXITCODE
+        $notBack = @()
+        if ($inventory) {
+            Write-Log "Removed apps and features: bringing back what can come back ($(@($plan | Where-Object How -ne 'skip').Count) items)"
+            $notBack = @(Invoke-RestorePlan $plan)
+            # the next attempt retries only what failed to install
+            $failedNames = @($notBack | Where-Object Reason -eq 'install failed' | ForEach-Object Name)
+            $plan = @($plan | Where-Object { $failedNames -contains $_.Name })
+        }
+        if ($appsExit -eq 0 -and -not @($notBack | Where-Object Reason -eq 'install failed').Count) { break }
+        if ($attempt -lt 3) { Write-Log '  not everything installed yet; trying again in 2 minutes' 'Yellow'; Start-Sleep -Seconds 120 }
+    }
     if ($inventory) {
-        Write-Log "Removed apps and features: bringing back what can come back ($(@($restorePlan | Where-Object How -ne 'skip').Count) items)"
-        $notBack = @(Invoke-RestorePlan $restorePlan)
         foreach ($n in $notBack) { Write-Log "  not restored  $($n.Name) ($($n.Reason))" 'Yellow' }
-        # what failed to install stays listed for the next Vanilla run; the rest is used up
+        # what still failed stays listed for the next Vanilla run; the rest is used up
         Save-RemainingInventory -Plan $restorePlan -NotBack $notBack -Path $inventoryPath
     }
     $failedApps = @($notBack | Where-Object Reason -eq 'install failed').Count + $(if ($appsExit -ne 0) { 1 } else { 0 })
     if ($failedApps) { Write-Log 'Some apps did not install (listed above); run Vanilla Mode again later to retry them.' 'Yellow' }
     Write-Log "Vanilla apps done. Log: $log" 'Green'
+    try { Stop-Transcript | Out-Null } catch { }
     if (Get-Command Write-TestStep -ErrorAction SilentlyContinue) { Write-TestStep 'Vanilla apps (after restart)' $(if ($failedApps) { 'FAIL' } else { 'PASS' }) $failedApps $appsWatch.Elapsed }   # TESTLOG
     exit 0
 }
