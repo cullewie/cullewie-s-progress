@@ -8,16 +8,16 @@
     "files":  [
                   {
                       "path":  "Launcher.ps1",
-                      "size":  35201,
-                      "sha256":  "c6731e3b2a5c3cf33a985a650e533855ff376dffe96e7f47c61919823fea1b47",
+                      "size":  37229,
+                      "sha256":  "21964c07b5dc10fdee5fce76b0fe9588ef0872536af229c02e06e9f27a6f61cb",
                       "role":  "launcher",
                       "origin":  "project",
                       "derivedFrom":  null
                   },
                   {
                       "path":  "README.md",
-                      "size":  4466,
-                      "sha256":  "3684cdcf7e21b565a83c22cfd745072393fe9784849e7950fbba62535054e432",
+                      "size":  4864,
+                      "sha256":  "1c614c60474e75f576dd2a2401149fc6bf5c629eda687bc760db5d22872f9c71",
                       "role":  "documentation",
                       "origin":  "project",
                       "derivedFrom":  null
@@ -128,16 +128,24 @@
                   },
                   {
                       "path":  "Scripts/GPU/Display-Options.ps1",
-                      "size":  16967,
-                      "sha256":  "fc9ec0e0c346edd3453a4ad0d7bcf38501639149d479368491649ba1bbe0766e",
+                      "size":  17064,
+                      "sha256":  "2d44a37b5412fe0c2196dc76c543edbe8112fcbcf796ed524b25ef0c848d43fb",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null
                   },
                   {
                       "path":  "Scripts/TestLog.ps1",
-                      "size":  6565,
-                      "sha256":  "35937741735923e6cb60f6cb5745744743ec5cea04ac43b3fa157013178a85f7",
+                      "size":  7024,
+                      "sha256":  "fe3dd88fefdb33d89abbe9c2cbfc54d209e8e9eb4d741602d6cb9932d937ccac",
+                      "role":  "source",
+                      "origin":  "project",
+                      "derivedFrom":  null
+                  },
+                  {
+                      "path":  "UI.ps1",
+                      "size":  35713,
+                      "sha256":  "992858d340655e2b32712cf47929be61188c53475c7dffaf63e45c0f2f1b3604",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null

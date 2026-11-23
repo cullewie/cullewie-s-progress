@@ -7,7 +7,9 @@ param(
     # Set by the full setup logon task after the first safe-mode restart.
     [switch]$ResumeFullSetup,
     # store / xbox: keep Microsoft Store (and Xbox, Game Pass) working; full mode asks when this is empty, live mode never asks
-    [string]$Apps = ''
+    [string]$Apps = '',
+    # started by UI.ps1: no questions in the console (the window asks), restarts reopen the window instead of a console
+    [switch]$Ui
 )
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
@@ -215,7 +217,8 @@ function ConvertTo-AppsLevel([string]$Value) {
 function Read-AppsChoice {
     if ($Apps) { return (ConvertTo-AppsLevel $Apps) }
     Write-Host ''
-    $answer = Read-Host 'Hangisi? 1 = All-in, 2 = Only Store Mode, 3 = Xbox & Store'
+    $answer = ''
+    if (-not $Ui) { $answer = Read-Host 'Hangisi? 1 = All-in, 2 = Only Store Mode, 3 = Xbox & Store' }
     switch (([string]$answer).Trim()) { '2' { 'store' } '3' { 'xbox' } default { 'off' } }
 }
 function Save-AppsChoice([string]$Level) {
@@ -341,17 +344,23 @@ try {
 }
 finally {
     cmd /c "bcdedit /deletevalue {current} safeboot >nul 2>&1"
-    if ($tlOn) { Write-TestStep 'Restart' 'INFO'; Stop-Transcript -ErrorAction SilentlyContinue | Out-Null }   # TESTLOG
+    if ($tlOn) { Write-TestStep 'Restart (after safe mode)' 'INFO'; Stop-Transcript -ErrorAction SilentlyContinue | Out-Null }   # TESTLOG
     Write-Host 'Restarting' -ForegroundColor Red
     shutdown -r -t 5
 }
 '@).Replace('__TESTLOG__', (Join-Path $script:RepoRoot 'Scripts\TestLog.ps1').Replace("'", "''")),[Text.UTF8Encoding]::new($false))   # TESTLOG: Replace
     $runOnce = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce'
-    Set-ItemProperty -Path $runOnce -Name '*cullewiesafe' -Value "powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Maximized -File `"$safeScript`""
+    $uiScript = Join-Path $script:RepoRoot 'UI.ps1'
+    # the window runs the safe-mode script first and then shows it; without -Ui a maximized console runs it
+    $safeCommand = if ($Ui) { "powershell.exe -NoProfile -STA -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$uiScript`" -SafeScript `"$safeScript`"" }
+                   else { "powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Maximized -File `"$safeScript`"" }
+    Set-ItemProperty -Path $runOnce -Name '*cullewiesafe' -Value $safeCommand
 
     # stage 3: an elevated logon task, so no UAC prompt and UAC stays on; Task Scheduler does not run in safe mode
     $user = [Security.Principal.WindowsIdentity]::GetCurrent().Name
-    $action = New-ScheduledTaskAction -Execute $script:PowerShellExe -Argument "-NoLogo -NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`" -ResumeFullSetup"
+    $taskArgument = if ($Ui) { "-NoLogo -NoProfile -STA -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$uiScript`" -Resume" }
+                    else { "-NoLogo -NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`" -ResumeFullSetup" }
+    $action = New-ScheduledTaskAction -Execute $script:PowerShellExe -Argument $taskArgument
     $trigger = New-ScheduledTaskTrigger -AtLogOn -User $user
     $principal = New-ScheduledTaskPrincipal -UserId $user -LogonType Interactive -RunLevel Highest
     $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -ExecutionTimeLimit ([TimeSpan]::Zero)
@@ -437,12 +446,14 @@ function Resume-FullSetup {
     foreach ($id in $windowsIds) {
         $toolArguments = @()
         if ($id -in 'tweaks', 'store-xbox') { $toolArguments = @(Get-AppsArguments) }
+        # the window asks Digital Vibrance at the very end, after the last restart; here only the scaling
+        if ($id -eq 'display-options' -and $Ui) { $toolArguments = @('-Level', 'none') }
         try { Invoke-RequiredTool -Id $id -Arguments $toolArguments } catch { $failed.Add($_.Exception.Message) }
     }
     if ($failed.Count) {
         Write-Host ([Environment]::NewLine + 'These steps did not complete:') -ForegroundColor Red
         $failed | ForEach-Object { Write-Host " - $_" -ForegroundColor Red }
-        [void](Read-Host 'Press Enter to continue with Services and the restart')
+        if (-not $Ui) { [void](Read-Host 'Press Enter to continue with Services and the restart') }
     }
     # Services goes last and applies in normal Windows, then a normal restart. Not in safe mode: Bloatware has just
     # queued feature changes that Windows applies at the next boot, and in safe mode they fail and get rolled back
@@ -456,7 +467,15 @@ function Resume-FullSetup {
         Start-Sleep -Seconds 15
     }
     Write-Host 'Setup finished. Restarting normally.' -ForegroundColor Green
-    if ($script:TestLogOn) { Write-TestStep 'Restart' 'INFO'; Register-NextBootLog }   # TESTLOG
+    if ($script:TestLogOn) { Write-TestStep 'Restart (final)' 'INFO'; Register-NextBootLog }   # TESTLOG
+    if ($Ui) {
+        # after this restart the window opens once more, elevated, for the last question (Digital Vibrance)
+        $user = [Security.Principal.WindowsIdentity]::GetCurrent().Name
+        $doneAction = New-ScheduledTaskAction -Execute $script:PowerShellExe -Argument "-NoLogo -NoProfile -STA -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$(Join-Path $script:RepoRoot 'UI.ps1')`" -Done"
+        $doneTrigger = New-ScheduledTaskTrigger -AtLogOn -User $user
+        $donePrincipal = New-ScheduledTaskPrincipal -UserId $user -LogonType Interactive -RunLevel Highest
+        try { Register-ScheduledTask -TaskName 'cullewie-done' -Action $doneAction -Trigger $doneTrigger -Principal $donePrincipal -Force | Out-Null } catch { }
+    }
     shutdown -r -t 10
 }
 function Test-PendingReboot {
@@ -540,5 +559,10 @@ try {
     }
     else { Start-FullSetup }
 }
-catch { Write-Host "Setup stopped: $($_.Exception.Message)" -ForegroundColor Red }
-[void](Read-Host 'Press Enter to close')
+catch {
+    Write-Host "Setup stopped: $($_.Exception.Message)" -ForegroundColor Red
+    if ($script:TestLogOn) { Write-TestStep 'Setup stopped' 'FAIL' }   # TESTLOG
+    # the window shows this when the setup stops before (or after) its log has a run
+    if ($Ui) { try { Set-Content -LiteralPath (Join-Path $env:ProgramData 'Cullewie\Work\ui-status.txt') -Value $_.Exception.Message } catch { } }
+}
+if (-not $Ui) { [void](Read-Host 'Press Enter to close') }

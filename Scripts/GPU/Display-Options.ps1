@@ -193,7 +193,8 @@ if (-not $PSBoundParameters.ContainsKey('Level')) {
     else { $Level = '' }
 }
 $percent = -1
-if ("$Level".Trim()) {
+# none: the window asks later (UI.ps1 -Done); nothing to set now
+if ("$Level".Trim() -and "$Level".Trim() -ne 'none') {
     if ("$Level".Trim() -notmatch '^\d{1,3}$') { Write-Host "Not a number: $Level. Digital Vibrance / Color Saturation left as is." -ForegroundColor Yellow }
     else {
         $percent = [int]"$Level".Trim()

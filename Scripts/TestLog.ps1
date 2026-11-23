@@ -112,14 +112,19 @@ function Save-NetworkState([string]$Root = $script:TestLogRoot) {
     catch { }
 }
 
-# the boot after the last restart runs no setup code: a one-time RunOnce entry records it (events, then network
-# at sign-in and a minute later). RunOnce ignores commands over 260 characters, so it stays short.
-function Register-NextBootLog([string]$Key = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce') {
+# the boot after the last restart runs no setup code: a one-time elevated logon task records it (events, then network
+# at sign-in and a minute later) and removes itself. Elevated, because the log folder is for Administrators only.
+function Get-NextBootCommand {
+    ". '$($script:TestLogSelf -replace "'", "''")'; Save-BootEvents; Start-Sleep 60; Save-NetworkState; Unregister-ScheduledTask -TaskName 'cullewie-nextboot' -Confirm:`$false"
+}
+function Register-NextBootLog {
     try {
-        $self = $script:TestLogSelf
-        if (-not (Test-Path $Key)) { New-Item -Path $Key -Force -ErrorAction Stop | Out-Null }
-        $cmd = "powershell.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -Command "". '$($self -replace "'", "''")'; Save-BootEvents; Start-Sleep 60; Save-NetworkState"""
-        Set-ItemProperty -Path $Key -Name '*cullewielog' -Value $cmd -ErrorAction Stop
+        $encoded = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes((Get-NextBootCommand)))
+        $user = [Security.Principal.WindowsIdentity]::GetCurrent().Name
+        $action = New-ScheduledTaskAction -Execute "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -Argument "-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -EncodedCommand $encoded"
+        $trigger = New-ScheduledTaskTrigger -AtLogOn -User $user
+        $principal = New-ScheduledTaskPrincipal -UserId $user -LogonType Interactive -RunLevel Highest
+        Register-ScheduledTask -TaskName 'cullewie-nextboot' -Action $action -Trigger $trigger -Principal $principal -Force -ErrorAction Stop | Out-Null
     }
     catch { }
 }
