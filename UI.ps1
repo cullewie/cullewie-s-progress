@@ -121,6 +121,12 @@ function Get-Gpu {
 # ---------- window ----------
 try {
 Add-Type -AssemblyName PresentationFramework, PresentationCore, WindowsBase
+# its own taskbar button, not one grouped under PowerShell (set before the window exists)
+try {
+    Add-Type -Namespace Cullewie -Name Shell -MemberDefinition '[DllImport("shell32.dll", CharSet = CharSet.Unicode)] public static extern int SetCurrentProcessExplicitAppUserModelID(string id);'
+    [void][Cullewie.Shell]::SetCurrentProcessExplicitAppUserModelID('Cullewie.Progress')
+}
+catch { }
 
 $xaml = @'
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -425,6 +431,21 @@ $conv = [Windows.Media.BrushConverter]::new()
 $brush = @{ Wait = $conv.ConvertFrom('#6E757B'); Run = $conv.ConvertFrom('#F5C400'); Pass = $conv.ConvertFrom('#5CB85C'); Fail = $conv.ConvertFrom('#E05A4F'); Text = $conv.ConvertFrom('#F2F2F2'); Dim = $conv.ConvertFrom('#A9B0B6') }
 $glyph = @{ Wait = '○'; Run = '●'; Pass = '✓'; Fail = '✕' }
 
+# the icon (title bar, taskbar, Alt+Tab): the yellow square on anthracite, drawn here, no file needed
+try {
+    $iconVisual = New-Object Windows.Media.DrawingVisual
+    $dc = $iconVisual.RenderOpen()
+    $dc.DrawRoundedRectangle([Windows.Media.Brush]$conv.ConvertFrom('#2F3337'), $null, (New-Object Windows.Rect 0, 0, 64, 64), 14, 14)
+    $dc.DrawRoundedRectangle([Windows.Media.Brush]$conv.ConvertFrom('#F5C400'), $null, (New-Object Windows.Rect 16, 16, 32, 32), 7, 7)
+    $dc.Close()
+    $iconBitmap = New-Object Windows.Media.Imaging.RenderTargetBitmap(64, 64, 96, 96, [Windows.Media.PixelFormats]::Pbgra32)
+    $iconBitmap.Render($iconVisual)
+    $win.Icon = $iconBitmap
+}
+catch { }
+# the progress also shows on the taskbar button: green while it runs, red when a step fails
+$win.TaskbarItemInfo = New-Object Windows.Shell.TaskbarItemInfo
+
 $script:Mode = 'full'; $script:Apps = 'off'; $script:Gpu = Get-Gpu
 $script:Expected = @(); $script:StartedAt = [datetime]::MinValue; $script:LastLogLen = -1; $script:Finished = $false
 $script:LogRoot = Join-Path $env:ProgramData 'Cullewie\Logs'
@@ -442,7 +463,7 @@ function Set-Rows($Rows) {
         [void]$dp.Children.Add($g); [void]$dp.Children.Add($l); [void]$ui.Steps.Children.Add($dp)
     }
 }
-function Show-Banner([string]$Text) { $ui.BannerText.Text = $Text; $ui.Banner.Visibility = 'Visible' }
+function Show-Banner([string]$Text) { $ui.BannerText.Text = $Text; $ui.Banner.Visibility = 'Visible'; $win.TaskbarItemInfo.ProgressState = 'Error' }
 # the run name (folder suffix) tells the mode and the Store/Xbox level after a restart
 function Set-ModeFromRun([string]$Run) {
     $leaf = Split-Path $Run -Leaf
@@ -471,6 +492,8 @@ function Update-Progress {
     $done = @($rows | Where-Object { $_.State -in 'Pass', 'Fail' }).Count
     $pct = if ($rows.Count) { [int](100 * $done / $rows.Count) } else { 0 }
     $ui.Bar.Value = $pct; $ui.Percent.Text = "%$pct"
+    if ($win.TaskbarItemInfo.ProgressState -ne 'Error') { $win.TaskbarItemInfo.ProgressState = 'Normal' }
+    $win.TaskbarItemInfo.ProgressValue = $pct / 100
     $running = $rows | Where-Object State -eq 'Run' | Select-Object -First 1
     if ($running) { $ui.Current.Text = $running.Label }
     $restarts = @($state.Lines | Where-Object { ($_ -split "`t")[1] -like 'Restart*' }).Count
@@ -507,6 +530,7 @@ function Start-Worker([string[]]$Arguments) {
 }
 function Show-Done {
     Show-Screen 'DoneScreen'
+    $win.TaskbarItemInfo.ProgressState = 'None'
     if ($script:Gpu -eq 'amd') {
         $ui.VibranceLabel.Text = 'Color Saturation'; $ui.Vibrance.Minimum = 100; $ui.Vibrance.Maximum = 200; $ui.Vibrance.Value = 100
         $ui.VibranceHint.Text = '100 = Windows varsayılanı · 200 = en canlı'
