@@ -27,8 +27,6 @@ Kurulum sırasında bilgisayar üç kez kendiliğinden yeniden başlar. Her aç�
 $env:CULLEWIE_MODE = 'live'; iwr 'https://github.com/cullewie/cullewie-s-progress/raw/refs/heads/main/IWR.ps1' -useb | iex
 ```
 
-Sonuç şu dosyaya yazılır: `C:\ProgramData\User\Work\live-setup-*.log`
-
 ## Xbox & Store / Only Store Mode
 
 İkisi de All-in'in yaptığı her şeyi yapar, ama seçilen uygulamaların çalışması için gereken hizmetleri ve ayarları açık bırakır. Eksik olan uygulamaları kurulum kendisi kurar. İkisinde de Windows Update açık kalır ama **yalnızca aylık güncellemeyi** alır; yeni Windows sürümü, sürücü ve önizleme güncellemeleri gelmez.
