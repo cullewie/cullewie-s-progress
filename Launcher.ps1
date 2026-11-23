@@ -19,11 +19,11 @@ $script:SuspendedBitLocker = $false
 # the Store/Xbox choice; a file, so it survives the safe-mode restarts of the full setup
 $script:AppsFlag = Join-Path $env:ProgramData 'Cullewie\Work\apps.flag'
 $script:Tools = @(
-    [pscustomobject]@{ Id='nvidia-updater'; Name='NVIDIA Driver'; Category='NVIDIA'; Path='Scripts/NVIDIA/Driver.ps1'; Wrapper='NvidiaCase' }
+    [pscustomobject]@{ Id='nvidia-updater'; Name='NVIDIA Driver'; Category='NVIDIA'; Path='Scripts/GPU/NVIDIA/Driver.ps1'; Wrapper='NvidiaCase' }
     [pscustomobject]@{ Id='ddu'; Name='DDU (driver cleanup)'; Category='GPU'; Path='Scripts/GPU/DDU.ps1'; Wrapper='' }
-    [pscustomobject]@{ Id='settings-github'; Name='NVIDIA Settings (profile, P0, refresh rate)'; Category='NVIDIA'; Path='Scripts/NVIDIA/Settings.ps1'; Wrapper='' }
-    [pscustomobject]@{ Id='amd-updater'; Name='AMD Driver'; Category='AMD'; Path='Scripts/AMD/Driver.ps1'; Wrapper='' }
-    [pscustomobject]@{ Id='amd-settings'; Name='AMD Settings (Adrenalin, refresh rate)'; Category='AMD'; Path='Scripts/AMD/Settings.ps1'; Wrapper='' }
+    [pscustomobject]@{ Id='settings-github'; Name='NVIDIA Settings (profile, P0, refresh rate)'; Category='NVIDIA'; Path='Scripts/GPU/NVIDIA/Settings.ps1'; Wrapper='' }
+    [pscustomobject]@{ Id='amd-updater'; Name='AMD Driver'; Category='AMD'; Path='Scripts/GPU/AMD/Driver.ps1'; Wrapper='' }
+    [pscustomobject]@{ Id='amd-settings'; Name='AMD Settings (Adrenalin, refresh rate)'; Category='AMD'; Path='Scripts/GPU/AMD/Settings.ps1'; Wrapper='' }
     [pscustomobject]@{ Id='services'; Name='Services Off'; Category='Windows'; Path='Scripts/Windows/Services.ps1'; Wrapper='' }
     [pscustomobject]@{ Id='power-plan'; Name='Power Plan On'; Category='Windows'; Path='Scripts/Windows/Power-Plan.ps1'; Wrapper='' }
     [pscustomobject]@{ Id='timer-resolution'; Name='Timer Resolution On'; Category='Windows'; Path='Scripts/Windows/Timer-Resolution.ps1'; Wrapper='' }

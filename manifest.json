@@ -8,16 +8,16 @@
     "files":  [
                   {
                       "path":  "Launcher.ps1",
-                      "size":  31084,
-                      "sha256":  "c0b5bc8a62bef257343e679847fd531e1219cdd6d14f4849644c742ec5c5a03b",
+                      "size":  31100,
+                      "sha256":  "d51537b341e886e0e495889b65d7092bad045889e613b23c5a993d1e181de39a",
                       "role":  "launcher",
                       "origin":  "project",
                       "derivedFrom":  null
                   },
                   {
                       "path":  "README.md",
-                      "size":  11163,
-                      "sha256":  "08c869e8d9a024537a3ca318eced9151854aceedd23c1ff2edc1480ac5f21e92",
+                      "size":  11279,
+                      "sha256":  "a215f0a9e574852201a1ddc4f3924a29eb1d02a709baca1a8498b9ce51576998",
                       "role":  "documentation",
                       "origin":  "project",
                       "derivedFrom":  null
@@ -31,7 +31,7 @@
                       "derivedFrom":  null
                   },
                   {
-                      "path":  "Scripts/NVIDIA/Driver.ps1",
+                      "path":  "Scripts/GPU/NVIDIA/Driver.ps1",
                       "size":  13441,
                       "sha256":  "2f9bcae0f2dfc143111355e36b0d043932a03d3d8bbb0522fc017eb28f50049c",
                       "role":  "source",
@@ -39,9 +39,9 @@
                       "derivedFrom":  null
                   },
                   {
-                      "path":  "Scripts/NVIDIA/Settings.ps1",
-                      "size":  16331,
-                      "sha256":  "fc7cffec08fb62faf54ce01c24d4b0a657f1ad197b727aab725f52560c27ff9f",
+                      "path":  "Scripts/GPU/NVIDIA/Settings.ps1",
+                      "size":  16323,
+                      "sha256":  "3d0d34feb73eab68ccc971c29edaeea1dee2ede2bcb3323a6440a70b2fdfe341",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null
@@ -103,7 +103,7 @@
                       "derivedFrom":  null
                   },
                   {
-                      "path":  "Scripts/AMD/Driver.ps1",
+                      "path":  "Scripts/GPU/AMD/Driver.ps1",
                       "size":  9218,
                       "sha256":  "7f023e9374508c29a714a594c0d3a4798a4d39c3e222f50e2cf6fa5229306131",
                       "role":  "source",
@@ -111,9 +111,9 @@
                       "derivedFrom":  null
                   },
                   {
-                      "path":  "Scripts/AMD/Settings.ps1",
-                      "size":  4449,
-                      "sha256":  "52a64dd630262ad12daae7ca3ef648932aa0e0cbf8b7ae3688aa4648bda44a46",
+                      "path":  "Scripts/GPU/AMD/Settings.ps1",
+                      "size":  4445,
+                      "sha256":  "338f4f2a186e7aabee3c263b3a89f4d7a4d9507d616de43ef6e89967ff43042f",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null
@@ -141,7 +141,7 @@
     "modules":  [
                     {
                         "id":  "nvidia-driver-updater",
-                        "entry":  "Scripts/NVIDIA/Driver.ps1",
+                        "entry":  "Scripts/GPU/NVIDIA/Driver.ps1",
                         "adminRequired":  true,
                         "requiresReboot":  true
                     },
@@ -153,7 +153,7 @@
                     },
                     {
                         "id":  "nvidia-settings-github",
-                        "entry":  "Scripts/NVIDIA/Settings.ps1",
+                        "entry":  "Scripts/GPU/NVIDIA/Settings.ps1",
                         "adminRequired":  true,
                         "requiresReboot":  false
                     },
@@ -195,13 +195,13 @@
                     },
                     {
                         "id":  "amd-driver-updater",
-                        "entry":  "Scripts/AMD/Driver.ps1",
+                        "entry":  "Scripts/GPU/AMD/Driver.ps1",
                         "adminRequired":  true,
                         "requiresReboot":  true
                     },
                     {
                         "id":  "amd-settings",
-                        "entry":  "Scripts/AMD/Settings.ps1",
+                        "entry":  "Scripts/GPU/AMD/Settings.ps1",
                         "adminRequired":  true,
                         "requiresReboot":  false
                     },

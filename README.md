@@ -63,14 +63,14 @@ IWR.ps1                  tek satırlık komutun indirdiği başlangıç dosyası
 Launcher.ps1             kurulumun sırasını yöneten ana dosya
 manifest.json            her dosyanın SHA-256 parmak izi
 Scripts/
-├── NVIDIA/
-│   ├── Driver.ps1       en yeni NVIDIA sürücüsünü bulur, indirir, imzasını kontrol eder, kurar
-│   └── Settings.ps1     NVIDIA profili (30 ayar), P0 durumu, en yüksek yenileme hızı
-├── AMD/
-│   ├── Driver.ps1       en yeni AMD sürücüsünü (RX 5000–9000) bulur, indirir, imzasını kontrol eder, kurar
-│   └── Settings.ps1     AMD Software ayarları, en yüksek yenileme hızı
-├── GPU/                 iki marka için ortak
-│   ├── DDU.ps1          eski sürücüyü güvenli modda siler
+├── GPU/                 ekran kartı
+│   ├── NVIDIA/
+│   │   ├── Driver.ps1   en yeni NVIDIA sürücüsünü bulur, indirir, imzasını kontrol eder, kurar
+│   │   └── Settings.ps1 NVIDIA profili (30 ayar), P0 durumu, en yüksek yenileme hızı
+│   ├── AMD/
+│   │   ├── Driver.ps1   en yeni AMD sürücüsünü (RX 5000–9000) bulur, indirir, imzasını kontrol eder, kurar
+│   │   └── Settings.ps1 AMD Software ayarları, en yüksek yenileme hızı
+│   ├── DDU.ps1          eski sürücüyü güvenli modda siler (iki marka için ortak)
 │   ├── Refresh-Rate.ps1 ekranı en yüksek yenileme hızına alır (NVIDIA ve AMD Settings çağırır)
 │   └── Display-Options.ps1  tam ekran ölçekleme ve dijital canlılık (son adım)
 └── Windows/
@@ -78,6 +78,7 @@ Scripts/
     ├── Power-Plan.ps1   güç planı
     ├── Timer-Resolution.ps1  0,5 ms zamanlayıcı hizmeti
     ├── Defender.ps1     Windows Defender ayarları (güvenli modda)
+    ├── Store-Xbox.ps1   Store / Xbox seçilince eksik uygulamaları kurar
     ├── Services.ps1     gereksiz hizmetleri kapatır
     └── Services-Restore.ps1  eski bir sürümün bozduğu hizmetleri onarır
 ```
