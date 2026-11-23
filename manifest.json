@@ -8,8 +8,8 @@
     "files":  [
                   {
                       "path":  "Launcher.ps1",
-                      "size":  40245,
-                      "sha256":  "79675940123ed3ece4ad88e22e4c91ba21edf47a8fd87134f615f1254378797a",
+                      "size":  40558,
+                      "sha256":  "3d137d783c7861c081d21677637ae1bb2cdde1867db7411a85a4ba21225e14fa",
                       "role":  "launcher",
                       "origin":  "project",
                       "derivedFrom":  null

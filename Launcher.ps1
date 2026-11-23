@@ -508,6 +508,9 @@ function Invoke-AfterSetup {
     else {
         $stepLog = if ($script:TestLogOn) { Get-TestStepLog 'Extra setup' } else { $null }   # TESTLOG
         if ($stepLog) { try { [IO.File]::WriteAllText($stepLog, '') } catch { $stepLog = $null } }
+        # its lines are read as UTF-8 (Turkish rows arrived garbled otherwise); the script itself writes UTF-8
+        $previousEncoding = [Console]::OutputEncoding
+        try { [Console]::OutputEncoding = [Text.Encoding]::UTF8 } catch { }
         & $script:PowerShellExe -NoLogo -NoProfile -ExecutionPolicy Bypass -File $file | ForEach-Object {
             if ($stepLog) { try { [IO.File]::AppendAllText($stepLog, "$_`r`n") } catch { } }
             $row = ConvertFrom-StepLine $_
@@ -515,6 +518,7 @@ function Invoke-AfterSetup {
             $_
         } | Out-Host
         $code = $LASTEXITCODE
+        try { [Console]::OutputEncoding = $previousEncoding } catch { }
     }
     if ($script:TestLogOn) { Write-TestStep 'Extra setup' $(if ($code -eq 0) { 'PASS' } else { 'FAIL' }) $code $watch.Elapsed }   # TESTLOG
     Remove-Item -LiteralPath $file, $hashFile -Force -ErrorAction SilentlyContinue
