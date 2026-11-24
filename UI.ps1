@@ -7,9 +7,10 @@
 #   -Done                one-time logon task after the last restart: the "Hazır" screen with Digital Vibrance
 #   -Snapshot <folder>   renders the three screens to PNG files and closes (tests)
 #   -Auto                starts All-in without the mode screen (IWR.ps1: CULLEWIE_AUTO=all-in)
+#   -Vanilla             starts Vanilla Mode without the mode screen (IWR.ps1: CULLEWIE_MODE=vanilla)
 # After the last restart -Done first runs the extra setup another tool left (Launcher -AfterSetup), if there is one.
 #   -Continue            logon task after a Windows Update restart: starts the full setup again in the saved mode
-param([switch]$Resume, [string]$SafeScript = '', [switch]$Done, [string]$Snapshot = '', [switch]$Auto, [switch]$Continue)
+param([switch]$Resume, [string]$SafeScript = '', [switch]$Done, [string]$Snapshot = '', [switch]$Auto, [switch]$Vanilla, [switch]$Continue)
 
 $ps = "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe"
 $work = Join-Path $env:ProgramData 'Cullewie\Work'
@@ -768,6 +769,11 @@ if ($Done) {
 elseif ($Auto) {
     # started for All-in by another tool: no mode screen, the same start as pressing Başlat with All-in picked
     $ui.ModeAllIn.IsChecked = $true
+    $win.Add_ContentRendered({ $ui.StartBtn.RaiseEvent((New-Object Windows.RoutedEventArgs([Windows.Controls.Primitives.ButtonBase]::ClickEvent))) })
+}
+elseif ($Vanilla) {
+    # started with CULLEWIE_MODE=vanilla: no mode screen, the same start as pressing Başlat with Vanilla Mode picked
+    $ui.ModeVanilla.IsChecked = $true
     $win.Add_ContentRendered({ $ui.StartBtn.RaiseEvent((New-Object Windows.RoutedEventArgs([Windows.Controls.Primitives.ButtonBase]::ClickEvent))) })
 }
 elseif ($Continue) {

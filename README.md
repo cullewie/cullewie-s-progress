@@ -62,7 +62,7 @@ $env:CULLEWIE_APPS = 'store'; iwr 'https://github.com/cullewie/cullewie-s-progre
 
 ## Vanilla Mode
 
-Aracın Windows'ta yaptığı değişiklikleri geri alır ve Windows'u normal davranışına döndürür. Pencerede **Vanilla Mode**'u seç ya da terminalde çalıştır:
+Aracın Windows'ta yaptığı değişiklikleri geri alır ve Windows'u normal davranışına döndürür. Pencerede **Vanilla Mode**'u seç ya da terminalde çalıştır. Bu komut da pencereyi açar ve Vanilla Mode'u kendiliğinden başlatır:
 
 ```powershell
 $env:CULLEWIE_MODE = 'vanilla'; iwr 'https://github.com/cullewie/cullewie-s-progress/raw/refs/heads/main/IWR.ps1' -useb | iex
