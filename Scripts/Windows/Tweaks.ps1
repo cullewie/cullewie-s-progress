@@ -65,12 +65,14 @@ $removeApps = @(
     'Microsoft.Windows.DevHome', 'MicrosoftCorporationII.QuickAssist', 'MicrosoftCorporationII.MicrosoftFamily',
     'Microsoft.MixedReality.Portal', 'Microsoft.SkypeApp', 'Microsoft.Messaging', 'Microsoft.Microsoft3DViewer',
     'Microsoft.3DBuilder', 'Microsoft.Office.OneNote', 'Microsoft.Wallet',
-    'Microsoft.Windows.Ai.Copilot.Provider', 'MicrosoftWindows.CrossDevice'
+    'Microsoft.Windows.Ai.Copilot.Provider', 'MicrosoftWindows.CrossDevice',
+    'Microsoft.WindowsCamera', 'Microsoft.MicrosoftStickyNotes'
 )
 # All-in and Only Store Mode also remove the Xbox app, Gaming Services and the Xbox Identity Provider: with the Xbox
 # services off they cannot work, and Gaming Services kept running in the background. Xbox & Store keeps them (Store-Xbox
 # installs what is missing). Listed below like every other app, so Vanilla Mode brings them back.
-if ($Apps -ne 'xbox') { $removeApps += 'Microsoft.GamingApp', 'Microsoft.GamingServices', 'Microsoft.XboxIdentityProvider' }
+# Xbox TCUI (Xbox Live sign-in/friends dialogs) and the speech-to-text overlay go with them.
+if ($Apps -ne 'xbox') { $removeApps += 'Microsoft.GamingApp', 'Microsoft.GamingServices', 'Microsoft.XboxIdentityProvider', 'Microsoft.Xbox.TCUI', 'Microsoft.XboxSpeechToTextOverlay' }
 # All-in also removes Microsoft Store: with its services off it cannot install anything. Only Store Mode and Xbox & Store
 # keep it (Store-Xbox installs it when it is missing); Vanilla Mode brings it back.
 if ($Apps -eq 'off') { $removeApps += 'Microsoft.WindowsStore', 'Microsoft.StorePurchaseApp' }
@@ -450,9 +452,11 @@ function Run-Trusted([string]$Command) {
     $key = 'HKLM:\SYSTEM\CurrentControlSet\Services\TrustedInstaller'
     $done = Join-Path $env:ProgramData ('Cullewie\Work\trusted-' + [guid]::NewGuid().ToString('N') + '.done')
     $deadline = (Get-Date).AddMinutes(10)
+    $said = $false
     while ((Get-Service TrustedInstaller).Status -ne 'Stopped') {
         # idle: stop it politely; busy with servicing (TiWorker) or still starting: wait
         if (-not (Get-Process TiWorker -ErrorAction SilentlyContinue)) { Stop-Service TrustedInstaller -ErrorAction SilentlyContinue }
+        elseif (-not $said) { Write-Host "Waiting for TrustedInstaller: Windows is busy installing components (up to 10 minutes)..." -ForegroundColor DarkGray; $said = $true }
         if ((Get-Date) -gt $deadline) { Write-Host 'TrustedInstaller is busy with Windows servicing; this step was skipped.' -ForegroundColor Yellow; $global:CullewieTrustedFailed = $true; return }
         Start-Sleep -Seconds 2
     }

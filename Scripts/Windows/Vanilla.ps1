@@ -190,6 +190,7 @@ $storeIds = [ordered]@{
     'Microsoft.BingSearch' = '9NZBF4GT040C'; 'MicrosoftWindows.Client.WebExperience' = '9MSSGKG348SP'; 'Microsoft.XboxGamingOverlay' = '9NZKPSTSNW4P'
     'Microsoft.GamingApp' = '9MV0B5HZVK9Z'; 'Microsoft.GamingServices' = '9MWPM2CQNLHN'; 'Microsoft.XboxIdentityProvider' = '9WZDNCRD1HKW'
     'Microsoft.WindowsStore' = '9WZDNCRFJBMP'
+    'Microsoft.WindowsCamera' = '9WZDNCRFJBBG'; 'Microsoft.MicrosoftStickyNotes' = '9NBLGGH4QGHW'; 'Microsoft.Xbox.TCUI' = '9NKNC0LD5NN6'
 }
 # All-in removes these with the Store; the Store installs them again itself when it needs them, so they are not
 # installed here and not listed as lost
