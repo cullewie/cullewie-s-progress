@@ -18,7 +18,7 @@ Bilgisayarı oyun için en sade haline getirir:
 - Eski ekran kartı sürücüsünü güvenli modda DDU ile siler, NVIDIA'nın ya da AMD'nin (Radeon RX 5000–9000) sitesinden en yenisini kurar. Sürücünün dijital imzası kontrol edilir.
 - NVIDIA veya AMD ayarlarını yapar, monitörü en yüksek yenileme hızına (Hz) alır. Her şey bitince pencere Digital Vibrance ya da AMD'de Color Saturation değerini sorar.
 - Gereksiz uygulamaları ve Windows hizmetlerini kapatır, Windows'u oyun için ayarlar.
-- Microsoft Store kaldırılır. winget (App Installer) Windows'un parçası olduğu için silinemez; Windows'un kendi ilkesiyle kilitlenir ve hiçbir şey kuramaz. Windows Update, Store'un kurulum hizmeti ve Teslim En İyileştirme (Delivery Optimization) kapatılır.
+- Microsoft Store kaldırılır. winget (App Installer) önce Windows'un kendi ilkesiyle kilitlenir, kurulumun sonunda da kaldırılır. Store / Xbox ve Vanilla modu winget'i geri kurar. Windows Update, Store'un kurulum hizmeti ve Teslim En İyileştirme (Delivery Optimization) kapatılır.
 - Windows Update, Xbox ve oyun dışı bazı Windows özellikleri bu seçenekte çalışmaz. Xbox uygulaması, Gaming Services ve Game Bar kaldırılır (Vanilla Mode hepsini geri kurar, Store ve winget dahil).
 - Kurulum sırasında hiçbir pencere (Görev Yöneticisi, Güç Seçenekleri) açılmaz; sonuçlar kurulum penceresinde ve kayıtta görünür.
 

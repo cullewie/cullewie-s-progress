@@ -83,7 +83,12 @@ function Invoke-ChildScript {
         $stepLog = if ($script:TestLogOn) { Get-TestStepLog $Tool.Name } else { $null }   # TESTLOG
         if ($stepLog) { try { [IO.File]::WriteAllText($stepLog, '') } catch { $stepLog = $null } }   # TESTLOG: a log that cannot be written means no log, never a broken step
         $stepWatch = [Diagnostics.Stopwatch]::StartNew()   # TESTLOG
-        if ($stepLog -and $script:CaptureChildOutput) { & $script:PowerShellExe @childArguments | ForEach-Object { try { [IO.File]::AppendAllText($stepLog, "$_`r`n") } catch { }; $_ } | Out-Host }   # TESTLOG
+        if ($stepLog -and $script:CaptureChildOutput) {   # TESTLOG: read the child's lines as UTF-8 (Turkish titles arrived garbled otherwise), as Extra setup does
+            $previousEncoding = [Console]::OutputEncoding
+            try { [Console]::OutputEncoding = [Text.Encoding]::UTF8 } catch { }
+            try { & $script:PowerShellExe @childArguments | ForEach-Object { try { [IO.File]::AppendAllText($stepLog, "$_`r`n") } catch { }; $_ } | Out-Host }
+            finally { try { [Console]::OutputEncoding = $previousEncoding } catch { } }
+        }   # TESTLOG
         elseif ($stepLog) {   # TESTLOG: an outer process holds the transcript and runs the child with -File as before (same exit codes, prompts still show)
             $quoted = (@($script:PowerShellExe) + $childArguments | ForEach-Object { "'" + ([string]$_ -replace "'", "''") + "'" }) -join ' '   # TESTLOG
             $wrapper = "Start-Transcript -LiteralPath '$($stepLog -replace "'", "''")' -Force | Out-Null; `$c = -1; & $quoted; if (`$null -ne `$LASTEXITCODE) { `$c = `$LASTEXITCODE }; Stop-Transcript | Out-Null; exit `$c"   # TESTLOG

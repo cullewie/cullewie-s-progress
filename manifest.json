@@ -8,16 +8,16 @@
     "files":  [
                   {
                       "path":  "Launcher.ps1",
-                      "size":  43959,
-                      "sha256":  "0e3cf4f4e4099386e05b8f38a0d51725312efa844bb547e19bcd1a6d48831bbd",
+                      "size":  44322,
+                      "sha256":  "0f9adef15bcfa1b846183c5c03f470f52b4a10871c10f4f8437855d361305e2f",
                       "role":  "launcher",
                       "origin":  "project",
                       "derivedFrom":  null
                   },
                   {
                       "path":  "README.md",
-                      "size":  5453,
-                      "sha256":  "ea7faa9f8b507838efbe8879bfde4d0d6e94fa5a1006141a6fc3989f4fb15c1b",
+                      "size":  5475,
+                      "sha256":  "4c7d1dcde2ac843aab60e1ee17d2e0231075c4c37f59d896afcfc2930bf38222",
                       "role":  "documentation",
                       "origin":  "project",
                       "derivedFrom":  null
@@ -80,8 +80,8 @@
                   },
                   {
                       "path":  "Scripts/Windows/Tweaks.ps1",
-                      "size":  84641,
-                      "sha256":  "fde89c4d08b91bf60e9a65f76267557aec310d3cbd3945697b3b38947c3ec8d9",
+                      "size":  86822,
+                      "sha256":  "340ae99a4b22136fd272a00c4e67068d4d3dc77848e7ac6aed7bd07c09a6c5a4",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null
@@ -96,8 +96,8 @@
                   },
                   {
                       "path":  "Scripts/Windows/Store-Xbox.ps1",
-                      "size":  6231,
-                      "sha256":  "26a1be02daf3c181f8e9604c82fffe458f538242ea63e6972dbc4ab56a5cb4f6",
+                      "size":  8522,
+                      "sha256":  "671259d56ad8b8aa2580920290dd0c7f07b701a75dd7601ac5af6acfaf0fd551",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null
@@ -152,16 +152,16 @@
                   },
                   {
                       "path":  "UI.ps1",
-                      "size":  51067,
-                      "sha256":  "e53042d503dfec04658c55b3f4b4be6572466e50dbb46aad4a2d674b576fb89a",
+                      "size":  51058,
+                      "sha256":  "c026f4f0eccdbc9af0ebffc5c90637986ca8fe7c410e102567cba6dd0b3c01b3",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null
                   },
                   {
                       "path":  "Scripts/Windows/Windows-Update.ps1",
-                      "size":  3852,
-                      "sha256":  "14ecd0b398f07fc01b89b5a2c549348edca347936422491b5ddd345a81464e38",
+                      "size":  5099,
+                      "sha256":  "2f70d4ebd10d80d00c8b2172dba8310d753cceb899a22305d084ab4d73c7ef47",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null

@@ -374,7 +374,7 @@ $xaml = @'
         <RadioButton x:Name="ModeAllIn" Style="{StaticResource Card}" IsChecked="True">
           <StackPanel>
             <TextBlock Text="All-in" Style="{StaticResource CardTitle}"/>
-            <TextBlock Style="{StaticResource CardText}" Text="Sürücüyü DDU ile temizleyip en güncel NVIDIA / AMD sürücüsünü kurar, ekranı ve Windows'u oyun için ayarlar. Microsoft Store kaldırılır, winget kilitlenir. Windows Update ve Xbox çalışmaz."/>
+            <TextBlock Style="{StaticResource CardText}" Text="Sürücüyü DDU ile temizleyip en güncel NVIDIA / AMD sürücüsünü kurar, ekranı ve Windows'u oyun için ayarlar. Microsoft Store ve winget kaldırılır. Windows Update ve Xbox çalışmaz."/>
           </StackPanel>
         </RadioButton>
         <RadioButton x:Name="ModeXbox" Style="{StaticResource Card}">

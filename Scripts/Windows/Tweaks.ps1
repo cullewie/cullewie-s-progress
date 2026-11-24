@@ -1,10 +1,10 @@
 # Windows tweaks: Bloatware, Tweaks and Extras in one script, in this order:
 #  1. Removes preinstalled Windows apps, optional capabilities and legacy features a gaming PC does not need. Only what
 #     is named in the lists is removed: apps the user installed (Claude, ChatGPT, games, Store apps) are never touched.
-#     All-in (-Apps off) also removes Microsoft Store and the Store purchase app, and locks App Installer (winget) with
-#     its Group Policy (EnableAppInstaller = 0): Windows 11 marks the App Installer package as part of Windows, so it
-#     cannot be uninstalled. The lock comes at the end, after the Visual C++ runtimes are installed with winget.
-#     -Apps store or xbox keep the Store and winget (and unlock winget). WSL/Hyper-V are kept.
+#     All-in (-Apps off) also removes Microsoft Store and the Store purchase app, locks App Installer (winget) with its
+#     Group Policy (EnableAppInstaller = 0) and then removes the App Installer package (through an EndOfLife entry, as
+#     Windows 11 marks it as part of Windows). This comes at the end, after the Visual C++ runtimes are installed with
+#     winget. -Apps store or xbox keep the Store and winget (Store-Xbox.ps1 installs winget again). WSL/Hyper-V are kept.
 #     Also removed: Microsoft GameInput, the Game Bar overlay, Copilot, Widgets, OneDrive, Windows Hello Face,
 #     Update Health Tools.
 #  2. General tweaks: privacy, telemetry, Explorer, game settings, Nagle, MSI mode, HDCP, memory compression,
@@ -1614,11 +1614,34 @@ Windows Registry Editor Version 5.00
 
 Write-Host "Done.`n"
 if ($Apps -eq 'off') {
-    # last, after the Visual C++ runtimes above (installed with winget). The package cannot be uninstalled (part of
-    # Windows), so its own policy locks it: every winget install, search and upgrade stops with "disabled by Group
-    # Policy". Vanilla Mode removes this value with the other policies; Store-Xbox removes it before it installs.
+    # last, after the Visual C++ runtimes above (installed with winget). First its own policy locks it: every winget
+    # install, search and upgrade stops with "disabled by Group Policy". Vanilla Mode removes this value with the other
+    # policies; Store-Xbox removes it before it installs.
     Write-Host 'winget (App Installer): locked by policy'
     Set-Reg -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AppInstaller" -Name "EnableAppInstaller" -Value 0
+    # Then the package goes. Windows 11 marks it as part of Windows (NonRemovable), so Remove-AppxPackage refuses it;
+    # an EndOfLife entry lets the normal removal work, and a Deprovisioned entry stops Windows from adding it again for
+    # new accounts. Both keys are open to Administrators: no ownership or permission change. In normal mode only: the
+    # AppX service does not run in safe mode. Store-Xbox.ps1 (Store, Xbox and Vanilla Mode) removes both entries and
+    # installs it again.
+    $appxStore = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Appx\AppxAllUserStore'
+    $appInstaller = @(Get-AppxPackage -AllUsers -Name 'Microsoft.DesktopAppInstaller' -ErrorAction SilentlyContinue)
+    if (-not $appInstaller.Count) { Write-Host '  ok    Microsoft.DesktopAppInstaller (already removed)' -ForegroundColor DarkGray }
+    else {
+        Write-Plan 'app' 'Microsoft.DesktopAppInstaller'
+        if (-not $DryRun) {
+            foreach ($pkg in $appInstaller) {
+                $sids = @($pkg.PackageUserInformation | ForEach-Object { $_.UserSecurityId.Sid }) + 'S-1-5-18' | Where-Object { $_ } | Select-Object -Unique
+                foreach ($sid in $sids) { New-Item -Path "$appxStore\EndOfLife\$sid\$($pkg.PackageFullName)" -Force | Out-Null }
+                Remove-AppxPackage -Package $pkg.PackageFullName -AllUsers -ErrorAction SilentlyContinue
+            }
+            Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -eq 'Microsoft.DesktopAppInstaller' } | Remove-AppxProvisionedPackage -Online -AllUsers -ErrorAction SilentlyContinue | Out-Null
+            New-Item -Path "$appxStore\Deprovisioned\Microsoft.DesktopAppInstaller_8wekyb3d8bbwe" -Force | Out-Null
+            $left = @(Get-AppxPackage -AllUsers -Name 'Microsoft.DesktopAppInstaller' -ErrorAction SilentlyContinue | Where-Object { @($_.PackageUserInformation | Where-Object { $_.InstallState -eq 'Installed' }).Count })
+            if ($left.Count) { Write-Host '  FAIL  Microsoft.DesktopAppInstaller (still installed; the policy lock stays)' -ForegroundColor Red }
+            else { Write-Host '  ok    Microsoft.DesktopAppInstaller (removed)' -ForegroundColor Green }
+        }
+    }
 }
 if ($Apps -ne 'off') {
     Write-Host 'Store/Xbox: Windows Update gets the monthly update only (no new Windows version, drivers or previews)'

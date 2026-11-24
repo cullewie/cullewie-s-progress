@@ -55,8 +55,38 @@ function Invoke-Winget([string]$Exe, [string[]]$Arguments, [int]$TimeoutSeconds 
     $p.ExitCode
 }
 
-# All-in locks winget with its policy (Tweaks.ps1); every install below needs it unlocked
+# All-in locks winget with its policy and removes App Installer (Tweaks.ps1); every install below needs it back
 Remove-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\AppInstaller' -Name 'EnableAppInstaller' -ErrorAction SilentlyContinue
+function Restore-AppInstaller {
+    if (Test-Package 'Microsoft.DesktopAppInstaller') { return }
+    Write-Host '  installing App Installer (winget) ...'
+    # the EndOfLife and Deprovisioned entries All-in wrote block it, so they go first
+    $appxStore = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Appx\AppxAllUserStore'
+    $family = 'Microsoft.DesktopAppInstaller_8wekyb3d8bbwe'
+    Get-ChildItem "$appxStore\EndOfLife" -ErrorAction SilentlyContinue | ForEach-Object {
+        Get-ChildItem $_.PSPath -ErrorAction SilentlyContinue | Where-Object { $_.PSChildName -like 'Microsoft.DesktopAppInstaller_*' } | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
+    }
+    Remove-Item "$appxStore\Deprovisioned\$family" -Recurse -Force -ErrorAction SilentlyContinue
+    # Windows' own copy, while its files are still on the disk
+    try { Add-AppxPackage -RegisterByFamilyName -MainPackage $family -ErrorAction Stop } catch { }
+    if (Test-Package 'Microsoft.DesktopAppInstaller') { return }
+    # otherwise Microsoft's winget release (signed packages: Windows checks the signature when it installs them)
+    $dir = Join-Path $env:TEMP 'cullewie-appinstaller'
+    try {
+        Remove-Item $dir -Recurse -Force -ErrorAction SilentlyContinue
+        New-Item -ItemType Directory -Force $dir | Out-Null
+        $release = 'https://github.com/microsoft/winget-cli/releases/latest/download/'
+        Invoke-WebRequest ($release + "$family.msixbundle") -OutFile "$dir\AppInstaller.msixbundle" -UseBasicParsing
+        Invoke-WebRequest ($release + 'DesktopAppInstaller_Dependencies.zip') -OutFile "$dir\deps.zip" -UseBasicParsing
+        Expand-Archive "$dir\deps.zip" "$dir\deps" -Force
+        $arch = if ($env:PROCESSOR_ARCHITECTURE -eq 'ARM64') { 'arm64' } else { 'x64' }
+        $deps = @(Get-ChildItem "$dir\deps" -Recurse -Include *.appx, *.msix | Where-Object { $_.Directory.Name -eq $arch } | ForEach-Object { $_.FullName })
+        Add-AppxPackage -Path "$dir\AppInstaller.msixbundle" -DependencyPath $deps -ForceApplicationShutdown -ErrorAction Stop
+    }
+    catch { Write-Host "  App Installer: $($_.Exception.Message)" -ForegroundColor Yellow }
+    finally { Remove-Item $dir -Recurse -Force -ErrorAction SilentlyContinue }
+}
+Restore-AppInstaller
 $winget = Get-Command winget.exe -ErrorAction SilentlyContinue
 foreach ($id in $packages.Keys) {
     $name = $packages[$id]
