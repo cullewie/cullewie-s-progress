@@ -6,8 +6,8 @@ $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 $previousSecurityProtocol = [Net.ServicePointManager]::SecurityProtocol
 $Repository = 'cullewie/cullewie-s-progress'
-$PayloadCommit = '3b47c877b630a3bb037f5197c0f0e228617120b1'
-$ExpectedManifestSha256 = '0924fdf2f834d7fde25cadf1354938fa0f9e88eb5c8cb5b59d46b94e40511748'
+$PayloadCommit = 'de63c77cc3b4fc10eb28dc8af634c87c10689f32'
+$ExpectedManifestSha256 = 'b6f569f4dab6641a9dddecbfa9e6fe1e2ba18929bd05d8a12ab1bfa3826560ff'
 $RawRoot = 'https://raw.githubusercontent.com/' + $Repository + '/' + $PayloadCommit
 
 function Test-Administrator {
@@ -162,14 +162,17 @@ try {
     $mode = if ($env:CULLEWIE_MODE -in 'guided', 'live', 'vanilla') { $env:CULLEWIE_MODE } else { 'full' }
     Write-Host "Starting: $mode" -ForegroundColor Cyan
     # CULLEWIE_APPS=store or xbox keeps Microsoft Store (and Xbox, Game Pass) working; unset: full mode asks, live mode = off
-    # the plain command opens the window (UI.ps1): mode choice, progress, the last question; the commands with
-    # CULLEWIE_MODE or CULLEWIE_APPS keep the console
+    # the plain command opens the window (UI.ps1): mode choice, progress, the last question; CULLEWIE_MODE=vanilla
+    # opens the window too and starts Vanilla Mode by itself; the other CULLEWIE_MODE values and CULLEWIE_APPS keep
+    # the console
     $uiScript = Join-Path $activePath 'UI.ps1'
     # CULLEWIE_AUTO=all-in (set by another tool, for example one that left an extra setup script): the window starts
     # All-in by itself, without the mode screen
-    if (-not $env:CULLEWIE_MODE -and -not $env:CULLEWIE_APPS -and (Test-Path -LiteralPath $uiScript -PathType Leaf)) {
+    $uiMode = (-not $env:CULLEWIE_MODE -or $mode -eq 'vanilla') -and -not $env:CULLEWIE_APPS
+    if ($uiMode -and (Test-Path -LiteralPath $uiScript -PathType Leaf)) {
         $uiArgs = @('-NoLogo', '-NoProfile', '-STA', '-ExecutionPolicy', 'Bypass', '-WindowStyle', 'Hidden', '-File', "`"$uiScript`"")
-        if ($env:CULLEWIE_AUTO -eq 'all-in') { $uiArgs += '-Auto' }
+        if ($mode -eq 'vanilla') { $uiArgs += '-Vanilla' }
+        elseif ($env:CULLEWIE_AUTO -eq 'all-in') { $uiArgs += '-Auto' }
         Start-Process -FilePath $windowsPowerShell -ArgumentList $uiArgs -WindowStyle Hidden
         Write-Host 'The setup window is open. You can close this PowerShell window.' -ForegroundColor Green
     }
