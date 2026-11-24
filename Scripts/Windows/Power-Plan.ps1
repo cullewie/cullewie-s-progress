@@ -426,10 +426,11 @@ powercfg /setdcvalueindex 99999999-9999-9999-9999-999999999999 de830923-a562-41a
 powercfg /setdcvalueindex scheme_current sub_none consolelock 0 2>$null
 powercfg /setacvalueindex scheme_current sub_none consolelock 0 2>$null
 
-# open settings
 # activate again so every value set above is in effect now, not only after the next restart
 cmd /c "powercfg /SETACTIVE 99999999-9999-9999-9999-999999999999 >nul 2>&1"
-Start-Process powercfg.cpl
+# no Power Options window: a window opened in the middle of All-in took focus, and clicks in it got in the way of the
+# next steps. The active plan goes to the log instead.
+Write-Host "Power plan: $((powercfg /getactivescheme) -join ' ')"
 
 exit
 

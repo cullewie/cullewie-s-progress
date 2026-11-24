@@ -1,9 +1,11 @@
 # Windows tweaks: Bloatware, Tweaks and Extras in one script, in this order:
 #  1. Removes preinstalled Windows apps, optional capabilities and legacy features a gaming PC does not need. Only what
 #     is named in the lists is removed: apps the user installed (Claude, ChatGPT, games, Store apps) are never touched.
-#     The apps themselves are kept: Microsoft Store, App Installer (winget), the Xbox app, Gaming Services, WSL/Hyper-V.
-#     But with the default Services list (Windows Update, BITS and Xbox services off) Store and Game Pass downloads do
-#     not work; choose -Apps store or xbox (also in Services) for them. Also removed: Microsoft GameInput, the Game Bar overlay, Copilot, Widgets, OneDrive, Windows Hello Face,
+#     All-in (-Apps off) also removes Microsoft Store and the Store purchase app, and locks App Installer (winget) with
+#     its Group Policy (EnableAppInstaller = 0): Windows 11 marks the App Installer package as part of Windows, so it
+#     cannot be uninstalled. The lock comes at the end, after the Visual C++ runtimes are installed with winget.
+#     -Apps store or xbox keep the Store and winget (and unlock winget). WSL/Hyper-V are kept.
+#     Also removed: Microsoft GameInput, the Game Bar overlay, Copilot, Widgets, OneDrive, Windows Hello Face,
 #     Update Health Tools.
 #  2. General tweaks: privacy, telemetry, Explorer, game settings, Nagle, MSI mode, HDCP, memory compression,
 #     Visual C++ runtimes. System Restore is turned off so Windows never creates restore points.
@@ -69,6 +71,9 @@ $removeApps = @(
 # services off they cannot work, and Gaming Services kept running in the background. Xbox & Store keeps them (Store-Xbox
 # installs what is missing). Listed below like every other app, so Vanilla Mode brings them back.
 if ($Apps -ne 'xbox') { $removeApps += 'Microsoft.GamingApp', 'Microsoft.GamingServices', 'Microsoft.XboxIdentityProvider' }
+# All-in also removes Microsoft Store: with its services off it cannot install anything. Only Store Mode and Xbox & Store
+# keep it (Store-Xbox installs it when it is missing); Vanilla Mode brings it back.
+if ($Apps -eq 'off') { $removeApps += 'Microsoft.WindowsStore', 'Microsoft.StorePurchaseApp' }
 # one line per listed app: already gone is a pass, not an error. A package left only "staged" for the
 # system account is not installed for anyone, so it counts as removed too.
 $installed = @(Get-AppxPackage -AllUsers | Where-Object { $removeApps -contains $_.Name -and @($_.PackageUserInformation | Where-Object { $_.InstallState -eq 'Installed' }).Count })
@@ -306,7 +311,7 @@ Set-Reg -Path "HKCU:\Software\Policies\Microsoft\Windows\Explorer" -Name "Disabl
 Set-Reg -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search" -Name "DisableWebSearch" -Value 1
 Set-Reg -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Name "Start_ShowRecommended" -Value 0
 
-Write-Host "Delivery Optimization: HTTP only, no peer-to-peer (Store downloads keep working)"
+Write-Host "Delivery Optimization: HTTP only, no peer-to-peer"
 Set-Reg -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DeliveryOptimization" -Name "DODownloadMode" -Value 0
 
 Write-Host "Folder type discovery off"
@@ -1608,9 +1613,18 @@ Windows Registry Editor Version 5.00
 '@
 
 Write-Host "Done.`n"
+if ($Apps -eq 'off') {
+    # last, after the Visual C++ runtimes above (installed with winget). The package cannot be uninstalled (part of
+    # Windows), so its own policy locks it: every winget install, search and upgrade stops with "disabled by Group
+    # Policy". Vanilla Mode removes this value with the other policies; Store-Xbox removes it before it installs.
+    Write-Host 'winget (App Installer): locked by policy'
+    Set-Reg -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AppInstaller" -Name "EnableAppInstaller" -Value 0
+}
 if ($Apps -ne 'off') {
     Write-Host 'Store/Xbox: Windows Update gets the monthly update only (no new Windows version, drivers or previews)'
     Set-AppsUpdatePolicy
+    # an earlier All-in locked winget; Store and Xbox installs need it
+    Remove-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\AppInstaller' -Name 'EnableAppInstaller' -ErrorAction SilentlyContinue
     # undo what an earlier default run set, so a PC that was already set up works too
     Remove-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\AppPrivacy' -Name 'LetAppsRunInBackground' -ErrorAction SilentlyContinue
     Set-Reg -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications' -Name 'GlobalUserDisabled' -Value 0

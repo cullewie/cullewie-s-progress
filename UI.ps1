@@ -8,7 +8,8 @@
 #   -Snapshot <folder>   renders the three screens to PNG files and closes (tests)
 #   -Auto                starts All-in without the mode screen (IWR.ps1: CULLEWIE_AUTO=all-in)
 # After the last restart -Done first runs the extra setup another tool left (Launcher -AfterSetup), if there is one.
-param([switch]$Resume, [string]$SafeScript = '', [switch]$Done, [string]$Snapshot = '', [switch]$Auto)
+#   -Continue            logon task after a Windows Update restart: starts the full setup again in the saved mode
+param([switch]$Resume, [string]$SafeScript = '', [switch]$Done, [string]$Snapshot = '', [switch]$Auto, [switch]$Continue)
 
 $ps = "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe"
 $work = Join-Path $env:ProgramData 'Cullewie\Work'
@@ -61,6 +62,7 @@ function Get-RunState([string]$Root, [string]$StatusPath) {
 function Get-ExpectedSteps([string]$Mode, [string]$Apps, [string]$Gpu, [switch]$After) {
     if ($Mode -eq 'vanilla') { return @([pscustomobject]@{ Key = 'Back to Windows defaults (vanilla)'; Label = 'Windows varsayılanlarına dönüş' }) }
     $list = [ordered]@{}
+    $list['Windows Update'] = 'Windows güncellemeleri'
     if ($Gpu) { $list['DDU (driver cleanup)'] = 'Hazırlık: sürücü temizliği' }
     $list['Defender Optimize'] = 'Hazırlık: Defender'
     $list['Restart (safe mode)'] = 'Yeniden başlatma (güvenli mod)'
@@ -95,7 +97,8 @@ function Get-StepRows([object[]]$Expected, [string[]]$Lines, [string]$Running) {
         [pscustomobject]@{ Label = $e.Label; State = $state; Key = $e.Key }
     }
     $known = @($Expected | ForEach-Object Key)
-    foreach ($k in $results.Keys) { if ($known -notcontains $k) { [pscustomobject]@{ Label = $k; State = $results[$k]; Key = $k } } }
+    $extraLabels = @{ 'Restart (updates)' = 'Yeniden başlatma (güncellemeler)'; 'Services Off (after the apps)' = 'Hizmetler (uygulamalardan sonra)' }
+    foreach ($k in $results.Keys) { if ($known -notcontains $k) { [pscustomobject]@{ Label = $(if ($extraLabels.ContainsKey($k)) { $extraLabels[$k] } else { $k }); State = $results[$k]; Key = $k } } }
 }
 # the Launcher's messages are English (the console keeps them); the window shows the known ones in Turkish
 function ConvertTo-TurkishStatus([string]$Text) {
@@ -371,7 +374,7 @@ $xaml = @'
         <RadioButton x:Name="ModeAllIn" Style="{StaticResource Card}" IsChecked="True">
           <StackPanel>
             <TextBlock Text="All-in" Style="{StaticResource CardTitle}"/>
-            <TextBlock Style="{StaticResource CardText}" Text="Sürücüyü DDU ile temizleyip en güncel NVIDIA / AMD sürücüsünü kurar, ekranı ve Windows'u oyun için ayarlar. Windows Update, Microsoft Store ve Xbox çalışmaz."/>
+            <TextBlock Style="{StaticResource CardText}" Text="Sürücüyü DDU ile temizleyip en güncel NVIDIA / AMD sürücüsünü kurar, ekranı ve Windows'u oyun için ayarlar. Microsoft Store kaldırılır, winget kilitlenir. Windows Update ve Xbox çalışmaz."/>
           </StackPanel>
         </RadioButton>
         <RadioButton x:Name="ModeXbox" Style="{StaticResource Card}">
@@ -599,7 +602,8 @@ function Update-Progress {
     $win.TaskbarItemInfo.ProgressValue = $pct / 100
     $running = $rows | Where-Object State -eq 'Run' | Select-Object -First 1
     if ($running) { $ui.Current.Text = $running.Label }
-    $restarts = @($state.Lines | Where-Object { ($_ -split "`t")[1] -like 'Restart*' }).Count
+    # an update restart is extra (only when Windows has updates waiting); the 3 counted are the setup's own
+    $restarts = @($state.Lines | Where-Object { $n = ($_ -split "`t")[1]; $n -like 'Restart*' -and $n -ne 'Restart (updates)' }).Count
     if ($script:Mode -eq 'full') { $ui.RestartInfo.Text = "Yeniden başlatma $restarts / 3 · bilgisayar açılınca bu pencere kendiliğinden açılır." }
     $fails = @($rows | Where-Object State -eq 'Fail')
     if ($fails.Count) { Show-Banner ("Hata veren adım: " + (($fails | ForEach-Object Label) -join ', ') + '. Kurulum devam edebiliyorsa devam ediyor; ayrıntılar kayıtta.') }
@@ -648,7 +652,7 @@ function Show-Done {
 }
 
 $ui.ModeVanilla.Add_Checked({ $ui.ModeNote.Text = 'Bitince bilgisayar bir kez kendiliğinden yeniden başlar; uygulamalar oturum açınca kurulur.' })
-foreach ($rb in 'ModeAllIn', 'ModeXbox', 'ModeStore') { $ui[$rb].Add_Checked({ $ui.ModeNote.Text = 'Bilgisayar 3 kez yeniden başlar. Her açılışta bu pencere kaldığı yerden devam eder.' }) }
+foreach ($rb in 'ModeAllIn', 'ModeXbox', 'ModeStore') { $ui[$rb].Add_Checked({ $ui.ModeNote.Text = 'Önce bekleyen Windows güncellemeleri kurulur (gerekirse ek yeniden başlatma). Sonra bilgisayar 3 kez yeniden başlar. Her açılışta bu pencere kaldığı yerden devam eder.' }) }
 $ui.StartBtn.Add_Click({
     if ($ui.ModeVanilla.IsChecked) { $script:Mode = 'vanilla'; $script:Apps = 'off' }
     else { $script:Mode = 'full'; $script:Apps = if ($ui.ModeXbox.IsChecked) { 'xbox' } elseif ($ui.ModeStore.IsChecked) { 'store' } else { 'off' } }
@@ -764,6 +768,14 @@ if ($Done) {
 elseif ($Auto) {
     # started for All-in by another tool: no mode screen, the same start as pressing Başlat with All-in picked
     $ui.ModeAllIn.IsChecked = $true
+    $win.Add_ContentRendered({ $ui.StartBtn.RaiseEvent((New-Object Windows.RoutedEventArgs([Windows.Controls.Primitives.ButtonBase]::ClickEvent))) })
+}
+elseif ($Continue) {
+    # after a Windows Update restart: the same start as pressing Başlat, in the mode saved before the restart
+    # (apps.flag: store / xbox; no file = All-in). The Launcher removes its logon task itself.
+    $flag = Join-Path $work 'apps.flag'
+    $saved = if (Test-Path -LiteralPath $flag) { ([string](Get-Content -LiteralPath $flag -Raw)).Trim().ToLowerInvariant() } else { 'off' }
+    $ui[$(switch ($saved) { 'xbox' { 'ModeXbox' } 'store' { 'ModeStore' } default { 'ModeAllIn' } })].IsChecked = $true
     $win.Add_ContentRendered({ $ui.StartBtn.RaiseEvent((New-Object Windows.RoutedEventArgs([Windows.Controls.Primitives.ButtonBase]::ClickEvent))) })
 }
 elseif ($Resume -or $SafeScript) {

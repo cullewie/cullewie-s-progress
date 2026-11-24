@@ -43,6 +43,7 @@ $script:Tools = @(
     [pscustomobject]@{ Id='vanilla'; Name='Back to Windows defaults (vanilla)'; Category='Windows'; Path='Scripts/Windows/Vanilla.ps1'; Wrapper='' }
     [pscustomobject]@{ Id='refresh-rate'; Name='Highest Refresh Rate'; Category='GPU'; Path='Scripts/GPU/Refresh-Rate.ps1'; Wrapper='' }
     [pscustomobject]@{ Id='display-options'; Name='Display: full-screen scaling and vibrance'; Category='GPU'; Path='Scripts/GPU/Display-Options.ps1'; Wrapper='' }
+    [pscustomobject]@{ Id='windows-update'; Name='Windows Update'; Category='Windows'; Path='Scripts/Windows/Windows-Update.ps1'; Wrapper='' }
 )
 function Test-IsAdministrator {
     $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
@@ -249,16 +250,48 @@ function Invoke-RequiredTool {
         throw "$($tool.Name) did not complete. Full setup stopped."
     }
 }
-function Start-FullSetup {
-    # pending updates would be applied at the safe-mode boot, fail there and get rolled back
-    if (Test-PendingReboot) {
+# Windows Update first: a PC fresh from a format has updates waiting. Installs them; when Windows then waits for a
+# restart, restarts and starts the full setup again at the next sign-in (same mode, no question), up to 3 rounds.
+# Pending updates must be done before the safe-mode boot: applied there, they fail and get rolled back.
+$script:UpdatesTask = 'cullewie-updates'
+$script:UpdatesRounds = Join-Path $env:ProgramData 'Cullewie\Work\updates-rounds.txt'
+function Invoke-UpdatesFirst([string]$Level) {
+    Unregister-ScheduledTask -TaskName $script:UpdatesTask -Confirm:$false -ErrorAction SilentlyContinue
+    $round = 0
+    if (Test-Path -LiteralPath $script:UpdatesRounds) { [void][int]::TryParse((Get-Content -LiteralPath $script:UpdatesRounds -Raw).Trim(), [ref]$round) }
+    # an update error never stops the setup; a restart that is still pending after 3 rounds does (below)
+    if (-not (Test-PendingReboot) -and $round -lt 3) {
+        $online = $true
+        try { Wait-Internet } catch { $online = $false; Write-Host 'Windows Update: no internet; skipped.' -ForegroundColor Yellow }
+        if ($online) { Invoke-ChildScript -Tool ($script:Tools | Where-Object { $_.Id -eq 'windows-update' } | Select-Object -First 1) }
+    }
+    if (-not (Test-PendingReboot)) { Remove-Item -LiteralPath $script:UpdatesRounds -Force -ErrorAction SilentlyContinue; return }
+    if ($round -ge 3) {
+        Remove-Item -LiteralPath $script:UpdatesRounds -Force -ErrorAction SilentlyContinue
         throw 'Windows is waiting for a restart to finish updates. Restart Windows normally once, then run the setup again.'
     }
+    Set-Content -LiteralPath $script:UpdatesRounds -Value ($round + 1)
+    $user = [Security.Principal.WindowsIdentity]::GetCurrent().Name
+    $uiScript = Join-Path $script:RepoRoot 'UI.ps1'
+    $taskArgument = if ($Ui) { "-NoLogo -NoProfile -STA -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$uiScript`" -Continue" }
+                    else { "-NoLogo -NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`" -Mode full -Apps $Level" }
+    $action = New-ScheduledTaskAction -Execute $script:PowerShellExe -Argument $taskArgument
+    $trigger = New-ScheduledTaskTrigger -AtLogOn -User $user
+    $principal = New-ScheduledTaskPrincipal -UserId $user -LogonType Interactive -RunLevel Highest
+    $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -ExecutionTimeLimit ([TimeSpan]::Zero)
+    Register-ScheduledTask -TaskName $script:UpdatesTask -Action $action -Trigger $trigger -Principal $principal -Settings $settings -Force | Out-Null
+    Write-Host "Windows Update: restarting to finish the updates (round $($round + 1) of 3). Sign in afterwards; the setup continues by itself." -ForegroundColor Cyan
+    if ($script:TestLogOn) { Write-TestStep 'Restart (updates)' 'INFO' }   # TESTLOG
+    shutdown -r -t 10
+    exit
+}
+function Start-FullSetup {
     # ask once, now: the rest of the setup runs by itself (an earlier run's answer is dropped first)
     Remove-Item -LiteralPath $script:AppsFlag -Force -ErrorAction SilentlyContinue
     $level = Read-AppsChoice
     Save-AppsChoice $level
     if ($script:TestLogOn) { [void](Start-TestRun "full-$level") }   # TESTLOG
+    Invoke-UpdatesFirst $level
     $statePath = Join-Path $script:RepoRoot 'nvidia-setup-state.json'
     $dduFlag = Join-Path $env:ProgramData 'Cullewie\Work\cullewie-ddu.flag'
     # also the AMD state an aborted run may have left (its saved link could install an older driver)
@@ -522,6 +555,11 @@ function Invoke-AfterSetup {
     }
     if ($script:TestLogOn) { Write-TestStep 'Extra setup' $(if ($code -eq 0) { 'PASS' } else { 'FAIL' }) $code $watch.Elapsed }   # TESTLOG
     Remove-Item -LiteralPath $file, $hashFile -Force -ErrorAction SilentlyContinue
+    # the installers may turn services back on (2026-11-24: right as the Chrome MSI finished, BITS went from disabled to
+    # automatic and Windows Update to manual), so Services runs once more, after the apps. The restart that ends the
+    # extra setup applies it.
+    $services = $script:Tools | Where-Object { $_.Id -eq 'services' } | Select-Object -First 1
+    Invoke-ChildScript -Tool ([pscustomobject]@{ Id = $services.Id; Name = 'Services Off (after the apps)'; Category = $services.Category; Path = $services.Path; Wrapper = '' }) -Arguments (@('-Live') + @(Get-AppsArguments))
 }
 function Test-PendingReboot {
     # Windows has updates or feature changes waiting for a restart

@@ -55,6 +55,8 @@ function Invoke-Winget([string]$Exe, [string[]]$Arguments, [int]$TimeoutSeconds 
     $p.ExitCode
 }
 
+# All-in locks winget with its policy (Tweaks.ps1); every install below needs it unlocked
+Remove-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\AppInstaller' -Name 'EnableAppInstaller' -ErrorAction SilentlyContinue
 $winget = Get-Command winget.exe -ErrorAction SilentlyContinue
 foreach ($id in $packages.Keys) {
     $name = $packages[$id]

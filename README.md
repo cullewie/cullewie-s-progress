@@ -14,12 +14,15 @@ Bir pencere açılır. **All-in**, **Xbox & Store**, **Only Store Mode** ya da h
 
 Bilgisayarı oyun için en sade haline getirir:
 
+- Önce bekleyen Windows güncellemelerini indirir ve kurar (sürücü, yeni Windows sürümü ve isteğe bağlı güncellemeler hariç). Yeniden başlatma gerekirse bilgisayar kendiliğinden yeniden başlar ve kurulum aynı modda devam eder (en fazla 3 tur).
 - Eski ekran kartı sürücüsünü güvenli modda DDU ile siler, NVIDIA'nın ya da AMD'nin (Radeon RX 5000–9000) sitesinden en yenisini kurar. Sürücünün dijital imzası kontrol edilir.
 - NVIDIA veya AMD ayarlarını yapar, monitörü en yüksek yenileme hızına (Hz) alır. Her şey bitince pencere Digital Vibrance ya da AMD'de Color Saturation değerini sorar.
 - Gereksiz uygulamaları ve Windows hizmetlerini kapatır, Windows'u oyun için ayarlar.
-- Windows Update, Microsoft Store, Xbox ve oyun dışı bazı Windows özellikleri bu seçenekte çalışmaz. Xbox uygulaması, Gaming Services ve Game Bar kaldırılır (Vanilla Mode geri kurar).
+- Microsoft Store kaldırılır. winget (App Installer) Windows'un parçası olduğu için silinemez; Windows'un kendi ilkesiyle kilitlenir ve hiçbir şey kuramaz. Windows Update, Store'un kurulum hizmeti ve Teslim En İyileştirme (Delivery Optimization) kapatılır.
+- Windows Update, Xbox ve oyun dışı bazı Windows özellikleri bu seçenekte çalışmaz. Xbox uygulaması, Gaming Services ve Game Bar kaldırılır (Vanilla Mode hepsini geri kurar, Store ve winget dahil).
+- Kurulum sırasında hiçbir pencere (Görev Yöneticisi, Güç Seçenekleri) açılmaz; sonuçlar kurulum penceresinde ve kayıtta görünür.
 
-Kurulum sırasında bilgisayar üç kez kendiliğinden yeniden başlar. Her açılışta Windows'a giriş yapman yeterli; pencere kaldığı yerden devam eder.
+Kurulum sırasında bilgisayar üç kez kendiliğinden yeniden başlar (bekleyen güncelleme varsa daha fazla). Her açılışta Windows'a giriş yapman yeterli; pencere kaldığı yerden devam eder.
 
 **Yeniden başlatmadan çalıştırmak için** (güvenli mod, sürücü temizliği, Defender ayarları ve ekran sorusu atlanır; hizmetler bir sonraki yeniden başlatmada değişir):
 
@@ -29,7 +32,7 @@ $env:CULLEWIE_MODE = 'live'; iwr 'https://github.com/cullewie/cullewie-s-progres
 
 ## Xbox & Store / Only Store Mode
 
-İkisi de All-in'in yaptığı her şeyi yapar, ama seçilen uygulamaların çalışması için gereken hizmetleri ve ayarları açık bırakır. Eksik olan uygulamaları kurulum kendisi kurar. İkisinde de Windows Update açık kalır ama **yalnızca aylık güncellemeyi** alır; yeni Windows sürümü, sürücü ve önizleme güncellemeleri gelmez.
+İkisi de All-in'in yaptığı her şeyi yapar, ama seçilen uygulamaların çalışması için gereken hizmetleri ve ayarları açık bırakır. Microsoft Store ve winget kalır (önceki bir All-in winget'i kilitlediyse kilit açılır). Eksik olan uygulamaları kurulum kendisi kurar. İkisinde de Windows Update açık kalır ama **yalnızca aylık güncellemeyi** alır; yeni Windows sürümü, sürücü ve önizleme güncellemeleri gelmez.
 
 ### Xbox & Store
 

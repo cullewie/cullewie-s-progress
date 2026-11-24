@@ -8,16 +8,16 @@
     "files":  [
                   {
                       "path":  "Launcher.ps1",
-                      "size":  40558,
-                      "sha256":  "3d137d783c7861c081d21677637ae1bb2cdde1867db7411a85a4ba21225e14fa",
+                      "size":  43959,
+                      "sha256":  "0e3cf4f4e4099386e05b8f38a0d51725312efa844bb547e19bcd1a6d48831bbd",
                       "role":  "launcher",
                       "origin":  "project",
                       "derivedFrom":  null
                   },
                   {
                       "path":  "README.md",
-                      "size":  4631,
-                      "sha256":  "01aa683e7fcbc45f9a9ae0839cc7124544c69ab25a8431f49f6121b948267572",
+                      "size":  5453,
+                      "sha256":  "ea7faa9f8b507838efbe8879bfde4d0d6e94fa5a1006141a6fc3989f4fb15c1b",
                       "role":  "documentation",
                       "origin":  "project",
                       "derivedFrom":  null
@@ -48,8 +48,8 @@
                   },
                   {
                       "path":  "Scripts/Windows/Power-Plan.ps1",
-                      "size":  32548,
-                      "sha256":  "a9fbfad32f6c94bc389a51fc4e530be31649f5f3525b0a4d0abfa08793583023",
+                      "size":  32744,
+                      "sha256":  "3213738306b45dae4830b6dc03190a9dca83d29265ece967ea428b16dd349fa9",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null
@@ -64,24 +64,24 @@
                   },
                   {
                       "path":  "Scripts/Windows/Services.ps1",
-                      "size":  36688,
-                      "sha256":  "c3bbf342dbef650b23b5349f331534352dea4cb0e58a68dc02cb6faa59b732e4",
+                      "size":  37193,
+                      "sha256":  "5c44ebac56291aa4e1c4680823dea871f2c990a38787f079497d4ed1a1237bc4",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null
                   },
                   {
                       "path":  "Scripts/Windows/Timer-Resolution.ps1",
-                      "size":  14859,
-                      "sha256":  "1e17ebce8e4507053ab6d90f826e66260e56368253512f6f2b572a217b78d697",
+                      "size":  15228,
+                      "sha256":  "c23dae17aaf4ad3d43be2781ce78fc751b6dd9b122973fa43caed9dde74b70f4",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null
                   },
                   {
                       "path":  "Scripts/Windows/Tweaks.ps1",
-                      "size":  83477,
-                      "sha256":  "ea67c410cb65f2392792a25f1b46abf490eacf60b9d29f4e1913d5404de886e7",
+                      "size":  84641,
+                      "sha256":  "fde89c4d08b91bf60e9a65f76267557aec310d3cbd3945697b3b38947c3ec8d9",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null
@@ -96,16 +96,16 @@
                   },
                   {
                       "path":  "Scripts/Windows/Store-Xbox.ps1",
-                      "size":  6001,
-                      "sha256":  "c42b90dcbcd5cb7655735c04d24a5cfb32f9de83c1da6710e52ea8ce11a57486",
+                      "size":  6231,
+                      "sha256":  "26a1be02daf3c181f8e9604c82fffe458f538242ea63e6972dbc4ab56a5cb4f6",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null
                   },
                   {
                       "path":  "Scripts/Windows/Vanilla.ps1",
-                      "size":  39629,
-                      "sha256":  "08a96a184f8086b272da2e2ea9a83a01f874f4049262630e7580fdb7a8e434f0",
+                      "size":  39928,
+                      "sha256":  "ca2abff614afd8a1c1dd48c5a2e063c65de06756e97436b2aea637e75376f91d",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null
@@ -152,8 +152,16 @@
                   },
                   {
                       "path":  "UI.ps1",
-                      "size":  49710,
-                      "sha256":  "bb44b33af44d68c82155066f27b3a520b6771e61cce76e4a73e7046c78d24db7",
+                      "size":  51067,
+                      "sha256":  "e53042d503dfec04658c55b3f4b4be6572466e50dbb46aad4a2d674b576fb89a",
+                      "role":  "source",
+                      "origin":  "project",
+                      "derivedFrom":  null
+                  },
+                  {
+                      "path":  "Scripts/Windows/Windows-Update.ps1",
+                      "size":  3852,
+                      "sha256":  "14ecd0b398f07fc01b89b5a2c549348edca347936422491b5ddd345a81464e38",
                       "role":  "source",
                       "origin":  "project",
                       "derivedFrom":  null
@@ -244,6 +252,12 @@
                     {
                         "id":  "vanilla",
                         "entry":  "Scripts/Windows/Vanilla.ps1",
+                        "adminRequired":  true,
+                        "requiresReboot":  true
+                    },
+                    {
+                        "id":  "windows-update",
+                        "entry":  "Scripts/Windows/Windows-Update.ps1",
                         "adminRequired":  true,
                         "requiresReboot":  true
                     }

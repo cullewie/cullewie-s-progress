@@ -297,8 +297,10 @@ Set-Service -Name "Set Timer Resolution Service" -Status Running -ErrorAction Si
 # enable global timer resolution requests
 cmd /c "reg add `"HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\kernel`" /v `"GlobalTimerResolutionRequests`" /t REG_DWORD /d `"1`" /f >nul 2>&1"
 
-# start taskmanager
-Start-Process taskmgr.exe
+# no Task Manager window: a window opened in the middle of All-in took focus, and clicks in it got in the way of the
+# next steps. The service state goes to the log instead.
+$timerService = Get-Service -Name "Set Timer Resolution Service" -ErrorAction SilentlyContinue
+Write-Host "Timer Resolution service: $(if ($timerService) { "$($timerService.Status), $($timerService.StartType)" } else { 'not installed' })"
 
 exit
 

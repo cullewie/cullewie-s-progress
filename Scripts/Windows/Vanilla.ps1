@@ -189,7 +189,11 @@ $storeIds = [ordered]@{
     'Microsoft.Copilot' = '9NHT9RB2F4HD'; 'MicrosoftCorporationII.QuickAssist' = '9P7BP5VNWKX5'; 'MicrosoftCorporationII.MicrosoftFamily' = '9PDJDJS743XF'
     'Microsoft.BingSearch' = '9NZBF4GT040C'; 'MicrosoftWindows.Client.WebExperience' = '9MSSGKG348SP'; 'Microsoft.XboxGamingOverlay' = '9NZKPSTSNW4P'
     'Microsoft.GamingApp' = '9MV0B5HZVK9Z'; 'Microsoft.GamingServices' = '9MWPM2CQNLHN'; 'Microsoft.XboxIdentityProvider' = '9WZDNCRD1HKW'
+    'Microsoft.WindowsStore' = '9WZDNCRFJBMP'
 }
+# All-in removes these with the Store; the Store installs them again itself when it needs them, so they are not
+# installed here and not listed as lost
+$storeManaged = @('Microsoft.StorePurchaseApp')
 # programs from winget; Remote Desktop Connection has no package to reinstall it from
 $wingetIds = @{ 'OneDrive' = 'Microsoft.OneDrive'; 'GameInput' = 'Microsoft.GameInput' }
 function Get-RemovedInventory([string]$Path) {
@@ -202,6 +206,7 @@ function Get-RemovedInventory([string]$Path) {
 }
 function Get-RestorePlan($Inventory) {
     foreach ($n in @($Inventory.apps)) {
+        if ($storeManaged -contains $n) { continue }
         if ($storeIds.Contains($n)) { [pscustomobject]@{ Kind = 'app'; Name = $n; How = 'msstore'; Id = $storeIds[$n] } }
         else { [pscustomobject]@{ Kind = 'app'; Name = $n; How = 'skip'; Id = '' } }
     }
